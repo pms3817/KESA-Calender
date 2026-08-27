@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KESA Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#F6F7F9; --panel:#FFFFFF; --ink:#0F172A; --muted:#64748B;
+    --line:#E4E8EE; --line-strong:#CBD3DE; --ink-soft:#334155;
+    --today:#FFF7ED; --today-line:#FDBA74;
+    /* department colors — the visual system */
+    --dept-event:#2563EB; --dept-marketing:#DB2777; --dept-finance:#059669;
+    --dept-internal:#D97706; --dept-all:#7C3AED; --dept-school:#5B6472;
+    --display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --body:"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.18);
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--canvas); color:var(--ink); font-family:var(--body);
+    font-size:14px; line-height:1.4; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:20px 20px 64px}
+
+  /* Header */
+  header.app{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
+  .brand h1{font-family:var(--display); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0}
+  .brand p{margin:2px 0 0; color:var(--muted); font-size:12.5px}
+  .brand .k{color:var(--dept-event)}
+  .nav{display:flex; align-items:center; gap:8px}
+  .month{font-family:var(--display); font-weight:600; font-size:16px; min-width:150px; text-align:center; letter-spacing:-.01em}
+  button{font-family:var(--body); cursor:pointer; border:1px solid var(--line-strong); background:var(--panel); color:var(--ink); border-radius:9px; padding:8px 12px; font-size:13px; font-weight:500}
+  button:hover{border-color:#9AA6B6}
+  button:focus-visible{outline:2px solid var(--dept-event); outline-offset:2px}
+  .icon-btn{width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:16px; line-height:1}
+  .primary{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:600}
+  .primary:hover{background:#1E293B; border-color:#1E293B}
+
+  /* Filter bar */
+  .filters{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+  .filters .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; margin-right:2px}
+  .pill{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 11px 5px 9px; font-size:12.5px; font-weight:500; user-select:none}
+  .pill .dot{width:10px; height:10px; border-radius:3px; flex:none}
+  .pill[aria-pressed="false"]{opacity:.4; filter:saturate(.4)}
+  .pill:hover{border-color:#9AA6B6}
+
+  /* Calendar */
+  .cal{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .dow{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--line)}
+  .dow div{padding:9px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr)}
+  .cell{min-height:118px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 6px 8px; position:relative; cursor:pointer; transition:background .12s}
+  .cell:nth-child(7n){border-right:none}
+  .grid .cell:hover{background:#FBFCFE}
+  .cell.out{background:#FBFBFC}
+  .cell.out .num{color:#C2CAD6}
+  .cell.today{background:var(--today); box-shadow:inset 0 0 0 1px var(--today-line)}
+  .num{font-family:var(--display); font-weight:600; font-size:12.5px; color:var(--ink-soft); display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:6px}
+  .cell.today .num{background:var(--today-line); color:#7C2D12}
+  .add-hint{position:absolute; top:7px; right:7px; opacity:0; font-size:15px; color:var(--muted); transition:opacity .12s}
+  .cell:hover .add-hint{opacity:1}
+  .chips{margin-top:5px; display:flex; flex-direction:column; gap:3px}
+  .chip{display:flex; align-items:center; gap:6px; border-radius:6px; padding:3px 6px; font-size:11.5px; font-weight:500; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border:0; text-align:left; width:100%; line-height:1.25}
+  .chip .g{flex:none; opacity:.92; font-size:11px}
+  .chip .t{overflow:hidden; text-overflow:ellipsis}
+  .chip .rec{flex:none; opacity:.8; font-size:10px}
+  .chip:hover{filter:brightness(1.06)}
+  .more{font-size:11px; color:var(--muted); padding:1px 4px; font-weight:500}
+
+  /* Modal */
+  .scrim{position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:50}
+  .scrim.open{display:flex}
+  .modal{background:var(--panel); width:100%; max-width:440px; border-radius:14px; box-shadow:0 24px 60px -12px rgba(15,23,42,.4); padding:20px; margin-top:20px}
+  .modal h2{font-family:var(--display); font-size:17px; margin:0 0 2px; letter-spacing:-.01em}
+  .modal .sub{color:var(--muted); font-size:12px; margin:0 0 16px}
+  .field{margin-bottom:12px}
+  .field.hide{display:none}
+  label.lb{display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:5px}
+  input[type=text], input[type=date], select, textarea{width:100%; font-family:var(--body); font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:9px; padding:9px 10px; background:#fff}
+  textarea{resize:vertical; min-height:56px}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--dept-event); outline-offset:0; border-color:transparent}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .seg{display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1; min-width:74px; padding:9px 6px; font-size:12.5px; border-radius:9px}
+  .seg button[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .modal-actions{display:flex; align-items:center; gap:8px; margin-top:8px}
+  .modal-actions .spacer{flex:1}
+  .danger{color:#B91C1C; border-color:#F1C4C4}
+  .danger:hover{background:#FEF2F2; border-color:#E4A0A0}
+  .err{color:#B91C1C; font-size:12px; margin-top:2px; display:none}
+  .err.show{display:block}
+
+  .empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:13px}
+  footer.note{margin-top:14px; color:var(--muted); font-size:11.5px; text-align:center}
+  .store-tag{display:inline-block; padding:2px 8px; border-radius:999px; background:#EEF2F7; border:1px solid var(--line); color:var(--ink-soft); font-weight:500}
+
+  @media (max-width:640px){
+    .cell{min-height:92px}
+    .brand h1{font-size:19px}
+    .month{min-width:120px; font-size:14px}
+    .chip .t{max-width:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <h1><span class="k">KESA</span> Calendar</h1>
+      <p>Shared club calendar · events, due dates, meetings & school dates</p>
+    </div>
+    <div class="nav">
+      <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
+      <div class="month" id="monthLabel">—</div>
+      <button class="icon-btn" id="next" aria-label="Next month">›</button>
+      <button id="today" style="margin-left:4px">Today</button>
+      <button class="primary" id="addBtn" style="margin-left:4px">+ Add item</button>
+    </div>
+  </header>
+
+  <div class="filters" id="filters">
+    <span class="label">Departments</span>
+    <!-- pills injected -->
+  </div>
+
+  <div class="cal">
+    <div class="dow">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <footer class="note">
+    Data is saved to <span class="store-tag" id="storeTag">shared storage</span> — everyone who opens this sees the same items.
+  </footer>
+</div>
+
+<!-- Modal -->
+<div class="scrim" id="scrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h2 id="mTitle">Add item</h2>
+    <p class="sub" id="mSub">Fill in the details and save to the calendar.</p>
+
+    <div class="field">
+      <label class="lb">Type</label>
+      <div class="seg" id="typeSeg">
+        <button type="button" data-type="event"   aria-pressed="true">Event</button>
+        <button type="button" data-type="due"     aria-pressed="false">Due date</button>
+        <button type="button" data-type="meeting" aria-pressed="false">Meeting</button>
+        <button type="button" data-type="school"  aria-pressed="false">School</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lb" for="fTitle">Title</label>
+      <input type="text" id="fTitle" placeholder="e.g. Fall Mixer" autocomplete="off" />
+      <div class="err" id="titleErr">Add a title so people know what this is.</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="lb" for="fDate">Date</label>
+        <input type="date" id="fDate" />
+      </div>
+      <div class="field" id="deptField">
+        <label class="lb" for="fDept">Department</label>
+        <select id="fDept">
+          <option value="event">Event</option>
+          <option value="marketing">Marketing</option>
+          <option value="finance">Finance</option>
+          <option value="internal">Internal</option>
+          <option value="all">All-hands</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field hide" id="assigneeField">
+      <label class="lb" for="fAssignee">Assignee <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <input type="text" id="fAssignee" placeholder="Who owns this?" autocomplete="off" />
+    </div>
+
+    <div class="field hide" id="linkField">
+      <label class="lb" for="fLink">Linked event <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <select id="fLink"><option value="">— None —</option></select>
+    </div>
+
+    <div class="field" id="recurField">
+      <label class="lb" for="fRecur">Repeats</label>
+      <select id="fRecur">
+        <option value="none">Does not repeat</option>
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="lb" for="fDetails">Details <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <textarea id="fDetails" placeholder="Notes, location, links…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="danger" id="deleteBtn" style="display:none">Delete</button>
+      <span class="spacer"></span>
+      <button id="cancelBtn">Cancel</button>
+      <button class="primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   DATA LAYER
+   Swap point for going live: replace load()/save() with Supabase calls.
+   Everything else in the app talks only to these two functions + the
+   in-memory `events` array, so the migration is contained here.
+--------------------------------------------------------------------------- */
+const STORE_KEY = 'kesa_events_v1';
+const hasStore = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+let memoryFallback = null; // used only if artifact storage is unavailable
+
+async function load(){
+  if (hasStore){
+    try{ const r = await window.storage.get(STORE_KEY, true); return r && r.value ? JSON.parse(r.value) : null; }
+    catch(e){ return null; } // key missing throws → treat as empty
+  }
+  return memoryFallback;
+}
+async function save(list){
+  if (hasStore){
+    try{ await window.storage.set(STORE_KEY, JSON.stringify(list), true); }catch(e){ console.error(e); }
+  } else { memoryFallback = list; }
+}
+
+/* ---------------------------------------------------------------------------
+   CONSTANTS
+--------------------------------------------------------------------------- */
+const DEPTS = [
+  {id:'event',     name:'Event',     color:'#2563EB'},
+  {id:'marketing', name:'Marketing', color:'#DB2777'},
+  {id:'finance',   name:'Finance',   color:'#059669'},
+  {id:'internal',  name:'Internal',  color:'#D97706'},
+  {id:'all',       name:'All-hands', color:'#7C3AED'},
+  {id:'school',    name:'School',    color:'#5B6472'},
+];
+const DEPT = Object.fromEntries(DEPTS.map(d=>[d.id,d]));
+const TYPE_GLYPH = {event:'●', due:'⚑', meeting:'◇', school:'▲'};
+const TYPE_NAME  = {event:'Event', due:'Due date', meeting:'Meeting', school:'School event'};
+const RECUR_GLYPH= {weekly:'↻', biweekly:'↻', monthly:'↻', none:''};
+
+/* ---------------------------------------------------------------------------
+   DATE HELPERS  (validated separately before UI build)
+--------------------------------------------------------------------------- */
+function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d, 12,0,0,0); }
+function fmt(date){ const y=date.getFullYear(); const m=String(date.getMonth()+1).padStart(2,'0'); const d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+function daysBetween(a,b){ return Math.round((b - a) / 86400000); }
+function nthWeekdayOfMonth(y, mi, wd, nth){ const first=new Date(y,mi,1,12); const off=(wd-first.getDay()+7)%7; const date=new Date(y,mi,1+off+(nth-1)*7,12); return date.getMonth()===mi?date:null; }
+function nthOfDate(base){ return Math.floor((base.getDate()-1)/7)+1; }
+const ORD = ['','1st','2nd','3rd','4th','5th'];
+const WEEKDAY = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function occurrences(ev, startStr, endStr){
+  const base=parseYMD(ev.date), start=parseYMD(startStr), end=parseYMD(endStr), out=[];
+  if(!ev.recur || ev.recur==='none'){ if(base>=start && base<=end) out.push(ev.date); return out; }
+  const nth=nthOfDate(base), wd=base.getDay();
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    if(d<base) continue;
+    let m=false;
+    if(ev.recur==='weekly') m=d.getDay()===wd;
+    else if(ev.recur==='biweekly') m=d.getDay()===wd && daysBetween(base,d)%14===0;
+    else if(ev.recur==='monthly'){ const nd=nthWeekdayOfMonth(d.getFullYear(),d.getMonth(),wd,nth); m=nd&&fmt(nd)===fmt(d); }
+    if(m) out.push(fmt(d));
+  }
+  return out;
+}
+function recurLabel(ev){
+  if(!ev.recur||ev.recur==='none') return '';
+  const b=parseYMD(ev.date), wd=WEEKDAY[b.getDay()];
+  if(ev.recur==='weekly') return `Weekly on ${wd}`;
+  if(ev.recur==='biweekly') return `Every 2 weeks on ${wd}`;
+  if(ev.recur==='monthly') return `Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
+  return '';
+}
+
+/* ---------------------------------------------------------------------------
+   STATE
+--------------------------------------------------------------------------- */
+let events = [];
+let view = new Date(); view.setDate(1);
+let editingId = null;
+let formType = 'event';
+const activeDepts = new Set(DEPTS.map(d=>d.id));
+
+const uid = ()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ---------------------------------------------------------------------------
+   SEED (only if storage empty) — demonstrates every feature, anchored to today
+--------------------------------------------------------------------------- */
+function seed(){
+  const t=new Date(); t.setHours(12,0,0,0);
+  const off=n=>{ const d=new Date(t); d.setDate(d.getDate()+n); return fmt(d); };
+  const mixer=uid();
+  return [
+    {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample)', source:'seed'},
+    {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample)', source:'seed'},
+    {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample)', source:'seed'},
+    {id:uid(), title:'Budget report', type:'due', dept:'finance', date:off(9), assignee:'Deniz', linkedEventId:null, recur:'monthly', details:'Monthly numbers. (sample)', source:'seed'},
+    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder — replace with UofT Eng academic calendar. (sample)', source:'seed'},
+  ];
+}
+
+/* ---------------------------------------------------------------------------
+   RENDER — filter pills
+--------------------------------------------------------------------------- */
+function renderFilters(){
+  const box=document.getElementById('filters');
+  box.querySelectorAll('.pill').forEach(p=>p.remove());
+  DEPTS.forEach(d=>{
+    const b=document.createElement('button');
+    b.className='pill'; b.setAttribute('aria-pressed', activeDepts.has(d.id));
+    b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${d.name}`;
+    b.onclick=()=>{ activeDepts.has(d.id)?activeDepts.delete(d.id):activeDepts.add(d.id); b.setAttribute('aria-pressed', activeDepts.has(d.id)); renderGrid(); };
+    box.appendChild(b);
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   RENDER — calendar grid
+--------------------------------------------------------------------------- */
+function renderGrid(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  const y=view.getFullYear(), m=view.getMonth();
+  document.getElementById('monthLabel').textContent=view.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+
+  const first=new Date(y,m,1,12);
+  const gridStart=new Date(first); gridStart.setDate(1-first.getDay()); // back to Sunday
+  const cells=[]; for(let i=0;i<42;i++){ const d=new Date(gridStart); d.setDate(gridStart.getDate()+i); cells.push(d); }
+  const rangeStart=fmt(cells[0]), rangeEnd=fmt(cells[41]);
+
+  // expand all events into occurrences on visible range, respecting filter
+  const byDay={};
+  events.forEach(ev=>{
+    if(!activeDepts.has(ev.dept)) return;
+    occurrences(ev, rangeStart, rangeEnd).forEach(ds=>{ (byDay[ds]=byDay[ds]||[]).push(ev); });
+  });
+
+  const todayStr=fmt(new Date());
+  cells.forEach(d=>{
+    const ds=fmt(d), inMonth=d.getMonth()===m;
+    const cell=document.createElement('div');
+    cell.className='cell'+(inMonth?'':' out')+(ds===todayStr?' today':'');
+    cell.innerHTML=`<span class="num">${d.getDate()}</span><span class="add-hint">+</span>`;
+    cell.onclick=()=>openAdd(ds);
+
+    const items=(byDay[ds]||[]).slice().sort((a,b)=> a.type.localeCompare(b.type));
+    const chips=document.createElement('div'); chips.className='chips';
+    const shown=items.slice(0,3);
+    shown.forEach(ev=>{
+      const c=document.createElement('button');
+      c.className='chip'; c.style.background=DEPT[ev.dept].color;
+      c.title=`${TYPE_NAME[ev.type]} · ${DEPT[ev.dept].name}${ev.assignee?' · '+ev.assignee:''}`;
+      c.innerHTML=`<span class="g">${TYPE_GLYPH[ev.type]}</span><span class="t">${escapeHtml(ev.title)}</span>${ev.recur&&ev.recur!=='none'?'<span class="rec">↻</span>':''}`;
+      c.onclick=(e)=>{ e.stopPropagation(); openEdit(ev); };
+      chips.appendChild(c);
+    });
+    if(items.length>3){ const more=document.createElement('div'); more.className='more'; more.textContent=`+${items.length-3} more`; chips.appendChild(more); }
+    cell.appendChild(chips);
+    grid.appendChild(cell);
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------------------------------------------------------------------------
+   MODAL
+--------------------------------------------------------------------------- */
+const scrim=document.getElementById('scrim');
+
+function setType(t){
+  formType=t;
+  document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.type===t));
+  // field visibility rules per type
+  const deptField=document.getElementById('deptField');
+  const assignee=document.getElementById('assigneeField');
+  const link=document.getElementById('linkField');
+  const recur=document.getElementById('recurField');
+  const dept=document.getElementById('fDept');
+
+  // school events are external: no department choice, no assignee/link/recur
+  if(t==='school'){
+    deptField.classList.add('hide'); assignee.classList.add('hide'); link.classList.add('hide'); recur.classList.add('hide');
+  } else {
+    deptField.classList.remove('hide'); recur.classList.remove('hide');
+    // assignee: due + meeting.  linked event: due only.
+    assignee.classList.toggle('hide', !(t==='due'||t==='meeting'));
+    link.classList.toggle('hide', t!=='due');
+  }
+  // restore full department list unless school
+  if(t!=='school' && dept.value==='school') dept.value='event';
+}
+
+function refreshLinkOptions(currentId){
+  const sel=document.getElementById('fLink');
+  sel.innerHTML='<option value="">— None —</option>';
+  events.filter(e=>e.type==='event' && e.id!==currentId)
+        .sort((a,b)=>a.date.localeCompare(b.date))
+        .forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=`${e.title} (${e.date})`; sel.appendChild(o); });
+}
+
+function openAdd(dateStr){
+  editingId=null;
+  document.getElementById('mTitle').textContent='Add item';
+  document.getElementById('mSub').textContent='Fill in the details and save to the calendar.';
+  document.getElementById('deleteBtn').style.display='none';
+  document.getElementById('fTitle').value='';
+  document.getElementById('fDate').value=dateStr||fmt(new Date());
+  document.getElementById('fDept').value='event';
+  document.getElementById('fAssignee').value='';
+  document.getElementById('fDetails').value='';
+  document.getElementById('fRecur').value='none';
+  refreshLinkOptions(null);
+  setType('event');
+  clearErr();
+  openModal();
+}
+function openEdit(ev){
+  editingId=ev.id;
+  document.getElementById('mTitle').textContent='Edit item';
+  document.getElementById('mSub').textContent = (ev.recur&&ev.recur!=='none') ? `${recurLabel(ev)} — edits apply to the whole series.` : 'Update the details or delete this item.';
+  document.getElementById('deleteBtn').style.display='inline-flex';
+  document.getElementById('fTitle').value=ev.title;
+  document.getElementById('fDate').value=ev.date;
+  document.getElementById('fAssignee').value=ev.assignee||'';
+  document.getElementById('fDetails').value=ev.details||'';
+  document.getElementById('fRecur').value=ev.recur||'none';
+  refreshLinkOptions(ev.id);
+  setType(ev.type);
+  if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
+  document.getElementById('fLink').value=ev.linkedEventId||'';
+  clearErr();
+  openModal();
+}
+function openModal(){ scrim.classList.add('open'); setTimeout(()=>document.getElementById('fTitle').focus(),30); }
+function closeModal(){ scrim.classList.remove('open'); }
+
+function clearErr(){ document.getElementById('titleErr').classList.remove('show'); }
+async function saveItem(){
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){ document.getElementById('titleErr').classList.add('show'); document.getElementById('fTitle').focus(); return; }
+  const date=document.getElementById('fDate').value || fmt(new Date());
+  const dept = formType==='school' ? 'school' : document.getElementById('fDept').value;
+  const rec  = document.getElementById('recurField').classList.contains('hide') ? 'none' : document.getElementById('fRecur').value;
+  const assignee = (formType==='due'||formType==='meeting') ? document.getElementById('fAssignee').value.trim() : '';
+  const linkedEventId = formType==='due' ? (document.getElementById('fLink').value||null) : null;
+  const details=document.getElementById('fDetails').value.trim();
+
+  if(editingId){
+    const ev=events.find(e=>e.id===editingId);
+    Object.assign(ev,{title,type:formType,dept,date,assignee,linkedEventId,recur:rec,details});
+  } else {
+    events.push({id:uid(),title,type:formType,dept,date,assignee,linkedEventId,recur:rec,details,source:'user'});
+  }
+  await save(events);
+  closeModal(); renderGrid();
+}
+async function deleteItem(){
+  if(!editingId) return;
+  events=events.filter(e=>e.id!==editingId);
+  // also unlink any due-dates that pointed at a deleted event
+  events.forEach(e=>{ if(e.linkedEventId===editingId) e.linkedEventId=null; });
+  await save(events);
+  closeModal(); renderGrid();
+}
+
+/* ---------------------------------------------------------------------------
+   WIRING
+--------------------------------------------------------------------------- */
+document.getElementById('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); renderGrid(); };
+document.getElementById('next').onclick=()=>{ view.setMonth(view.getMonth()+1); renderGrid(); };
+document.getElementById('today').onclick=()=>{ view=new Date(); view.setDate(1); renderGrid(); };
+document.getElementById('addBtn').onclick=()=>openAdd(fmt(new Date()));
+document.getElementById('cancelBtn').onclick=closeModal;
+document.getElementById('saveBtn').onclick=saveItem;
+document.getElementById('deleteBtn').onclick=deleteItem;
+document.querySelectorAll('#typeSeg button').forEach(b=> b.onclick=()=>setType(b.dataset.type));
+scrim.onclick=(e)=>{ if(e.target===scrim) closeModal(); };
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && scrim.classList.contains('open')) closeModal(); });
+
+/* ---------------------------------------------------------------------------
+   BOOT
+--------------------------------------------------------------------------- */
+(async function init(){
+  document.getElementById('storeTag').textContent = hasStore ? 'shared storage' : 'this session only';
+  let stored = await load();
+  if(!stored || !Array.isArray(stored) || stored.length===0){ stored = seed(); await save(stored); }
+  events = stored;
+  renderFilters();
+  renderGrid();
+})();
+</script>
+</body>
+</html>
