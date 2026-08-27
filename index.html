@@ -7,12 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --canvas:#F6F7F9; --panel:#FFFFFF; --ink:#0F172A; --muted:#64748B;
     --line:#E4E8EE; --line-strong:#CBD3DE; --ink-soft:#334155;
     --today:#FFF7ED; --today-line:#FDBA74;
-    /* department colors — the visual system */
     --dept-event:#2563EB; --dept-marketing:#DB2777; --dept-finance:#059669;
     --dept-internal:#D97706; --dept-all:#7C3AED; --dept-school:#5B6472;
     --display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -22,13 +22,9 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{
-    background:var(--canvas); color:var(--ink); font-family:var(--body);
-    font-size:14px; line-height:1.4; -webkit-font-smoothing:antialiased;
-  }
+  body{background:var(--canvas); color:var(--ink); font-family:var(--body); font-size:14px; line-height:1.4; -webkit-font-smoothing:antialiased;}
   .wrap{max-width:1120px; margin:0 auto; padding:20px 20px 64px}
-
-  /* Header */
+ 
   header.app{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
   .brand h1{font-family:var(--display); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0}
   .brand p{margin:2px 0 0; color:var(--muted); font-size:12.5px}
@@ -41,16 +37,17 @@
   .icon-btn{width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:16px; line-height:1}
   .primary{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:600}
   .primary:hover{background:#1E293B; border-color:#1E293B}
-
-  /* Filter bar */
+ 
+  .banner{display:none; align-items:center; gap:8px; background:#FEF2F2; border:1px solid #F1C4C4; color:#991B1B; border-radius:10px; padding:9px 12px; font-size:12.5px; margin-bottom:14px}
+  .banner.show{display:flex}
+ 
   .filters{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px}
   .filters .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; margin-right:2px}
   .pill{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 11px 5px 9px; font-size:12.5px; font-weight:500; user-select:none}
   .pill .dot{width:10px; height:10px; border-radius:3px; flex:none}
   .pill[aria-pressed="false"]{opacity:.4; filter:saturate(.4)}
   .pill:hover{border-color:#9AA6B6}
-
-  /* Calendar */
+ 
   .cal{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
   .dow{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--line)}
   .dow div{padding:9px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
@@ -72,8 +69,7 @@
   .chip .rec{flex:none; opacity:.8; font-size:10px}
   .chip:hover{filter:brightness(1.06)}
   .more{font-size:11px; color:var(--muted); padding:1px 4px; font-weight:500}
-
-  /* Modal */
+ 
   .scrim{position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:50}
   .scrim.open{display:flex}
   .modal{background:var(--panel); width:100%; max-width:440px; border-radius:14px; box-shadow:0 24px 60px -12px rgba(15,23,42,.4); padding:20px; margin-top:20px}
@@ -95,17 +91,12 @@
   .danger:hover{background:#FEF2F2; border-color:#E4A0A0}
   .err{color:#B91C1C; font-size:12px; margin-top:2px; display:none}
   .err.show{display:block}
-
-  .empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:13px}
+  .saving{opacity:.6; pointer-events:none}
+ 
   footer.note{margin-top:14px; color:var(--muted); font-size:11.5px; text-align:center}
   .store-tag{display:inline-block; padding:2px 8px; border-radius:999px; background:#EEF2F7; border:1px solid var(--line); color:var(--ink-soft); font-weight:500}
-
-  @media (max-width:640px){
-    .cell{min-height:92px}
-    .brand h1{font-size:19px}
-    .month{min-width:120px; font-size:14px}
-    .chip .t{max-width:none}
-  }
+ 
+  @media (max-width:640px){ .cell{min-height:92px} .brand h1{font-size:19px} .month{min-width:120px; font-size:14px} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -124,30 +115,28 @@
       <button class="primary" id="addBtn" style="margin-left:4px">+ Add item</button>
     </div>
   </header>
-
+ 
+  <div class="banner" id="banner"></div>
+ 
   <div class="filters" id="filters">
     <span class="label">Departments</span>
-    <!-- pills injected -->
   </div>
-
+ 
   <div class="cal">
-    <div class="dow">
-      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-    </div>
+    <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
     <div class="grid" id="grid"></div>
   </div>
-
+ 
   <footer class="note">
-    Data is saved to <span class="store-tag" id="storeTag">shared storage</span> — everyone who opens this sees the same items.
+    Data is saved to <span class="store-tag" id="storeTag">the database</span> — everyone who opens this sees the same items.
   </footer>
 </div>
-
-<!-- Modal -->
+ 
 <div class="scrim" id="scrim">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle">Add item</h2>
     <p class="sub" id="mSub">Fill in the details and save to the calendar.</p>
-
+ 
     <div class="field">
       <label class="lb">Type</label>
       <div class="seg" id="typeSeg">
@@ -157,13 +146,13 @@
         <button type="button" data-type="school"  aria-pressed="false">School</button>
       </div>
     </div>
-
+ 
     <div class="field">
       <label class="lb" for="fTitle">Title</label>
       <input type="text" id="fTitle" placeholder="e.g. Fall Mixer" autocomplete="off" />
       <div class="err" id="titleErr">Add a title so people know what this is.</div>
     </div>
-
+ 
     <div class="row2">
       <div class="field">
         <label class="lb" for="fDate">Date</label>
@@ -180,17 +169,17 @@
         </select>
       </div>
     </div>
-
+ 
     <div class="field hide" id="assigneeField">
       <label class="lb" for="fAssignee">Assignee <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <input type="text" id="fAssignee" placeholder="Who owns this?" autocomplete="off" />
     </div>
-
+ 
     <div class="field hide" id="linkField">
       <label class="lb" for="fLink">Linked event <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <select id="fLink"><option value="">— None —</option></select>
     </div>
-
+ 
     <div class="field" id="recurField">
       <label class="lb" for="fRecur">Repeats</label>
       <select id="fRecur">
@@ -200,12 +189,12 @@
         <option value="monthly">Monthly</option>
       </select>
     </div>
-
+ 
     <div class="field">
       <label class="lb" for="fDetails">Details <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <textarea id="fDetails" placeholder="Notes, location, links…"></textarea>
     </div>
-
+ 
     <div class="modal-actions">
       <button class="danger" id="deleteBtn" style="display:none">Delete</button>
       <span class="spacer"></span>
@@ -214,34 +203,46 @@
     </div>
   </div>
 </div>
-
+ 
 <script>
-/* ---------------------------------------------------------------------------
-   DATA LAYER
-   Swap point for going live: replace load()/save() with Supabase calls.
-   Everything else in the app talks only to these two functions + the
-   in-memory `events` array, so the migration is contained here.
---------------------------------------------------------------------------- */
-const STORE_KEY = 'kesa_events_v1';
-const hasStore = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
-let memoryFallback = null; // used only if artifact storage is unavailable
-
-async function load(){
-  if (hasStore){
-    try{ const r = await window.storage.get(STORE_KEY, true); return r && r.value ? JSON.parse(r.value) : null; }
-    catch(e){ return null; } // key missing throws → treat as empty
-  }
-  return memoryFallback;
+/* ===========================================================================
+   SUPABASE CONFIG  — the only place your project details live.
+   =========================================================================== */
+const SUPABASE_URL = 'https://eryuvlxrpilrqvwbrazs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_YIivMMyfzhUhO1m_5_PUSQ_ugqDY_do';
+let sb = null;
+ 
+/* ===========================================================================
+   DATA LAYER  — all database access is contained here.
+   Rows in the `events` table use snake_case (linked_event_id); the rest of the
+   app uses camelCase (linkedEventId). toRow / fromRow translate between them.
+   =========================================================================== */
+function toRow(ev){
+  return { id:ev.id, title:ev.title, type:ev.type, dept:ev.dept, date:ev.date,
+           assignee:ev.assignee||'', linked_event_id:ev.linkedEventId||null,
+           recur:ev.recur||'none', details:ev.details||'', source:ev.source||'user' };
 }
-async function save(list){
-  if (hasStore){
-    try{ await window.storage.set(STORE_KEY, JSON.stringify(list), true); }catch(e){ console.error(e); }
-  } else { memoryFallback = list; }
+function fromRow(r){
+  return { id:r.id, title:r.title, type:r.type, dept:r.dept, date:r.date,
+           assignee:r.assignee||'', linkedEventId:r.linked_event_id||null,
+           recur:r.recur||'none', details:r.details||'', source:r.source||'user' };
 }
-
-/* ---------------------------------------------------------------------------
+async function q(builder){ const { error } = await builder; if(error) throw new Error(error.message); }
+ 
+async function dbLoad(){
+  const { data, error } = await sb.from('events').select('*');
+  if(error) throw new Error(error.message);
+  return (data||[]).map(fromRow);
+}
+async function dbInsert(ev){ await q(sb.from('events').insert(toRow(ev))); }
+async function dbInsertMany(list){ await q(sb.from('events').insert(list.map(toRow))); }
+async function dbUpdate(ev){ await q(sb.from('events').update(toRow(ev)).eq('id', ev.id)); }
+async function dbDelete(id){ await q(sb.from('events').delete().eq('id', id)); }
+async function dbUnlink(id){ await q(sb.from('events').update({ linked_event_id:null }).eq('id', id)); }
+ 
+/* ===========================================================================
    CONSTANTS
---------------------------------------------------------------------------- */
+   =========================================================================== */
 const DEPTS = [
   {id:'event',     name:'Event',     color:'#2563EB'},
   {id:'marketing', name:'Marketing', color:'#DB2777'},
@@ -253,11 +254,10 @@ const DEPTS = [
 const DEPT = Object.fromEntries(DEPTS.map(d=>[d.id,d]));
 const TYPE_GLYPH = {event:'●', due:'⚑', meeting:'◇', school:'▲'};
 const TYPE_NAME  = {event:'Event', due:'Due date', meeting:'Meeting', school:'School event'};
-const RECUR_GLYPH= {weekly:'↻', biweekly:'↻', monthly:'↻', none:''};
-
-/* ---------------------------------------------------------------------------
-   DATE HELPERS  (validated separately before UI build)
---------------------------------------------------------------------------- */
+ 
+/* ===========================================================================
+   DATE HELPERS
+   =========================================================================== */
 function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d, 12,0,0,0); }
 function fmt(date){ const y=date.getFullYear(); const m=String(date.getMonth()+1).padStart(2,'0'); const d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
 function daysBetween(a,b){ return Math.round((b - a) / 86400000); }
@@ -265,7 +265,7 @@ function nthWeekdayOfMonth(y, mi, wd, nth){ const first=new Date(y,mi,1,12); con
 function nthOfDate(base){ return Math.floor((base.getDate()-1)/7)+1; }
 const ORD = ['','1st','2nd','3rd','4th','5th'];
 const WEEKDAY = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
+ 
 function occurrences(ev, startStr, endStr){
   const base=parseYMD(ev.date), start=parseYMD(startStr), end=parseYMD(endStr), out=[];
   if(!ev.recur || ev.recur==='none'){ if(base>=start && base<=end) out.push(ev.date); return out; }
@@ -288,37 +288,38 @@ function recurLabel(ev){
   if(ev.recur==='monthly') return `Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
   return '';
 }
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
    STATE
---------------------------------------------------------------------------- */
+   =========================================================================== */
 let events = [];
 let view = new Date(); view.setDate(1);
 let editingId = null;
 let formType = 'event';
 const activeDepts = new Set(DEPTS.map(d=>d.id));
-
 const uid = ()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-
-/* ---------------------------------------------------------------------------
-   SEED (only if storage empty) — demonstrates every feature, anchored to today
---------------------------------------------------------------------------- */
+ 
 function seed(){
   const t=new Date(); t.setHours(12,0,0,0);
   const off=n=>{ const d=new Date(t); d.setDate(d.getDate()+n); return fmt(d); };
   const mixer=uid();
   return [
-    {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample)', source:'seed'},
-    {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample)', source:'seed'},
-    {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample)', source:'seed'},
-    {id:uid(), title:'Budget report', type:'due', dept:'finance', date:off(9), assignee:'Deniz', linkedEventId:null, recur:'monthly', details:'Monthly numbers. (sample)', source:'seed'},
-    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder — replace with UofT Eng academic calendar. (sample)', source:'seed'},
+    {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample — delete me)', source:'seed'},
+    {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample — delete me)', source:'seed'},
+    {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample — delete me)', source:'seed'},
+    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder — replace with UofT Eng academic calendar. (sample — delete me)', source:'seed'},
   ];
 }
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
+   ERROR BANNER
+   =========================================================================== */
+function showError(msg){ const b=document.getElementById('banner'); b.textContent='⚠ '+msg; b.classList.add('show'); }
+function clearBanner(){ document.getElementById('banner').classList.remove('show'); }
+ 
+/* ===========================================================================
    RENDER — filter pills
---------------------------------------------------------------------------- */
+   =========================================================================== */
 function renderFilters(){
   const box=document.getElementById('filters');
   box.querySelectorAll('.pill').forEach(p=>p.remove());
@@ -330,27 +331,26 @@ function renderFilters(){
     box.appendChild(b);
   });
 }
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
    RENDER — calendar grid
---------------------------------------------------------------------------- */
+   =========================================================================== */
 function renderGrid(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   const y=view.getFullYear(), m=view.getMonth();
   document.getElementById('monthLabel').textContent=view.toLocaleDateString('en-US',{month:'long', year:'numeric'});
-
+ 
   const first=new Date(y,m,1,12);
-  const gridStart=new Date(first); gridStart.setDate(1-first.getDay()); // back to Sunday
+  const gridStart=new Date(first); gridStart.setDate(1-first.getDay());
   const cells=[]; for(let i=0;i<42;i++){ const d=new Date(gridStart); d.setDate(gridStart.getDate()+i); cells.push(d); }
   const rangeStart=fmt(cells[0]), rangeEnd=fmt(cells[41]);
-
-  // expand all events into occurrences on visible range, respecting filter
+ 
   const byDay={};
   events.forEach(ev=>{
     if(!activeDepts.has(ev.dept)) return;
     occurrences(ev, rangeStart, rangeEnd).forEach(ds=>{ (byDay[ds]=byDay[ds]||[]).push(ev); });
   });
-
+ 
   const todayStr=fmt(new Date());
   cells.forEach(d=>{
     const ds=fmt(d), inMonth=d.getMonth()===m;
@@ -358,11 +358,10 @@ function renderGrid(){
     cell.className='cell'+(inMonth?'':' out')+(ds===todayStr?' today':'');
     cell.innerHTML=`<span class="num">${d.getDate()}</span><span class="add-hint">+</span>`;
     cell.onclick=()=>openAdd(ds);
-
+ 
     const items=(byDay[ds]||[]).slice().sort((a,b)=> a.type.localeCompare(b.type));
     const chips=document.createElement('div'); chips.className='chips';
-    const shown=items.slice(0,3);
-    shown.forEach(ev=>{
+    items.slice(0,3).forEach(ev=>{
       const c=document.createElement('button');
       c.className='chip'; c.style.background=DEPT[ev.dept].color;
       c.title=`${TYPE_NAME[ev.type]} · ${DEPT[ev.dept].name}${ev.assignee?' · '+ev.assignee:''}`;
@@ -376,35 +375,30 @@ function renderGrid(){
   });
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
    MODAL
---------------------------------------------------------------------------- */
+   =========================================================================== */
 const scrim=document.getElementById('scrim');
-
+ 
 function setType(t){
   formType=t;
   document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.type===t));
-  // field visibility rules per type
   const deptField=document.getElementById('deptField');
   const assignee=document.getElementById('assigneeField');
   const link=document.getElementById('linkField');
   const recur=document.getElementById('recurField');
   const dept=document.getElementById('fDept');
-
-  // school events are external: no department choice, no assignee/link/recur
   if(t==='school'){
     deptField.classList.add('hide'); assignee.classList.add('hide'); link.classList.add('hide'); recur.classList.add('hide');
   } else {
     deptField.classList.remove('hide'); recur.classList.remove('hide');
-    // assignee: due + meeting.  linked event: due only.
     assignee.classList.toggle('hide', !(t==='due'||t==='meeting'));
     link.classList.toggle('hide', t!=='due');
   }
-  // restore full department list unless school
   if(t!=='school' && dept.value==='school') dept.value='event';
 }
-
+ 
 function refreshLinkOptions(currentId){
   const sel=document.getElementById('fLink');
   sel.innerHTML='<option value="">— None —</option>';
@@ -412,7 +406,7 @@ function refreshLinkOptions(currentId){
         .sort((a,b)=>a.date.localeCompare(b.date))
         .forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=`${e.title} (${e.date})`; sel.appendChild(o); });
 }
-
+ 
 function openAdd(dateStr){
   editingId=null;
   document.getElementById('mTitle').textContent='Add item';
@@ -424,10 +418,7 @@ function openAdd(dateStr){
   document.getElementById('fAssignee').value='';
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
-  refreshLinkOptions(null);
-  setType('event');
-  clearErr();
-  openModal();
+  refreshLinkOptions(null); setType('event'); clearErr(); openModal();
 }
 function openEdit(ev){
   editingId=ev.id;
@@ -439,17 +430,16 @@ function openEdit(ev){
   document.getElementById('fAssignee').value=ev.assignee||'';
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
-  refreshLinkOptions(ev.id);
-  setType(ev.type);
+  refreshLinkOptions(ev.id); setType(ev.type);
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
   document.getElementById('fLink').value=ev.linkedEventId||'';
-  clearErr();
-  openModal();
+  clearErr(); openModal();
 }
 function openModal(){ scrim.classList.add('open'); setTimeout(()=>document.getElementById('fTitle').focus(),30); }
 function closeModal(){ scrim.classList.remove('open'); }
-
 function clearErr(){ document.getElementById('titleErr').classList.remove('show'); }
+function setBusy(on){ document.querySelector('.modal').classList.toggle('saving', on); }
+ 
 async function saveItem(){
   const title=document.getElementById('fTitle').value.trim();
   if(!title){ document.getElementById('titleErr').classList.add('show'); document.getElementById('fTitle').focus(); return; }
@@ -459,28 +449,39 @@ async function saveItem(){
   const assignee = (formType==='due'||formType==='meeting') ? document.getElementById('fAssignee').value.trim() : '';
   const linkedEventId = formType==='due' ? (document.getElementById('fLink').value||null) : null;
   const details=document.getElementById('fDetails').value.trim();
-
-  if(editingId){
-    const ev=events.find(e=>e.id===editingId);
-    Object.assign(ev,{title,type:formType,dept,date,assignee,linkedEventId,recur:rec,details});
-  } else {
-    events.push({id:uid(),title,type:formType,dept,date,assignee,linkedEventId,recur:rec,details,source:'user'});
-  }
-  await save(events);
-  closeModal(); renderGrid();
+ 
+  setBusy(true); clearBanner();
+  try{
+    if(editingId){
+      const payload={ id:editingId, title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details,
+                      source:(events.find(e=>e.id===editingId)||{}).source||'user' };
+      await dbUpdate(payload);
+      Object.assign(events.find(e=>e.id===editingId), payload);
+    } else {
+      const payload={ id:uid(), title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details, source:'user' };
+      await dbInsert(payload);
+      events.push(payload);
+    }
+  }catch(e){ setBusy(false); showError('Could not save — '+e.message); return; }
+  setBusy(false); closeModal(); renderGrid();
 }
+ 
 async function deleteItem(){
   if(!editingId) return;
-  events=events.filter(e=>e.id!==editingId);
-  // also unlink any due-dates that pointed at a deleted event
-  events.forEach(e=>{ if(e.linkedEventId===editingId) e.linkedEventId=null; });
-  await save(events);
-  closeModal(); renderGrid();
+  const delId=editingId;
+  setBusy(true); clearBanner();
+  try{
+    await dbDelete(delId);
+    const deps=events.filter(e=>e.linkedEventId===delId);
+    for(const d of deps){ await dbUnlink(d.id); d.linkedEventId=null; }
+  }catch(e){ setBusy(false); showError('Could not delete — '+e.message); return; }
+  events=events.filter(e=>e.id!==delId);
+  setBusy(false); closeModal(); renderGrid();
 }
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
    WIRING
---------------------------------------------------------------------------- */
+   =========================================================================== */
 document.getElementById('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); renderGrid(); };
 document.getElementById('next').onclick=()=>{ view.setMonth(view.getMonth()+1); renderGrid(); };
 document.getElementById('today').onclick=()=>{ view=new Date(); view.setDate(1); renderGrid(); };
@@ -491,16 +492,23 @@ document.getElementById('deleteBtn').onclick=deleteItem;
 document.querySelectorAll('#typeSeg button').forEach(b=> b.onclick=()=>setType(b.dataset.type));
 scrim.onclick=(e)=>{ if(e.target===scrim) closeModal(); };
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && scrim.classList.contains('open')) closeModal(); });
-
-/* ---------------------------------------------------------------------------
+ 
+/* ===========================================================================
    BOOT
---------------------------------------------------------------------------- */
+   =========================================================================== */
 (async function init(){
-  document.getElementById('storeTag').textContent = hasStore ? 'shared storage' : 'this session only';
-  let stored = await load();
-  if(!stored || !Array.isArray(stored) || stored.length===0){ stored = seed(); await save(stored); }
-  events = stored;
+  if(typeof supabase==='undefined' || !supabase.createClient){
+    showError('Could not load the database library. Check your internet connection and refresh.'); return;
+  }
+  try{ sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+  catch(e){ showError('Supabase config looks wrong: '+e.message); return; }
+ 
+  document.getElementById('storeTag').textContent='Supabase';
   renderFilters();
+  try{
+    events = await dbLoad();
+    if(events.length===0){ const s=seed(); await dbInsertMany(s); events=s; }
+  }catch(e){ showError('Could not reach the database — '+e.message); }
   renderGrid();
 })();
 </script>
