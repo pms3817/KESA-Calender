@@ -426,8 +426,17 @@
     gap:3px;
     flex:1 1 auto;
     min-height:0;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#CBD5E1 transparent;
   }
+
+  .chips::-webkit-scrollbar{width:6px}
+  .chips::-webkit-scrollbar-track{background:transparent}
+  .chips::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:999px}
+  .chips::-webkit-scrollbar-thumb:hover{background:#94A3B8}
 
   .chip{
     display:flex;
@@ -1015,7 +1024,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v17</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v18</span></p>
     </div>
 
     <div class="nav">
