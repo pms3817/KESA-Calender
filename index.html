@@ -174,6 +174,7 @@
   }
 
   .upcoming-box{
+    --item-color:#64748B;
     grid-column:3;
     justify-self:end;
     display:flex;
@@ -182,8 +183,9 @@
     max-width:calc(300px * var(--cal-scale,1));
     min-width:0;
     padding:calc(5px * var(--cal-scale,1)) calc(8px * var(--cal-scale,1));
-    border:1px solid var(--line);
-    background:#fff;
+    border:1px solid color-mix(in srgb,var(--item-color) 28%,#CBD5E1 72%);
+    border-left:3px solid var(--item-color);
+    background:color-mix(in srgb,var(--item-color) 12%,#fff 88%);
     border-radius:calc(9px * var(--cal-scale,1));
   }
 
@@ -210,7 +212,7 @@
     font-weight:700;
   }
 
-  .upcoming-item:hover{border:0;color:#2563EB}
+  .upcoming-item:hover{border:0;color:var(--item-color)}
   .upcoming-item .up-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .upcoming-item .up-date{flex:none;color:var(--muted);font-weight:600}
 
@@ -456,42 +458,17 @@
 
   .chip,.long-event-bar{
     --item-color:#64748B;
-    --type-bg:#FFFFFF;
-    --type-line:#64748B;
     --type-ink:#334155;
-    background:color-mix(in srgb,var(--item-color) 7%,var(--type-bg) 93%);
-    border-color:color-mix(in srgb,var(--item-color) 24%,#CBD5E1 76%);
-    border-left-color:var(--type-line);
+    background:color-mix(in srgb,var(--item-color) 13%,#fff 87%);
+    border-color:color-mix(in srgb,var(--item-color) 30%,#CBD5E1 70%);
+    border-left-color:var(--item-color);
   }
 
-  .chip.type-event,.long-event-bar.type-event{
-    --type-bg:#FFFFFF;
-    --type-line:#2563EB;
-    --type-ink:#1D4ED8;
-  }
-  .chip.type-due,.long-event-bar.type-due{
-    --type-bg:#FFFBEB;
-    --type-line:#D97706;
-    --type-ink:#92400E;
-  }
-  .chip.type-meeting,.long-event-bar.type-meeting{
-    --type-bg:#F0FDFA;
-    --type-line:#0F766E;
-    --type-ink:#115E59;
-  }
-  .chip.type-school,.long-event-bar.type-school{
-    --type-bg:#F8FAFC;
-    --type-line:#475569;
-    --type-ink:#334155;
-    background:#F1F5F9;
-    border-color:#CBD5E1;
-    border-left-color:#475569;
-  }
-  .chip.type-other,.long-event-bar.type-other{
-    --type-bg:#FAF5FF;
-    --type-line:#7E22CE;
-    --type-ink:#6B21A8;
-  }
+  .chip.type-event,.long-event-bar.type-event{--type-ink:#1D4ED8}
+  .chip.type-due,.long-event-bar.type-due{--type-ink:#92400E}
+  .chip.type-meeting,.long-event-bar.type-meeting{--type-ink:#115E59}
+  .chip.type-school,.long-event-bar.type-school{--type-ink:#334155}
+  .chip.type-other,.long-event-bar.type-other{--type-ink:#6B21A8}
 
   .card-top{
     display:flex;
@@ -519,10 +496,9 @@
   .status-pill{
     flex:none;
     margin-left:auto;
-    padding:0;
-    border:0;
-    background:transparent;
-    border-radius:0;
+    padding:calc(1px * var(--cal-scale,1)) calc(5px * var(--cal-scale,1));
+    border:1px solid transparent;
+    border-radius:999px;
     font-size:calc(6.8px * var(--cal-scale,1));
     font-weight:800;
     letter-spacing:.055em;
@@ -530,8 +506,8 @@
     line-height:1.35;
   }
 
-  .status-final .status-pill{color:#64748B}
-  .status-tentative .status-pill{color:#B45309}
+  .status-final .status-pill{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
+  .status-tentative .status-pill{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
 
   .card-bottom{
     display:flex;
@@ -580,7 +556,7 @@
 
   .chip:hover,.long-event-bar:hover{
     border-color:color-mix(in srgb,var(--item-color) 42%,#94A3B8 58%);
-    background:color-mix(in srgb,var(--item-color) 10%,var(--type-bg) 90%);
+    background:color-mix(in srgb,var(--item-color) 17%,#fff 83%);
   }
 
   .resize-handle{
@@ -749,6 +725,7 @@
   #detailScrim.open{display:flex}
 
   .detail-modal{
+    --item-color:#64748B;
     width:min(430px,92vw);
     max-width:none;
     height:100vh;
@@ -772,8 +749,9 @@
     position:relative;
     padding:22px 22px 18px;
     color:var(--ink);
-    background:#fff !important;
-    border-bottom:1px solid var(--line);
+    background:color-mix(in srgb,var(--item-color) 13%,#fff 87%) !important;
+    border-bottom:1px solid color-mix(in srgb,var(--item-color) 24%,var(--line) 76%);
+    box-shadow:inset 4px 0 0 var(--item-color);
   }
 
   .detail-hero::after{display:none}
@@ -804,23 +782,23 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    background:#F8FAFC;
-    border:1px solid var(--line);
+    background:color-mix(in srgb,var(--item-color) 10%,#fff 90%);
+    border:1px solid color-mix(in srgb,var(--item-color) 24%,var(--line) 76%);
     color:var(--ink);
     font-size:15px;
   }
 
   .detail-status{
-    padding:0;
-    border:0;
-    border-radius:0;
+    padding:3px 8px;
+    border:1px solid transparent;
+    border-radius:999px;
     font-size:10px;
     font-weight:800;
     letter-spacing:.05em;
     text-transform:uppercase;
-    background:transparent;
-    color:var(--muted);
   }
+  .detail-status.status-final{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
+  .detail-status.status-tentative{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
 
   .detail-title{
     font-family:var(--display);
@@ -843,6 +821,7 @@
     flex:1;
     display:flex;
     flex-direction:column;
+    background:color-mix(in srgb,var(--item-color) 3%,#fff 97%);
   }
 
   .detail-grid{
@@ -931,7 +910,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v10</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v11</span></p>
     </div>
 
     <div class="nav">
@@ -1838,9 +1817,13 @@ function renderUpcoming(){
   const next=candidates[0];
 
   if(!next){
+    box.style.removeProperty('--item-color');
     box.innerHTML='<span class="upcoming-label">Upcoming</span><span class="upcoming-item">Nothing scheduled</span>';
     return;
   }
+
+  const upcomingDp=deptOf(next.ev.dept);
+  box.style.setProperty('--item-color',upcomingDp.color);
 
   const d=parseYMD(next.when);
   const dateLabel=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
@@ -1871,13 +1854,14 @@ function openDetail(ev){
   detailEventId=ev.id;
   const dp=deptOf(ev.dept);
   const linked=linkedEventFor(ev);
-  document.getElementById('detailHero').style.background='#fff';
+  const detailModal=document.querySelector('#detailScrim .detail-modal');
+  detailModal.style.setProperty('--item-color',dp.color);
 
   document.getElementById('detailIcon').textContent=glyphFor(ev);
   document.getElementById('detailType').textContent=TYPE_NAME[ev.type]||ev.type;
   const statusEl=document.getElementById('detailStatus');
   statusEl.textContent=ev.status==='tentative'?'Tentative':'Final';
-  statusEl.style.color=ev.status==='tentative'?'#B45309':'#64748B';
+  statusEl.className='detail-status '+(ev.status==='tentative'?'status-tentative':'status-final');
   document.getElementById('detailTitle').textContent=ev.title;
   document.getElementById('detailCategory').textContent=ev.type==='school'?'School':dp.name;
 
