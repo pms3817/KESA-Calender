@@ -285,8 +285,54 @@
   }
 
   .pill .dot{width:10px;height:10px;border-radius:3px;flex:none}
-  .pill[aria-pressed="false"]{opacity:.4;filter:saturate(.4)}
+  .pill[aria-pressed="false"]{opacity:.62;filter:saturate(.72)}
+  .pill[aria-pressed="true"]{
+    opacity:1;
+    border-color:color-mix(in srgb,var(--pill-color,#64748B) 48%,#CBD5E1 52%);
+    background:color-mix(in srgb,var(--pill-color,#64748B) 12%,#fff 88%);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pill-color,#64748B) 18%,transparent 82%),0 1px 2px rgba(15,23,42,.05);
+    font-weight:700;
+  }
   .pill:hover{border-color:#9AA6B6}
+  .pill.all-pill .dot{background:conic-gradient(#2563EB,#DB2777,#059669,#D97706,#7C3AED,#2563EB)!important}
+
+  .manage-slot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .viewer-control{display:flex;align-items:center;gap:7px}
+  .viewer-control label{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .viewer-control select{
+    width:210px;
+    padding:7px 30px 7px 9px;
+    border-radius:9px;
+    font-size:12px;
+    background:#fff;
+  }
+  .toolbar-viewer{
+    grid-column:1;
+    justify-self:start;
+    min-width:0;
+  }
+  .calendar-toolbar .toolbar-viewer label{
+    font-size:calc(9px * var(--cal-scale,1));
+  }
+  .calendar-toolbar .toolbar-viewer select{
+    width:calc(190px * var(--cal-scale,1));
+    max-width:calc(260px * var(--cal-scale,1));
+    padding:calc(6px * var(--cal-scale,1)) calc(28px * var(--cal-scale,1)) calc(6px * var(--cal-scale,1)) calc(9px * var(--cal-scale,1));
+    font-size:calc(10.5px * var(--cal-scale,1));
+  }
+
+  .chip.assigned-to-me,.long-event-bar.assigned-to-me{
+    box-shadow:inset 0 0 0 1.5px #3B82F6,0 1px 2px rgba(15,23,42,.06);
+  }
+  .lrow.assigned-to-me{background:#EFF6FF}
+  .lrow.assigned-to-me:hover{background:#DBEAFE}
 
   .others-row[hidden]{display:none}
 
@@ -1008,7 +1054,11 @@
     .brand h1{font-size:19px}
     .filter-row{grid-template-columns:1fr}
     .filter-label{padding-top:2px}
-    .filter-row .manage-slot{justify-self:start}
+    .filter-row .manage-slot{justify-self:start;justify-content:flex-start}
+    .viewer-control:not(.toolbar-viewer){width:100%}
+    .viewer-control:not(.toolbar-viewer) select{width:min(240px,70vw)}
+    .toolbar-viewer label{display:none}
+    .calendar-toolbar .toolbar-viewer select{width:140px;max-width:36vw;font-size:10px;padding:6px 24px 6px 7px}
     .fixed-secondary{padding-left:10px;margin-left:2px}
     .board{width:100%!important}
     .resize-handle{display:none!important}
@@ -1024,7 +1074,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v18</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v19</span></p>
     </div>
 
     <div class="nav">
@@ -1059,7 +1109,12 @@
   <div class="board calendar-mode" id="board">
     <div class="cal" id="calView">
       <div class="calendar-toolbar">
-        <div></div>
+        <div class="viewer-control toolbar-viewer">
+          <label for="viewerSelect">Who are you?</label>
+          <select id="viewerSelect">
+            <option value="">Everyone</option>
+          </select>
+        </div>
         <div class="month-nav">
           <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
           <div class="month" id="monthLabel">—</div>
@@ -1422,7 +1477,8 @@ const DEFAULT_DEPTS = [
 
 let DEPTS=[];
 let DEPT={};
-const activeDepts=new Set();
+let selectedDeptFilter='all';
+let selectedViewerId='';
 
 let EXECUTIVES=[];
 let EXEC_BY_ID={};
@@ -1432,11 +1488,42 @@ function setExecutives(list){
   EXEC_BY_ID=Object.fromEntries(EXECUTIVES.map(x=>[x.id,x]));
 }
 
-function executivesForEvent(ev){
+function executiveDepartmentId(person){
+  if(!person) return null;
+  const map={Event:'event',Marketing:'marketing',Finance:'finance',Internal:'internal'};
+  return map[person.department]||null;
+}
+
+function currentViewer(){return selectedViewerId?EXEC_BY_ID[selectedViewerId]||null:null}
+
+function eventAssigneeIds(ev){
   if(!ev) return [];
-  const ids=(ev.assigneeIds&&ev.assigneeIds.length)
+  return (ev.assigneeIds&&ev.assigneeIds.length)
     ?ev.assigneeIds
     :(ev.assigneeId?[ev.assigneeId]:[]);
+}
+
+function isAssignedToViewer(ev){
+  return !!(selectedViewerId&&eventAssigneeIds(ev).includes(selectedViewerId));
+}
+
+function viewerScopeAllows(ev){
+  const viewer=currentViewer();
+  if(!viewer) return true;
+  if(isAssignedToViewer(ev)) return true;
+  if(ev.dept==='all'||ev.dept==='school') return true;
+  const viewerDept=executiveDepartmentId(viewer);
+  return !!(viewerDept&&ev.dept===viewerDept);
+}
+
+function eventMatchesView(ev){
+  if(!viewerScopeAllows(ev)) return false;
+  return selectedDeptFilter==='all'||ev.dept===selectedDeptFilter;
+}
+
+function executivesForEvent(ev){
+  if(!ev) return [];
+  const ids=eventAssigneeIds(ev);
   return ids.map(id=>EXEC_BY_ID[id]).filter(Boolean);
 }
 
@@ -1470,15 +1557,7 @@ function deptOf(id){return DEPT[id]||{id,name:id,color:'#94A3B8',builtin:false}}
 function setDepartments(list){
   DEPTS=(list&&list.length)?list.slice():DEFAULT_DEPTS.slice();
   DEPT=Object.fromEntries(DEPTS.map(d=>[d.id,d]));
-
-  const ids=new Set(DEPTS.map(d=>d.id));
-  DEPTS.forEach(d=>{
-    if(!activeDepts.has(d.id)) activeDepts.add(d.id);
-  });
-
-  [...activeDepts].forEach(id=>{
-    if(!ids.has(id)) activeDepts.delete(id);
-  });
+  if(selectedDeptFilter!=='all'&&!DEPT[selectedDeptFilter]) selectedDeptFilter='all';
 }
 
 const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'};
@@ -1674,35 +1753,54 @@ function clearBanner(){
 }
 
 /* ===== FILTER PILLS ===== */
-function makeFilterPill(d){
+function makeFilterPill(d,{all=false}={}){
   const b=document.createElement('button');
-  b.className='pill';
-  b.setAttribute('aria-pressed',activeDepts.has(d.id));
-  b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
+  b.className='pill'+(all?' all-pill':'');
+  const id=all?'all':d.id;
+  b.style.setProperty('--pill-color',all?'#475569':d.color);
+  b.setAttribute('aria-pressed',selectedDeptFilter===id);
+  b.innerHTML=all
+    ?`<span class="dot"></span>All`
+    :`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
 
   b.onclick=()=>{
-    if(activeDepts.has(d.id)) activeDepts.delete(d.id);
-    else activeDepts.add(d.id);
-
-    b.setAttribute('aria-pressed',activeDepts.has(d.id));
+    selectedDeptFilter=id;
+    renderFilters();
     renderActive();
   };
 
   return b;
 }
 
+function allowedFilterDepartments(){
+  const viewer=currentViewer();
+  if(!viewer) return DEPTS.slice();
+
+  const viewerDept=executiveDepartmentId(viewer);
+  return DEPTS.filter(d=>
+    d.id==='all'||
+    d.id==='school'||
+    (viewerDept&&d.id===viewerDept)
+  );
+}
+
 function renderFilters(){
   const deptBox=document.getElementById('departmentFilters');
   const otherBox=document.getElementById('otherFilters');
   const othersRow=document.getElementById('othersRow');
+  const allowed=allowedFilterDepartments();
+  const allowedIds=new Set(allowed.map(d=>d.id));
+
+  if(selectedDeptFilter!=='all'&&!allowedIds.has(selectedDeptFilter)) selectedDeptFilter='all';
 
   deptBox.innerHTML='';
   otherBox.innerHTML='';
+  deptBox.appendChild(makeFilterPill(null,{all:true}));
 
-  DEPTS.filter(d=>DEPARTMENT_IDS.has(d.id))
+  allowed.filter(d=>DEPARTMENT_IDS.has(d.id))
     .forEach(d=>deptBox.appendChild(makeFilterPill(d)));
 
-  const secondary=DEPTS.filter(d=>SECONDARY_FIXED_IDS.has(d.id));
+  const secondary=allowed.filter(d=>SECONDARY_FIXED_IDS.has(d.id));
   if(secondary.length){
     const group=document.createElement('span');
     group.className='fixed-secondary';
@@ -1710,10 +1808,44 @@ function renderFilters(){
     deptBox.appendChild(group);
   }
 
-  const others=DEPTS.filter(d=>!FIXED_IDS.has(d.id));
+  const others=allowed.filter(d=>!FIXED_IDS.has(d.id));
   others.forEach(d=>otherBox.appendChild(makeFilterPill(d)));
-
   othersRow.hidden=others.length===0;
+}
+
+function populateViewerSelect(){
+  const sel=document.getElementById('viewerSelect');
+  if(!sel) return;
+  sel.innerHTML='<option value="">Everyone</option>';
+
+  const order=['Presidential','Event','Marketing','Finance','Internal'];
+  const groups=new Map();
+  EXECUTIVES.forEach(person=>{
+    if(!groups.has(person.department)) groups.set(person.department,[]);
+    groups.get(person.department).push(person);
+  });
+
+  [...groups.keys()]
+    .sort((a,b)=>{
+      const ai=order.indexOf(a),bi=order.indexOf(b);
+      return (ai<0?99:ai)-(bi<0?99:bi)||a.localeCompare(b);
+    })
+    .forEach(dept=>{
+      const group=document.createElement('optgroup');
+      group.label=dept;
+      groups.get(dept)
+        .slice()
+        .sort((a,b)=>a.role.localeCompare(b.role)||a.english_name.localeCompare(b.english_name))
+        .forEach(person=>{
+          const opt=document.createElement('option');
+          opt.value=person.id;
+          opt.textContent=`${person.english_name} · ${person.korean_name} — ${person.role}`;
+          group.appendChild(opt);
+        });
+      sel.appendChild(group);
+    });
+
+  sel.value=selectedViewerId;
 }
 
 /* ===== VIEW SWITCH ===== */
@@ -1765,7 +1897,7 @@ function renderGrid(){
   const longSegments=[];
 
   events.forEach(ev=>{
-    if(!activeDepts.has(ev.dept)) return;
+    if(!eventMatchesView(ev)) return;
 
     const span=spanDays(ev);
     const searchStart=fmt(addDays(parseYMD(rangeStart),-span));
@@ -1825,7 +1957,12 @@ function renderGrid(){
     cell.innerHTML=`<span class="num">${d.getDate()}</span><span class="add-hint">+</span>`;
     cell.onclick=()=>openAdd(ds);
 
-    const items=(byDay[ds]||[]).slice().sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||a.type.localeCompare(b.type));
+    const items=(byDay[ds]||[]).slice().sort((a,b)=>
+      Number(a.type==='school')-Number(b.type==='school') ||
+      (a.time||'99:99').localeCompare(b.time||'99:99') ||
+      a.type.localeCompare(b.type) ||
+      a.title.localeCompare(b.title)
+    );
     const chips=document.createElement('div');
     chips.className='chips';
 
@@ -1833,7 +1970,7 @@ function renderGrid(){
       const dp=deptOf(ev.dept);
       const c=document.createElement('button');
 
-      c.className=`chip type-${ev.type} status-${ev.status||'none'}`;
+      c.className=`chip type-${ev.type} status-${ev.status||'none'}`+(isAssignedToViewer(ev)?' assigned-to-me':'');
       c.style.setProperty('--item-color',dp.color);
       c.dataset.eventId=ev.id;
 
@@ -1905,6 +2042,7 @@ function renderLongEventBars(segments){
 
   const sorted=segments.slice().sort((a,b)=>
     a.row-b.row ||
+    Number(a.ev.type==='school')-Number(b.ev.type==='school') ||
     a.startIndex-b.startIndex ||
     (b.endIndex-b.startIndex)-(a.endIndex-a.startIndex)
   );
@@ -1938,6 +2076,7 @@ function renderLongEventBars(segments){
     const bar=document.createElement('button');
     bar.className=
       `long-event-bar type-${seg.ev.type} status-${seg.ev.status||'none'}`+
+      (isAssignedToViewer(seg.ev)?' assigned-to-me':'')+
       (seg.continuesLeft?' continues-left':'')+
       (seg.continuesRight?' continues-right':'');
 
@@ -2012,7 +2151,7 @@ function jumpToEventById(id){
   const target=events.find(e=>e.id===id&&e.type==='event');
   if(!target) return;
 
-  activeDepts.add(target.dept);
+  if(viewerScopeAllows(target)) selectedDeptFilter=target.dept;
   renderFilters();
 
   const d=parseYMD(target.date);
@@ -2039,7 +2178,7 @@ function renderUpcoming(){
   const today=fmt(new Date());
   const candidates=[];
 
-  events.filter(ev=>ev.type!=='school').forEach(ev=>{
+  events.filter(ev=>ev.type!=='school'&&eventMatchesView(ev)).forEach(ev=>{
     let when=null;
     if(ev.recur&&ev.recur!=='none'){
       const occ=occurrences(ev,today,fmt(addDays(parseYMD(today),400)));
@@ -2188,9 +2327,14 @@ function renderList(){
   const todayStr=fmt(new Date());
 
   const rows=events
-    .filter(ev=>activeDepts.has(ev.dept))
+    .filter(eventMatchesView)
     .map(ev=>({ev,when:nextOccurrence(ev,todayStr)}))
-    .sort((a,b)=>a.when.localeCompare(b.when));
+    .sort((a,b)=>
+      a.when.localeCompare(b.when) ||
+      Number(a.ev.type==='school')-Number(b.ev.type==='school') ||
+      (a.ev.time||'99:99').localeCompare(b.ev.time||'99:99') ||
+      a.ev.title.localeCompare(b.ev.title)
+    );
 
   if(rows.length===0){
     box.innerHTML='<div class="empty">No items match the current filters. Adjust the category filters, or add an item.</div>';
@@ -2213,7 +2357,7 @@ function renderList(){
 
     const dp=deptOf(ev.dept);
     const row=document.createElement('button');
-    row.className='lrow'+(when<todayStr?' past':'');
+    row.className='lrow'+(when<todayStr?' past':'')+(isAssignedToViewer(ev)?' assigned-to-me':'');
 
     const dateLabel=d.toLocaleDateString('en-US',{
       weekday:'short',
@@ -3034,6 +3178,12 @@ document.querySelectorAll('#viewToggle button')
   .forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 document.getElementById('manageBtn').onclick=openCat;
+document.getElementById('viewerSelect').addEventListener('change',e=>{
+  selectedViewerId=e.target.value||'';
+  selectedDeptFilter='all';
+  renderFilters();
+  renderActive();
+});
 document.getElementById('catClose').onclick=closeCat;
 document.getElementById('newCatAdd').onclick=addCategory;
 document.getElementById('detailClose').onclick=closeDetail;
@@ -3095,7 +3245,6 @@ document.addEventListener('keydown',e=>{
     showError('Using default categories — the departments table could not be loaded.');
   }
 
-  renderFilters();
   buildDeptOptions();
 
   try{
@@ -3105,6 +3254,8 @@ document.addEventListener('keydown',e=>{
     showError('Could not load the executive roster — '+e.message);
   }
 
+  populateViewerSelect();
+  renderFilters();
   setSelectedAssignees([]);
 
   try{
