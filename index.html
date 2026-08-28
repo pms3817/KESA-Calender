@@ -493,6 +493,15 @@
     text-transform:uppercase;
   }
 
+  .card-time{
+    flex:none;
+    color:var(--muted);
+    font-size:calc(7px * var(--cal-scale,1));
+    font-weight:700;
+    letter-spacing:.015em;
+    white-space:nowrap;
+  }
+
   .status-pill{
     flex:none;
     margin-left:auto;
@@ -673,7 +682,7 @@
   .field.hide{display:none}
   label.lb{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
 
-  input[type=text],input[type=date],select,textarea{
+  input[type=text],input[type=date],input[type=time],select,textarea{
     width:100%;
     font-family:var(--body);
     font-size:13.5px;
@@ -927,7 +936,7 @@
 
   .detail-grid{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr;
     gap:10px;
   }
 
@@ -1012,7 +1021,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v14</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v15</span></p>
     </div>
 
     <div class="nav">
@@ -1137,10 +1146,15 @@
         <input type="date" id="fDate" />
       </div>
 
-      <div class="field" id="deptField">
-        <label class="lb" for="fDept">Department / category</label>
-        <select id="fDept"></select>
+      <div class="field">
+        <label class="lb" for="fTime">Time <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+        <input type="time" id="fTime" />
       </div>
+    </div>
+
+    <div class="field" id="deptField">
+      <label class="lb" for="fDept">Department / category</label>
+      <select id="fDept"></select>
     </div>
 
     <div class="field hide" id="endField">
@@ -1264,6 +1278,7 @@ function toRow(ev){
     type:ev.type,
     dept:ev.dept,
     date:ev.date,
+    event_time:ev.time||null,
     end_date:ev.endDate||null,
     status:ev.status??null,
     assignee:ev.assignee||'',
@@ -1283,6 +1298,7 @@ function fromRow(r){
     type:r.type,
     dept:r.dept,
     date:r.date,
+    time:r.event_time||'',
     endDate:r.end_date||null,
     status:r.status??null,
     assignee:r.assignee||'',
@@ -1806,7 +1822,7 @@ function renderGrid(){
     cell.innerHTML=`<span class="num">${d.getDate()}</span><span class="add-hint">+</span>`;
     cell.onclick=()=>openAdd(ds);
 
-    const items=(byDay[ds]||[]).slice().sort((a,b)=>a.type.localeCompare(b.type));
+    const items=(byDay[ds]||[]).slice().sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||a.type.localeCompare(b.type));
     const chips=document.createElement('div');
     chips.className='chips';
 
@@ -1821,6 +1837,7 @@ function renderGrid(){
       const linked=linkedEventFor(ev);
       c.title=
         `${TYPE_NAME[ev.type]} · ${dp.name}`+
+        `${ev.time?' · '+prettyTime(ev.time):''}`+
         `${assigneeDisplay(ev)?' · '+assigneeDisplay(ev):''}`+
         `${linked?' · linked to '+linked.title:''}`+
         `${ev.endDate?` · ${ev.date}→${ev.endDate}`:''}`+
@@ -1834,6 +1851,7 @@ function renderGrid(){
         `<span class="card-top">`+
           `<span class="type-glyph">${glyphFor(ev)}</span>`+
           `<span class="type-label">${escapeHtml(TYPE_NAME[ev.type])}</span>`+
+          `${ev.time?`<span class="card-time">${escapeHtml(prettyTime(ev.time))}</span>`:''}`+
           `${ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
         `</span>`+
         `<span class="card-bottom">`+
@@ -1931,6 +1949,7 @@ function renderLongEventBars(segments){
 
     bar.title=
       `${seg.ev.title} · ${seg.ev.date} → ${seg.ev.endDate}`+
+      `${seg.ev.time?' · '+prettyTime(seg.ev.time):''}`+
       `${assigneeDisplay(seg.ev)?' · '+assigneeDisplay(seg.ev):''}`+
       `${seg.ev.status==='tentative'?' · tentative':''}`;
 
@@ -1943,6 +1962,7 @@ function renderLongEventBars(segments){
       `<span class="card-top">`+
         `<span class="type-glyph">${glyphFor(seg.ev)}</span>`+
         `<span class="type-label">${escapeHtml(TYPE_NAME[seg.ev.type])}</span>`+
+        `${seg.ev.time?`<span class="card-time">${escapeHtml(prettyTime(seg.ev.time))}</span>`:''}`+
         `${seg.ev.status?`<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
       `</span>`+
       `<span class="card-bottom">`+
@@ -2039,7 +2059,7 @@ function renderUpcoming(){
   box.style.setProperty('--item-color',upcomingDp.color);
 
   const d=parseYMD(next.when);
-  const dateLabel=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const dateLabel=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(next.ev.time?' · '+prettyTime(next.ev.time):'');
   box.innerHTML=`<span class="upcoming-label">Upcoming</span>`+
     `<button class="upcoming-item" type="button">`+
       `<span>${glyphFor(next.ev)}</span>`+
@@ -2055,6 +2075,13 @@ let detailEventId=null;
 
 function prettyDate(s){
   return parseYMD(s).toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+}
+
+function prettyTime(s){
+  if(!s) return '';
+  const [h,m]=s.split(':').map(Number);
+  const d=new Date(2000,0,1,h||0,m||0);
+  return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 }
 
 function detailRow(label,value,full=false,extraClass=''){
@@ -2090,6 +2117,7 @@ function openDetail(ev){
 
   let html='';
   html+=detailRow('Date',escapeHtml(prettyDate(ev.date)));
+  if(ev.time) html+=detailRow('Time',escapeHtml(prettyTime(ev.time)));
   if(ev.endDate) html+=detailRow('End date',escapeHtml(prettyDate(ev.endDate)));
   if(assigneeDetail(ev)) html+=detailRow('Assignees',`👤 ${assigneeDetailHtml(ev)}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
@@ -2191,6 +2219,7 @@ function renderList(){
 
     const meta=[];
     meta.push(TYPE_NAME[ev.type]);
+    if(ev.time) meta.push(prettyTime(ev.time));
 
     if(ev.dept!=='school') meta.push(dp.name);
 
@@ -2490,6 +2519,7 @@ function openAdd(dateStr){
   document.getElementById('deleteBtn').style.display='none';
   document.getElementById('fTitle').value='';
   document.getElementById('fDate').value=dateStr||fmt(new Date());
+  document.getElementById('fTime').value='';
   document.getElementById('fEnd').value=document.getElementById('fDate').value;
   document.getElementById('fEmoji').value='📌';
   selectedAssigneeIds=new Set();
@@ -2523,6 +2553,7 @@ function openEdit(ev){
   document.getElementById('deleteBtn').style.display='inline-flex';
   document.getElementById('fTitle').value=ev.title;
   document.getElementById('fDate').value=ev.date;
+  document.getElementById('fTime').value=ev.time||'';
   document.getElementById('fEnd').value=ev.endDate||ev.date;
   document.getElementById('fEmoji').value=ev.emoji||'📌';
   selectedAssigneeIds=new Set();
@@ -2577,6 +2608,7 @@ async function saveItem(){
   }
 
   const date=document.getElementById('fDate').value||fmt(new Date());
+  const time=document.getElementById('fTime').value||'';
   const dept=formType==='school'?'school':document.getElementById('fDept').value;
   const rec=document.getElementById('recurField').classList.contains('hide')
     ?'none'
@@ -2622,6 +2654,7 @@ async function saveItem(){
         type:formType,
         dept,
         date,
+        time,
         endDate,
         status,
         assignee,
@@ -2644,6 +2677,7 @@ async function saveItem(){
         type:formType,
         dept,
         date,
+        time,
         endDate,
         status,
         assignee,
