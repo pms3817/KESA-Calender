@@ -138,25 +138,28 @@
   .viewtoggle button+button{border-left:1px solid var(--line-strong)}
   .viewtoggle button[aria-pressed="true"]{background:var(--ink);color:#fff}
 
-  #calControls{
-    display:inline-flex;
+  .calendar-toolbar{
+    display:flex;
     align-items:center;
-    gap:8px;
-    width:326px;
-    justify-content:flex-start;
-    flex:none;
+    justify-content:center;
+    gap:calc(8px * var(--cal-scale,1));
+    padding:calc(10px * var(--cal-scale,1)) calc(12px * var(--cal-scale,1));
+    border-bottom:1px solid var(--line);
+    background:#FBFCFE;
   }
 
-  #calControls.inactive{
-    visibility:hidden;
-    pointer-events:none;
+  .calendar-toolbar .icon-btn{
+    width:calc(34px * var(--cal-scale,1));
+    height:calc(34px * var(--cal-scale,1));
+    font-size:calc(16px * var(--cal-scale,1));
+    border-radius:calc(9px * var(--cal-scale,1));
   }
 
   .month{
     font-family:var(--display);
     font-weight:600;
-    font-size:16px;
-    width:150px;
+    font-size:calc(16px * var(--cal-scale,1));
+    min-width:calc(170px * var(--cal-scale,1));
     text-align:center;
     letter-spacing:-.01em;
     flex:none;
@@ -310,11 +313,6 @@
     border-bottom-right-radius:2px;
   }
 
-  .long-event-bar.tentative{
-    outline:1.5px dashed rgba(255,255,255,.9);
-    outline-offset:-3px;
-    opacity:.92;
-  }
 
   .long-event-bar .bar-title{
     overflow:hidden;
@@ -437,7 +435,43 @@
     40%{filter:brightness(1.3)}
   }
   .chip:hover{filter:brightness(1.06)}
-  .chip.tentative{outline:1.5px dashed rgba(255,255,255,.85);outline-offset:-3px;opacity:.9}
+
+  .chip,.long-event-bar{position:relative;--item-color:#64748B}
+  .chip.type-event,.long-event-bar.type-event{
+    background:var(--item-color);
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);
+  }
+  .chip.type-due,.long-event-bar.type-due{
+    background:var(--item-color);
+    border-left:calc(4px * var(--cal-scale,1)) solid rgba(255,255,255,.92);
+    border-radius:3px 6px 6px 3px;
+  }
+  .chip.type-meeting,.long-event-bar.type-meeting{
+    background:var(--item-color);
+    border-radius:999px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);
+  }
+  .chip.type-school,.long-event-bar.type-school{
+    background:repeating-linear-gradient(135deg,var(--item-color) 0,var(--item-color) 9px,rgba(255,255,255,.18) 9px,rgba(255,255,255,.18) 13px);
+  }
+  .chip.type-other,.long-event-bar.type-other{
+    background-color:var(--item-color);
+    background-image:radial-gradient(rgba(255,255,255,.32) 1px,transparent 1.5px);
+    background-size:8px 8px;
+  }
+  .status-mark{
+    position:absolute;
+    top:calc(2px * var(--cal-scale,1));
+    right:calc(4px * var(--cal-scale,1));
+    z-index:4;
+    font-size:calc(9px * var(--cal-scale,1));
+    line-height:1;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    pointer-events:none;
+  }
+  .status-final .status-mark{color:#FDE68A}
+  .status-tentative .status-mark{color:#FFFFFF;opacity:.92}
+  .chip.status-tentative,.long-event-bar.status-tentative{opacity:.9}
 
   .resize-handle{
     position:absolute;
@@ -605,7 +639,6 @@
   @media (max-width:900px){
     header.app{align-items:flex-start}
     .nav{width:100%;overflow-x:auto;padding-bottom:2px}
-    #calControls{width:300px}
     .month{width:132px;font-size:14px}
   }
 
@@ -631,7 +664,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v6</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v7</span></p>
     </div>
 
     <div class="nav">
@@ -640,13 +673,7 @@
         <button type="button" data-view="list" aria-pressed="false">List</button>
       </div>
 
-      <span id="calControls">
-        <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
-        <div class="month" id="monthLabel">—</div>
-        <button class="icon-btn" id="next" aria-label="Next month">›</button>
-        <button id="today">Today</button>
-      </span>
-
+      <button id="today">Today</button>
       <button class="primary" id="addBtn">+ Add item</button>
     </div>
   </header>
@@ -671,6 +698,11 @@
 
   <div class="board calendar-mode" id="board">
     <div class="cal" id="calView">
+      <div class="calendar-toolbar">
+        <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
+        <div class="month" id="monthLabel">—</div>
+        <button class="icon-btn" id="next" aria-label="Next month">›</button>
+      </div>
       <div class="dow">
         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div>
         <div>Thu</div><div>Fri</div><div>Sat</div>
@@ -1187,9 +1219,6 @@ function setView(mode){
   document.getElementById('calView').hidden=mode!=='calendar';
   document.getElementById('listView').hidden=mode!=='list';
 
-  const controls=document.getElementById('calControls');
-  controls.classList.toggle('inactive',mode!=='calendar');
-
   const board=document.getElementById('board');
   board.classList.toggle('calendar-mode',mode==='calendar');
 
@@ -1295,8 +1324,8 @@ function renderGrid(){
       const dp=deptOf(ev.dept);
       const c=document.createElement('button');
 
-      c.className='chip'+(ev.status==='tentative'?' tentative':'');
-      c.style.background=dp.color;
+      c.className=`chip type-${ev.type} status-${ev.status||'final'}`;
+      c.style.setProperty('--item-color',dp.color);
       c.dataset.eventId=ev.id;
 
       const linked=linkedEventFor(ev);
@@ -1310,9 +1339,9 @@ function renderGrid(){
       const metaParts=[];
       if(ev.assignee) metaParts.push(`<span>👤 ${escapeHtml(ev.assignee)}</span>`);
       if(linked) metaParts.push(`<span class="chip-link" data-linked-id="${escapeHtml(linked.id)}">🔗 ${escapeHtml(linked.title)}</span>`);
-      if(ev.details) metaParts.push(`<span>📝 ${escapeHtml(ev.details)}</span>`);
 
       c.innerHTML=
+        `<span class="status-mark">${ev.status==='tentative'?'☆':'★'}</span>`+
         `<span class="chip-main">`+
           `<span class="g">${glyphFor(ev)}</span>`+
           `<span class="t">${escapeHtml(ev.title)}</span>`+
@@ -1392,12 +1421,11 @@ function renderLongEventBars(segments){
 
     const bar=document.createElement('button');
     bar.className=
-      'long-event-bar'+
+      `long-event-bar type-${seg.ev.type} status-${seg.ev.status||'final'}`+
       (seg.continuesLeft?' continues-left':'')+
-      (seg.continuesRight?' continues-right':'')+
-      (seg.ev.status==='tentative'?' tentative':'');
+      (seg.continuesRight?' continues-right':'');
 
-    bar.style.background=dp.color;
+    bar.style.setProperty('--item-color',dp.color);
     bar.dataset.eventId=seg.ev.id;
     const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
     const barHeight=Math.round(18*calScale);
@@ -1415,6 +1443,7 @@ function renderLongEventBars(segments){
 
     const linked=linkedEventFor(seg.ev);
     bar.innerHTML=
+      `<span class="status-mark">${seg.ev.status==='tentative'?'☆':'★'}</span>`+
       `<span>${glyphFor(seg.ev)}</span>`+
       `<span class="bar-title">${escapeHtml(seg.ev.title)}</span>`+
       `${seg.ev.assignee?`<span>· 👤 ${escapeHtml(seg.ev.assignee)}</span>`:''}`+
@@ -1615,6 +1644,10 @@ function setType(t){
 
   if(t==='event'||t==='school') syncEndDateConstraints();
 
+  if(t==='event'&&!editingId&&DEPT.all){
+    dept.value='all';
+  }
+
   if(t!=='school'&&dept.value==='school'){
     dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
   }
@@ -1679,9 +1712,10 @@ function openAdd(dateStr){
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
 
-  buildDeptOptions((DEPTS.find(d=>d.id!=='school')||{}).id);
+  buildDeptOptions('all');
   refreshLinkOptions(null);
   setType('event');
+  if(DEPT.all) document.getElementById('fDept').value='all';
   syncEndDateConstraints();
   setStatus('final');
   clearErr();
