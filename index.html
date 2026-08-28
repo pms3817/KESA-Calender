@@ -1015,7 +1015,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v16</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v17</span></p>
     </div>
 
     <div class="nav">
@@ -1892,7 +1892,7 @@ function renderLongEventBars(segments){
   if(cellEls.length!==42) return;
 
   const occupancy=Array.from({length:6},()=>[]);
-  const rowLaneCount=Array(6).fill(0);
+  const cellLaneCount=Array.from({length:6},()=>Array(7).fill(0));
 
   const sorted=segments.slice().sort((a,b)=>
     a.row-b.row ||
@@ -1918,7 +1918,9 @@ function renderLongEventBars(segments){
     }
 
     occupancy[row][lane].push([startCol,endCol]);
-    rowLaneCount[row]=Math.max(rowLaneCount[row],lane+1);
+    for(let col=startCol;col<=endCol;col++){
+      cellLaneCount[row][col]=Math.max(cellLaneCount[row][col],lane+1);
+    }
 
     const firstCell=cellEls[seg.startIndex];
     const lastCell=cellEls[seg.endIndex];
@@ -1984,14 +1986,12 @@ function renderLongEventBars(segments){
   const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
   const laneStep=Math.round(40*calScale)+3;
 
-  rowLaneCount.forEach((count,row)=>{
-    if(!count) return;
-
-    const margin=8+count*laneStep;
-    for(let col=0;col<7;col++){
+  cellLaneCount.forEach((rowCounts,row)=>{
+    rowCounts.forEach((count,col)=>{
+      if(!count) return;
       const chips=cellEls[row*7+col].querySelector('.chips');
-      if(chips) chips.style.marginTop=margin+'px';
-    }
+      if(chips) chips.style.marginTop=(8+count*laneStep)+'px';
+    });
   });
 }
 
