@@ -1770,7 +1770,7 @@ function renderGrid(){
     occurrences(ev,searchStart,rangeEnd).forEach(startStr=>{
       const occurrenceEnd=fmt(addDays(parseYMD(startStr),span));
 
-      if(span>=2){
+      if(span>=1){
         const clippedStart=startStr<rangeStart?rangeStart:startStr;
         const clippedEnd=occurrenceEnd>rangeEnd?rangeEnd:occurrenceEnd;
 
