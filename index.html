@@ -506,8 +506,8 @@
     line-height:1.35;
   }
 
-  .status-final .status-pill{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
-  .status-tentative .status-pill{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
+  .status-final .status-pill{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
+  .status-tentative .status-pill{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
 
   .card-bottom{
     display:flex;
@@ -704,6 +704,18 @@
   .seg{display:flex;gap:6px;flex-wrap:wrap}
   .seg button{flex:1;min-width:70px;padding:9px 6px;font-size:12.5px;border-radius:9px}
   .seg button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .school-status-option{
+    display:none;
+    align-items:center;
+    gap:8px;
+    margin-bottom:7px;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    font-weight:600;
+  }
+  .school-status-option.show{display:flex}
+  .school-status-option input{width:15px;height:15px;margin:0}
+  #statusSeg.status-disabled{display:none}
   .modal-actions{display:flex;align-items:center;gap:8px;margin-top:8px}
   .modal-actions .spacer{flex:1}
   .danger{color:#B91C1C;border-color:#F1C4C4}
@@ -797,8 +809,8 @@
     letter-spacing:.05em;
     text-transform:uppercase;
   }
-  .detail-status.status-final{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
-  .detail-status.status-tentative{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
+  .detail-status.status-final{color:#92400E;background:#FEF3C7;border-color:#FDE68A}
+  .detail-status.status-tentative{color:#475569;background:#E2E8F0;border-color:#CBD5E1}
 
   .detail-title{
     font-family:var(--display);
@@ -874,6 +886,7 @@
     margin-top:auto;
     padding-top:18px;
   }
+  .detail-actions .detail-delete{margin-right:auto}
   .catrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .catrow .catcolor{width:40px;height:36px;flex:none}
   .catrow .catname{flex:1}
@@ -910,7 +923,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v11</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v12</span></p>
     </div>
 
     <div class="nav">
@@ -1047,8 +1060,12 @@
       <div class="err" id="endErr">End date cannot be before the starting date.</div>
     </div>
 
-    <div class="field">
+    <div class="field" id="statusField">
       <label class="lb">Status</label>
+      <label class="school-status-option" id="schoolStatusOption">
+        <input type="checkbox" id="schoolStatusToggle">
+        <span>Add a status to this School item</span>
+      </label>
       <div class="seg" id="statusSeg">
         <button type="button" data-status="final" aria-pressed="true">Final</button>
         <button type="button" data-status="tentative" aria-pressed="false">Tentative</button>
@@ -1104,6 +1121,7 @@
     <div class="detail-body">
       <div class="detail-grid" id="detailGrid"></div>
       <div class="detail-actions">
+        <button class="danger detail-delete" id="detailDelete">Delete</button>
         <button id="detailClose">Close</button>
         <button class="primary" id="detailEdit">Edit</button>
       </div>
@@ -1152,7 +1170,7 @@ function toRow(ev){
     dept:ev.dept,
     date:ev.date,
     end_date:ev.endDate||null,
-    status:ev.status||'final',
+    status:ev.status??null,
     assignee:ev.assignee||'',
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
@@ -1170,7 +1188,7 @@ function fromRow(r){
     dept:r.dept,
     date:r.date,
     endDate:r.end_date||null,
-    status:r.status||'final',
+    status:r.status??null,
     assignee:r.assignee||'',
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
@@ -1362,6 +1380,7 @@ let viewMode='calendar';
 let editingId=null;
 let formType='event';
 let formStatus='final';
+let schoolStatusEnabled=false;
 
 const uid=()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
@@ -1601,7 +1620,7 @@ function renderGrid(){
       const dp=deptOf(ev.dept);
       const c=document.createElement('button');
 
-      c.className=`chip type-${ev.type} status-${ev.status||'final'}`;
+      c.className=`chip type-${ev.type} status-${ev.status||'none'}`;
       c.style.setProperty('--item-color',dp.color);
       c.dataset.eventId=ev.id;
 
@@ -1621,7 +1640,7 @@ function renderGrid(){
         `<span class="card-top">`+
           `<span class="type-glyph">${glyphFor(ev)}</span>`+
           `<span class="type-label">${escapeHtml(TYPE_NAME[ev.type])}</span>`+
-          `<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`+
+          `${ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
         `</span>`+
         `<span class="card-bottom">`+
           `<span class="card-title">${escapeHtml(ev.title)}</span>`+
@@ -1701,7 +1720,7 @@ function renderLongEventBars(segments){
 
     const bar=document.createElement('button');
     bar.className=
-      `long-event-bar type-${seg.ev.type} status-${seg.ev.status||'final'}`+
+      `long-event-bar type-${seg.ev.type} status-${seg.ev.status||'none'}`+
       (seg.continuesLeft?' continues-left':'')+
       (seg.continuesRight?' continues-right':'');
 
@@ -1730,7 +1749,7 @@ function renderLongEventBars(segments){
       `<span class="card-top">`+
         `<span class="type-glyph">${glyphFor(seg.ev)}</span>`+
         `<span class="type-label">${escapeHtml(TYPE_NAME[seg.ev.type])}</span>`+
-        `<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`+
+        `${seg.ev.status?`<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
       `</span>`+
       `<span class="card-bottom">`+
         `<span class="card-title">${escapeHtml(seg.ev.title)}</span>`+
@@ -1852,6 +1871,9 @@ function detailRow(label,value,full=false,extraClass=''){
 
 function openDetail(ev){
   detailEventId=ev.id;
+  const deleteBtn=document.getElementById('detailDelete');
+  deleteBtn.disabled=false;
+  deleteBtn.textContent='Delete';
   const dp=deptOf(ev.dept);
   const linked=linkedEventFor(ev);
   const detailModal=document.querySelector('#detailScrim .detail-modal');
@@ -1860,8 +1882,15 @@ function openDetail(ev){
   document.getElementById('detailIcon').textContent=glyphFor(ev);
   document.getElementById('detailType').textContent=TYPE_NAME[ev.type]||ev.type;
   const statusEl=document.getElementById('detailStatus');
-  statusEl.textContent=ev.status==='tentative'?'Tentative':'Final';
-  statusEl.className='detail-status '+(ev.status==='tentative'?'status-tentative':'status-final');
+  if(ev.status){
+    statusEl.hidden=false;
+    statusEl.textContent=ev.status==='tentative'?'Tentative':'Final';
+    statusEl.className='detail-status '+(ev.status==='tentative'?'status-tentative':'status-final');
+  }else{
+    statusEl.hidden=true;
+    statusEl.textContent='';
+    statusEl.className='detail-status';
+  }
   document.getElementById('detailTitle').textContent=ev.title;
   document.getElementById('detailCategory').textContent=ev.type==='school'?'School':dp.name;
 
@@ -1884,6 +1913,39 @@ function openDetail(ev){
 }
 
 function closeDetail(){detailScrim.classList.remove('open')}
+
+async function deleteFromDetail(){
+  const delId=detailEventId;
+  const ev=events.find(e=>e.id===delId);
+  if(!delId||!ev) return;
+
+  if(!window.confirm(`Delete “${ev.title}”? This cannot be undone.`)) return;
+
+  clearBanner();
+  const btn=document.getElementById('detailDelete');
+  btn.disabled=true;
+  btn.textContent='Deleting…';
+
+  try{
+    await dbDelete(delId);
+    for(const d of events.filter(e=>e.linkedEventId===delId)){
+      await dbUnlink(d.id);
+      d.linkedEventId=null;
+    }
+  }catch(e){
+    btn.disabled=false;
+    btn.textContent='Delete';
+    showError('Could not delete — '+e.message);
+    return;
+  }
+
+  events=events.filter(e=>e.id!==delId);
+  detailEventId=null;
+  btn.disabled=false;
+  btn.textContent='Delete';
+  closeDetail();
+  renderActive();
+}
 
 function editFromDetail(){
   const ev=events.find(e=>e.id===detailEventId);
@@ -1999,6 +2061,7 @@ function buildDeptOptions(keep){
 let endDateAutoSeeded=true;
 
 function setType(t){
+  const previousType=formType;
   formType=t;
 
   document.querySelectorAll('#typeSeg button')
@@ -2020,11 +2083,16 @@ function setType(t){
     assignee.classList.add('hide');
     link.classList.add('hide');
     recur.classList.add('hide');
+    if(previousType!=='school') setSchoolStatusEnabled(false);
+    else updateStatusUI();
   }else{
     deptField.classList.remove('hide');
     recur.classList.remove('hide');
     assignee.classList.toggle('hide',!(t==='due'||t==='meeting'||t==='other'));
     link.classList.toggle('hide',!(t==='due'||t==='other'));
+    schoolStatusEnabled=false;
+    if(!formStatus) formStatus='final';
+    updateStatusUI();
   }
 
   if(t==='event'||t==='school') syncEndDateConstraints();
@@ -2061,10 +2129,30 @@ function validateEndDate(){
   return !invalid;
 }
 
+function updateStatusUI(){
+  const schoolOption=document.getElementById('schoolStatusOption');
+  const schoolToggle=document.getElementById('schoolStatusToggle');
+  const seg=document.getElementById('statusSeg');
+  const isSchool=formType==='school';
+
+  schoolOption.classList.toggle('show',isSchool);
+  schoolToggle.checked=isSchool&&schoolStatusEnabled;
+  seg.classList.toggle('status-disabled',isSchool&&!schoolStatusEnabled);
+}
+
+function setSchoolStatusEnabled(on){
+  schoolStatusEnabled=!!on;
+  if(schoolStatusEnabled&&!formStatus) formStatus='final';
+  if(!schoolStatusEnabled&&formType==='school') formStatus=null;
+  updateStatusUI();
+}
+
 function setStatus(s){
   formStatus=s;
+  if(formType==='school') schoolStatusEnabled=true;
   document.querySelectorAll('#statusSeg button')
     .forEach(b=>b.setAttribute('aria-pressed',b.dataset.status===s));
+  updateStatusUI();
 }
 
 function refreshLinkOptions(currentId){
@@ -2085,6 +2173,8 @@ function refreshLinkOptions(currentId){
 function openAdd(dateStr){
   editingId=null;
   endDateAutoSeeded=true;
+  schoolStatusEnabled=false;
+  formStatus='final';
 
   document.getElementById('mTitle').textContent='Add item';
   document.getElementById('mSub').textContent='Fill in the details and save to the calendar.';
@@ -2110,6 +2200,8 @@ function openAdd(dateStr){
 function openEdit(ev){
   editingId=ev.id;
   endDateAutoSeeded=!ev.endDate;
+  schoolStatusEnabled=ev.type==='school'&&!!ev.status;
+  formStatus=ev.status||'final';
 
   document.getElementById('mTitle').textContent='Edit item';
   document.getElementById('mSub').textContent=
@@ -2130,7 +2222,12 @@ function openEdit(ev){
   refreshLinkOptions(ev.id);
   setType(ev.type);
   syncEndDateConstraints();
-  setStatus(ev.status||'final');
+  if(ev.type==='school'){
+    setSchoolStatusEnabled(!!ev.status);
+    if(ev.status) setStatus(ev.status);
+  }else{
+    setStatus(ev.status||'final');
+  }
 
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
   document.getElementById('fLink').value=ev.linkedEventId||'';
@@ -2193,6 +2290,7 @@ async function saveItem(){
 
   const emoji=formType==='other'?document.getElementById('fEmoji').value:'';
   const details=document.getElementById('fDetails').value.trim();
+  const status=(formType==='school'&&!schoolStatusEnabled)?null:(formStatus||'final');
 
   setBusy(true);
   clearBanner();
@@ -2206,7 +2304,7 @@ async function saveItem(){
         dept,
         date,
         endDate,
-        status:formStatus,
+        status,
         assignee,
         linkedEventId,
         recur:rec,
@@ -2226,7 +2324,7 @@ async function saveItem(){
         dept,
         date,
         endDate,
-        status:formStatus,
+        status,
         assignee,
         linkedEventId,
         recur:rec,
@@ -2557,6 +2655,11 @@ document.querySelectorAll('#typeSeg button')
 document.querySelectorAll('#statusSeg button')
   .forEach(b=>b.onclick=()=>setStatus(b.dataset.status));
 
+document.getElementById('schoolStatusToggle').addEventListener('change',e=>{
+  setSchoolStatusEnabled(e.target.checked);
+  if(e.target.checked) setStatus(formStatus||'final');
+});
+
 document.querySelectorAll('#viewToggle button')
   .forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
@@ -2564,6 +2667,7 @@ document.getElementById('manageBtn').onclick=openCat;
 document.getElementById('catClose').onclick=closeCat;
 document.getElementById('newCatAdd').onclick=addCategory;
 document.getElementById('detailClose').onclick=closeDetail;
+document.getElementById('detailDelete').onclick=deleteFromDetail;
 document.getElementById('detailEdit').onclick=editFromDetail;
 
 document.getElementById('fDate').addEventListener('change',syncEndDateConstraints);
