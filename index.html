@@ -23,13 +23,13 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--canvas); color:var(--ink); font-family:var(--body); font-size:14px; line-height:1.4; -webkit-font-smoothing:antialiased;}
-  .wrap{max-width:1120px; margin:0 auto; padding:20px 20px 64px}
- 
+  .wrap{max-width:1120px; margin:0 auto; padding:20px 20px 48px}
+
   header.app{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
   .brand h1{font-family:var(--display); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0}
   .brand p{margin:2px 0 0; color:var(--muted); font-size:12.5px}
   .brand .k{color:var(--dept-event)}
-  .nav{display:flex; align-items:center; gap:8px}
+  .nav{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
   .month{font-family:var(--display); font-weight:600; font-size:16px; min-width:150px; text-align:center; letter-spacing:-.01em}
   button{font-family:var(--body); cursor:pointer; border:1px solid var(--line-strong); background:var(--panel); color:var(--ink); border-radius:9px; padding:8px 12px; font-size:13px; font-weight:500}
   button:hover{border-color:#9AA6B6}
@@ -37,17 +37,25 @@
   .icon-btn{width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:16px; line-height:1}
   .primary{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:600}
   .primary:hover{background:#1E293B; border-color:#1E293B}
- 
+
+  /* view toggle */
+  .viewtoggle{display:inline-flex; border:1px solid var(--line-strong); border-radius:9px; overflow:hidden}
+  .viewtoggle button{border:0; border-radius:0; padding:8px 13px}
+  .viewtoggle button+button{border-left:1px solid var(--line-strong)}
+  .viewtoggle button[aria-pressed="true"]{background:var(--ink); color:#fff}
+  #calControls{display:inline-flex; align-items:center; gap:8px}
+
   .banner{display:none; align-items:center; gap:8px; background:#FEF2F2; border:1px solid #F1C4C4; color:#991B1B; border-radius:10px; padding:9px 12px; font-size:12.5px; margin-bottom:14px}
   .banner.show{display:flex}
- 
+
   .filters{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px}
   .filters .label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; margin-right:2px}
   .pill{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 11px 5px 9px; font-size:12.5px; font-weight:500; user-select:none}
   .pill .dot{width:10px; height:10px; border-radius:3px; flex:none}
   .pill[aria-pressed="false"]{opacity:.4; filter:saturate(.4)}
   .pill:hover{border-color:#9AA6B6}
- 
+
+  /* calendar */
   .cal{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
   .dow{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--line)}
   .dow div{padding:9px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
@@ -69,7 +77,22 @@
   .chip .rec{flex:none; opacity:.8; font-size:10px}
   .chip:hover{filter:brightness(1.06)}
   .more{font-size:11px; color:var(--muted); padding:1px 4px; font-weight:500}
- 
+
+  /* list view */
+  .list{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .mhead{padding:9px 16px; font-family:var(--display); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:#FBFCFE; border-bottom:1px solid var(--line)}
+  .lrow{display:flex; align-items:stretch; gap:12px; padding:11px 16px; border-bottom:1px solid var(--line); cursor:pointer; width:100%; text-align:left; background:none; border-radius:0; border-left:0; border-right:0; border-top:0}
+  .lrow:hover{background:#FBFCFE}
+  .lrow .ldate{flex:none; width:104px; font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--ink-soft); font-weight:600; padding-top:1px}
+  .lrow .lbar{flex:none; width:4px; border-radius:2px}
+  .lrow .lbody{min-width:0; flex:1}
+  .lrow .ltitle{font-size:13.5px; font-weight:500; color:var(--ink); display:flex; align-items:center; gap:7px}
+  .lrow .ltitle .g{flex:none; font-size:11px}
+  .lrow .lmeta{font-size:11.5px; color:var(--muted); margin-top:3px; display:flex; gap:10px; flex-wrap:wrap}
+  .list .empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:13px}
+  .past .ldate, .past .ltitle{opacity:.55}
+
+  /* modal */
   .scrim{position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:50}
   .scrim.open{display:flex}
   .modal{background:var(--panel); width:100%; max-width:440px; border-radius:14px; box-shadow:0 24px 60px -12px rgba(15,23,42,.4); padding:20px; margin-top:20px}
@@ -92,11 +115,8 @@
   .err{color:#B91C1C; font-size:12px; margin-top:2px; display:none}
   .err.show{display:block}
   .saving{opacity:.6; pointer-events:none}
- 
-  footer.note{margin-top:14px; color:var(--muted); font-size:11.5px; text-align:center}
-  .store-tag{display:inline-block; padding:2px 8px; border-radius:999px; background:#EEF2F7; border:1px solid var(--line); color:var(--ink-soft); font-weight:500}
- 
-  @media (max-width:640px){ .cell{min-height:92px} .brand h1{font-size:19px} .month{min-width:120px; font-size:14px} }
+
+  @media (max-width:640px){ .cell{min-height:92px} .brand h1{font-size:19px} .month{min-width:120px; font-size:14px} .lrow .ldate{width:82px} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -108,35 +128,39 @@
       <p>Shared club calendar · events, due dates, meetings & school dates</p>
     </div>
     <div class="nav">
-      <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
-      <div class="month" id="monthLabel">—</div>
-      <button class="icon-btn" id="next" aria-label="Next month">›</button>
-      <button id="today" style="margin-left:4px">Today</button>
-      <button class="primary" id="addBtn" style="margin-left:4px">+ Add item</button>
+      <div class="viewtoggle" id="viewToggle">
+        <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
+        <button type="button" data-view="list" aria-pressed="false">List</button>
+      </div>
+      <span id="calControls">
+        <button class="icon-btn" id="prev" aria-label="Previous month">‹</button>
+        <div class="month" id="monthLabel">—</div>
+        <button class="icon-btn" id="next" aria-label="Next month">›</button>
+        <button id="today">Today</button>
+      </span>
+      <button class="primary" id="addBtn">+ Add item</button>
     </div>
   </header>
- 
+
   <div class="banner" id="banner"></div>
- 
+
   <div class="filters" id="filters">
     <span class="label">Departments</span>
   </div>
- 
-  <div class="cal">
+
+  <div class="cal" id="calView">
     <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
     <div class="grid" id="grid"></div>
   </div>
- 
-  <footer class="note">
-    Data is saved to <span class="store-tag" id="storeTag">the database</span> — everyone who opens this sees the same items.
-  </footer>
+
+  <div class="list" id="listView" hidden></div>
 </div>
- 
+
 <div class="scrim" id="scrim">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle">Add item</h2>
     <p class="sub" id="mSub">Fill in the details and save to the calendar.</p>
- 
+
     <div class="field">
       <label class="lb">Type</label>
       <div class="seg" id="typeSeg">
@@ -146,13 +170,13 @@
         <button type="button" data-type="school"  aria-pressed="false">School</button>
       </div>
     </div>
- 
+
     <div class="field">
       <label class="lb" for="fTitle">Title</label>
       <input type="text" id="fTitle" placeholder="e.g. Fall Mixer" autocomplete="off" />
       <div class="err" id="titleErr">Add a title so people know what this is.</div>
     </div>
- 
+
     <div class="row2">
       <div class="field">
         <label class="lb" for="fDate">Date</label>
@@ -169,17 +193,17 @@
         </select>
       </div>
     </div>
- 
+
     <div class="field hide" id="assigneeField">
       <label class="lb" for="fAssignee">Assignee <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <input type="text" id="fAssignee" placeholder="Who owns this?" autocomplete="off" />
     </div>
- 
+
     <div class="field hide" id="linkField">
       <label class="lb" for="fLink">Linked event <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <select id="fLink"><option value="">— None —</option></select>
     </div>
- 
+
     <div class="field" id="recurField">
       <label class="lb" for="fRecur">Repeats</label>
       <select id="fRecur">
@@ -189,12 +213,12 @@
         <option value="monthly">Monthly</option>
       </select>
     </div>
- 
+
     <div class="field">
       <label class="lb" for="fDetails">Details <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <textarea id="fDetails" placeholder="Notes, location, links…"></textarea>
     </div>
- 
+
     <div class="modal-actions">
       <button class="danger" id="deleteBtn" style="display:none">Delete</button>
       <span class="spacer"></span>
@@ -203,19 +227,17 @@
     </div>
   </div>
 </div>
- 
+
 <script>
 /* ===========================================================================
-   SUPABASE CONFIG  — the only place your project details live.
+   SUPABASE CONFIG
    =========================================================================== */
 const SUPABASE_URL = 'https://eryuvlxrpilrqvwbrazs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_YIivMMyfzhUhO1m_5_PUSQ_ugqDY_do';
 let sb = null;
- 
+
 /* ===========================================================================
-   DATA LAYER  — all database access is contained here.
-   Rows in the `events` table use snake_case (linked_event_id); the rest of the
-   app uses camelCase (linkedEventId). toRow / fromRow translate between them.
+   DATA LAYER
    =========================================================================== */
 function toRow(ev){
   return { id:ev.id, title:ev.title, type:ev.type, dept:ev.dept, date:ev.date,
@@ -228,18 +250,13 @@ function fromRow(r){
            recur:r.recur||'none', details:r.details||'', source:r.source||'user' };
 }
 async function q(builder){ const { error } = await builder; if(error) throw new Error(error.message); }
- 
-async function dbLoad(){
-  const { data, error } = await sb.from('events').select('*');
-  if(error) throw new Error(error.message);
-  return (data||[]).map(fromRow);
-}
+async function dbLoad(){ const { data, error } = await sb.from('events').select('*'); if(error) throw new Error(error.message); return (data||[]).map(fromRow); }
 async function dbInsert(ev){ await q(sb.from('events').insert(toRow(ev))); }
 async function dbInsertMany(list){ await q(sb.from('events').insert(list.map(toRow))); }
 async function dbUpdate(ev){ await q(sb.from('events').update(toRow(ev)).eq('id', ev.id)); }
 async function dbDelete(id){ await q(sb.from('events').delete().eq('id', id)); }
 async function dbUnlink(id){ await q(sb.from('events').update({ linked_event_id:null }).eq('id', id)); }
- 
+
 /* ===========================================================================
    CONSTANTS
    =========================================================================== */
@@ -254,18 +271,19 @@ const DEPTS = [
 const DEPT = Object.fromEntries(DEPTS.map(d=>[d.id,d]));
 const TYPE_GLYPH = {event:'●', due:'⚑', meeting:'◇', school:'▲'};
 const TYPE_NAME  = {event:'Event', due:'Due date', meeting:'Meeting', school:'School event'};
- 
+
 /* ===========================================================================
    DATE HELPERS
    =========================================================================== */
 function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d, 12,0,0,0); }
 function fmt(date){ const y=date.getFullYear(); const m=String(date.getMonth()+1).padStart(2,'0'); const d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
 function daysBetween(a,b){ return Math.round((b - a) / 86400000); }
 function nthWeekdayOfMonth(y, mi, wd, nth){ const first=new Date(y,mi,1,12); const off=(wd-first.getDay()+7)%7; const date=new Date(y,mi,1+off+(nth-1)*7,12); return date.getMonth()===mi?date:null; }
 function nthOfDate(base){ return Math.floor((base.getDate()-1)/7)+1; }
 const ORD = ['','1st','2nd','3rd','4th','5th'];
 const WEEKDAY = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
- 
+
 function occurrences(ev, startStr, endStr){
   const base=parseYMD(ev.date), start=parseYMD(startStr), end=parseYMD(endStr), out=[];
   if(!ev.recur || ev.recur==='none'){ if(base>=start && base<=end) out.push(ev.date); return out; }
@@ -288,17 +306,25 @@ function recurLabel(ev){
   if(ev.recur==='monthly') return `Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
   return '';
 }
- 
+// next occurrence on/after `fromStr` (for recurring); base date otherwise
+function nextOccurrence(ev, fromStr){
+  if(!ev.recur || ev.recur==='none') return ev.date;
+  const end=fmt(addDays(parseYMD(fromStr),400));
+  const occ=occurrences(ev, fromStr, end);
+  return occ.length ? occ[0] : ev.date;
+}
+
 /* ===========================================================================
    STATE
    =========================================================================== */
 let events = [];
 let view = new Date(); view.setDate(1);
+let viewMode = 'calendar';
 let editingId = null;
 let formType = 'event';
 const activeDepts = new Set(DEPTS.map(d=>d.id));
 const uid = ()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
- 
+
 function seed(){
   const t=new Date(); t.setHours(12,0,0,0);
   const off=n=>{ const d=new Date(t); d.setDate(d.getDate()+n); return fmt(d); };
@@ -307,16 +333,16 @@ function seed(){
     {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample — delete me)', source:'seed'},
     {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample — delete me)', source:'seed'},
     {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample — delete me)', source:'seed'},
-    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder — replace with UofT Eng academic calendar. (sample — delete me)', source:'seed'},
+    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder. (sample — delete me)', source:'seed'},
   ];
 }
- 
+
 /* ===========================================================================
    ERROR BANNER
    =========================================================================== */
 function showError(msg){ const b=document.getElementById('banner'); b.textContent='⚠ '+msg; b.classList.add('show'); }
 function clearBanner(){ document.getElementById('banner').classList.remove('show'); }
- 
+
 /* ===========================================================================
    RENDER — filter pills
    =========================================================================== */
@@ -327,11 +353,24 @@ function renderFilters(){
     const b=document.createElement('button');
     b.className='pill'; b.setAttribute('aria-pressed', activeDepts.has(d.id));
     b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${d.name}`;
-    b.onclick=()=>{ activeDepts.has(d.id)?activeDepts.delete(d.id):activeDepts.add(d.id); b.setAttribute('aria-pressed', activeDepts.has(d.id)); renderGrid(); };
+    b.onclick=()=>{ activeDepts.has(d.id)?activeDepts.delete(d.id):activeDepts.add(d.id); b.setAttribute('aria-pressed', activeDepts.has(d.id)); renderActive(); };
     box.appendChild(b);
   });
 }
- 
+
+/* ===========================================================================
+   VIEW SWITCHING
+   =========================================================================== */
+function setView(mode){
+  viewMode=mode;
+  document.querySelectorAll('#viewToggle button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.view===mode));
+  document.getElementById('calView').hidden  = mode!=='calendar';
+  document.getElementById('listView').hidden = mode!=='list';
+  document.getElementById('calControls').style.display = mode==='calendar' ? 'inline-flex' : 'none';
+  renderActive();
+}
+function renderActive(){ if(viewMode==='calendar') renderGrid(); else renderList(); }
+
 /* ===========================================================================
    RENDER — calendar grid
    =========================================================================== */
@@ -339,18 +378,18 @@ function renderGrid(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   const y=view.getFullYear(), m=view.getMonth();
   document.getElementById('monthLabel').textContent=view.toLocaleDateString('en-US',{month:'long', year:'numeric'});
- 
+
   const first=new Date(y,m,1,12);
   const gridStart=new Date(first); gridStart.setDate(1-first.getDay());
-  const cells=[]; for(let i=0;i<42;i++){ const d=new Date(gridStart); d.setDate(gridStart.getDate()+i); cells.push(d); }
+  const cells=[]; for(let i=0;i<42;i++){ cells.push(addDays(gridStart,i)); }
   const rangeStart=fmt(cells[0]), rangeEnd=fmt(cells[41]);
- 
+
   const byDay={};
   events.forEach(ev=>{
     if(!activeDepts.has(ev.dept)) return;
     occurrences(ev, rangeStart, rangeEnd).forEach(ds=>{ (byDay[ds]=byDay[ds]||[]).push(ev); });
   });
- 
+
   const todayStr=fmt(new Date());
   cells.forEach(d=>{
     const ds=fmt(d), inMonth=d.getMonth()===m;
@@ -358,7 +397,7 @@ function renderGrid(){
     cell.className='cell'+(inMonth?'':' out')+(ds===todayStr?' today':'');
     cell.innerHTML=`<span class="num">${d.getDate()}</span><span class="add-hint">+</span>`;
     cell.onclick=()=>openAdd(ds);
- 
+
     const items=(byDay[ds]||[]).slice().sort((a,b)=> a.type.localeCompare(b.type));
     const chips=document.createElement('div'); chips.className='chips';
     items.slice(0,3).forEach(ev=>{
@@ -374,13 +413,59 @@ function renderGrid(){
     grid.appendChild(cell);
   });
 }
+
+/* ===========================================================================
+   RENDER — list view (all events, chronological; recurring shown once)
+   =========================================================================== */
+function renderList(){
+  const box=document.getElementById('listView'); box.innerHTML='';
+  const todayStr=fmt(new Date());
+
+  const rows = events
+    .filter(ev=>activeDepts.has(ev.dept))
+    .map(ev=>({ ev, when: nextOccurrence(ev, todayStr) }))
+    .sort((a,b)=> a.when.localeCompare(b.when));
+
+  if(rows.length===0){
+    box.innerHTML='<div class="empty">No items match the current filters. Adjust the department filters, or add an item.</div>';
+    return;
+  }
+
+  let currentMonth='';
+  rows.forEach(({ev,when})=>{
+    const d=parseYMD(when);
+    const mk=d.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+    if(mk!==currentMonth){ currentMonth=mk; const h=document.createElement('div'); h.className='mhead'; h.textContent=mk; box.appendChild(h); }
+
+    const row=document.createElement('button');
+    row.className='lrow'+(when<todayStr?' past':'');
+    const dateLabel=d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'});
+
+    const meta=[];
+    meta.push(TYPE_NAME[ev.type]);
+    if(ev.dept!=='school') meta.push(DEPT[ev.dept].name);
+    if(ev.assignee) meta.push('→ '+escapeHtml(ev.assignee));
+    if(ev.recur&&ev.recur!=='none') meta.push('↻ '+recurLabel(ev));
+    if(ev.linkedEventId){ const le=events.find(e=>e.id===ev.linkedEventId); if(le) meta.push('for '+escapeHtml(le.title)); }
+
+    row.innerHTML =
+      `<span class="ldate">${dateLabel}</span>`+
+      `<span class="lbar" style="background:${DEPT[ev.dept].color}"></span>`+
+      `<span class="lbody">`+
+        `<span class="ltitle"><span class="g" style="color:${DEPT[ev.dept].color}">${TYPE_GLYPH[ev.type]}</span>${escapeHtml(ev.title)}</span>`+
+        `<span class="lmeta">${meta.map(escapeHtml).join(' &nbsp;·&nbsp; ')}</span>`+
+      `</span>`;
+    row.onclick=()=>openEdit(ev);
+    box.appendChild(row);
+  });
+}
+
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
- 
+
 /* ===========================================================================
    MODAL
    =========================================================================== */
 const scrim=document.getElementById('scrim');
- 
 function setType(t){
   formType=t;
   document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.type===t));
@@ -389,24 +474,20 @@ function setType(t){
   const link=document.getElementById('linkField');
   const recur=document.getElementById('recurField');
   const dept=document.getElementById('fDept');
-  if(t==='school'){
-    deptField.classList.add('hide'); assignee.classList.add('hide'); link.classList.add('hide'); recur.classList.add('hide');
-  } else {
+  if(t==='school'){ deptField.classList.add('hide'); assignee.classList.add('hide'); link.classList.add('hide'); recur.classList.add('hide'); }
+  else{
     deptField.classList.remove('hide'); recur.classList.remove('hide');
     assignee.classList.toggle('hide', !(t==='due'||t==='meeting'));
     link.classList.toggle('hide', t!=='due');
   }
   if(t!=='school' && dept.value==='school') dept.value='event';
 }
- 
 function refreshLinkOptions(currentId){
   const sel=document.getElementById('fLink');
   sel.innerHTML='<option value="">— None —</option>';
-  events.filter(e=>e.type==='event' && e.id!==currentId)
-        .sort((a,b)=>a.date.localeCompare(b.date))
-        .forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=`${e.title} (${e.date})`; sel.appendChild(o); });
+  events.filter(e=>e.type==='event' && e.id!==currentId).sort((a,b)=>a.date.localeCompare(b.date))
+    .forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=`${e.title} (${e.date})`; sel.appendChild(o); });
 }
- 
 function openAdd(dateStr){
   editingId=null;
   document.getElementById('mTitle').textContent='Add item';
@@ -439,7 +520,7 @@ function openModal(){ scrim.classList.add('open'); setTimeout(()=>document.getEl
 function closeModal(){ scrim.classList.remove('open'); }
 function clearErr(){ document.getElementById('titleErr').classList.remove('show'); }
 function setBusy(on){ document.querySelector('.modal').classList.toggle('saving', on); }
- 
+
 async function saveItem(){
   const title=document.getElementById('fTitle').value.trim();
   if(!title){ document.getElementById('titleErr').classList.add('show'); document.getElementById('fTitle').focus(); return; }
@@ -449,36 +530,31 @@ async function saveItem(){
   const assignee = (formType==='due'||formType==='meeting') ? document.getElementById('fAssignee').value.trim() : '';
   const linkedEventId = formType==='due' ? (document.getElementById('fLink').value||null) : null;
   const details=document.getElementById('fDetails').value.trim();
- 
+
   setBusy(true); clearBanner();
   try{
     if(editingId){
-      const payload={ id:editingId, title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details,
-                      source:(events.find(e=>e.id===editingId)||{}).source||'user' };
-      await dbUpdate(payload);
-      Object.assign(events.find(e=>e.id===editingId), payload);
+      const payload={ id:editingId, title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details, source:(events.find(e=>e.id===editingId)||{}).source||'user' };
+      await dbUpdate(payload); Object.assign(events.find(e=>e.id===editingId), payload);
     } else {
       const payload={ id:uid(), title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details, source:'user' };
-      await dbInsert(payload);
-      events.push(payload);
+      await dbInsert(payload); events.push(payload);
     }
   }catch(e){ setBusy(false); showError('Could not save — '+e.message); return; }
-  setBusy(false); closeModal(); renderGrid();
+  setBusy(false); closeModal(); renderActive();
 }
- 
 async function deleteItem(){
   if(!editingId) return;
   const delId=editingId;
   setBusy(true); clearBanner();
   try{
     await dbDelete(delId);
-    const deps=events.filter(e=>e.linkedEventId===delId);
-    for(const d of deps){ await dbUnlink(d.id); d.linkedEventId=null; }
+    for(const d of events.filter(e=>e.linkedEventId===delId)){ await dbUnlink(d.id); d.linkedEventId=null; }
   }catch(e){ setBusy(false); showError('Could not delete — '+e.message); return; }
   events=events.filter(e=>e.id!==delId);
-  setBusy(false); closeModal(); renderGrid();
+  setBusy(false); closeModal(); renderActive();
 }
- 
+
 /* ===========================================================================
    WIRING
    =========================================================================== */
@@ -490,26 +566,23 @@ document.getElementById('cancelBtn').onclick=closeModal;
 document.getElementById('saveBtn').onclick=saveItem;
 document.getElementById('deleteBtn').onclick=deleteItem;
 document.querySelectorAll('#typeSeg button').forEach(b=> b.onclick=()=>setType(b.dataset.type));
+document.querySelectorAll('#viewToggle button').forEach(b=> b.onclick=()=>setView(b.dataset.view));
 scrim.onclick=(e)=>{ if(e.target===scrim) closeModal(); };
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && scrim.classList.contains('open')) closeModal(); });
- 
+
 /* ===========================================================================
    BOOT
    =========================================================================== */
 (async function init(){
-  if(typeof supabase==='undefined' || !supabase.createClient){
-    showError('Could not load the database library. Check your internet connection and refresh.'); return;
-  }
+  if(typeof supabase==='undefined' || !supabase.createClient){ showError('Could not load the database library. Check your connection and refresh.'); return; }
   try{ sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
   catch(e){ showError('Supabase config looks wrong: '+e.message); return; }
- 
-  document.getElementById('storeTag').textContent='Supabase';
   renderFilters();
   try{
     events = await dbLoad();
     if(events.length===0){ const s=seed(); await dbInsertMany(s); events=s; }
   }catch(e){ showError('Could not reach the database — '+e.message); }
-  renderGrid();
+  setView('calendar');
 })();
 </script>
 </body>
