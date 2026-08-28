@@ -724,6 +724,33 @@
   .err.show{display:block}
   .emoji-row{display:flex;align-items:center;gap:8px}
   .emoji-row select{width:100%}
+
+  .assignee-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:6px;
+  }
+
+  .assignee-scope{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  .assignee-toggle{
+    padding:4px 8px;
+    font-size:11px;
+    border-radius:7px;
+    background:#F8FAFC;
+  }
+
+  .assignee-help{
+    margin-top:5px;
+    font-size:10.5px;
+    color:var(--muted);
+  }
   .saving{opacity:.6;pointer-events:none}
 
   #detailScrim{
@@ -923,7 +950,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v12</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v13</span></p>
     </div>
 
     <div class="nav">
@@ -1074,7 +1101,14 @@
 
     <div class="field hide" id="assigneeField">
       <label class="lb" for="fAssignee">Assignee <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
-      <input type="text" id="fAssignee" placeholder="Who owns this?" autocomplete="off" />
+      <div class="assignee-toolbar">
+        <span class="assignee-scope" id="assigneeScope">All executives</span>
+        <button type="button" class="assignee-toggle" id="assigneeScopeToggle" style="display:none">View all executives</button>
+      </div>
+      <select id="fAssignee">
+        <option value="">— Unassigned —</option>
+      </select>
+      <div class="assignee-help" id="assigneeHelp">Choose from the executive roster.</div>
     </div>
 
     <div class="field hide" id="linkField">
@@ -1172,6 +1206,7 @@ function toRow(ev){
     end_date:ev.endDate||null,
     status:ev.status??null,
     assignee:ev.assignee||'',
+    assignee_id:ev.assigneeId||null,
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
     details:ev.details||'',
@@ -1190,6 +1225,7 @@ function fromRow(r){
     endDate:r.end_date||null,
     status:r.status??null,
     assignee:r.assignee||'',
+    assigneeId:r.assignee_id||null,
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
@@ -1239,6 +1275,17 @@ async function deptInsert(d){await q(sb.from('departments').insert(d))}
 async function deptUpdate(d){await q(sb.from('departments').update({name:d.name,color:d.color}).eq('id',d.id))}
 async function deptDelete(id){await q(sb.from('departments').delete().eq('id',id))}
 
+async function executiveLoad(){
+  const {data,error}=await sb
+    .from('executives')
+    .select('id,english_name,korean_name,department,role')
+    .order('department')
+    .order('english_name');
+
+  if(error) throw new Error(error.message);
+  return data||[];
+}
+
 /* ===== CATEGORIES ===== */
 const FIXED_IDS = new Set(['event','marketing','finance','internal','all','school']);
 const DEPARTMENT_IDS = new Set(['event','marketing','finance','internal']);
@@ -1256,6 +1303,29 @@ const DEFAULT_DEPTS = [
 let DEPTS=[];
 let DEPT={};
 const activeDepts=new Set();
+
+let EXECUTIVES=[];
+let EXEC_BY_ID={};
+
+function setExecutives(list){
+  EXECUTIVES=(list||[]).slice();
+  EXEC_BY_ID=Object.fromEntries(EXECUTIVES.map(x=>[x.id,x]));
+}
+
+function executiveForEvent(ev){
+  return ev&&ev.assigneeId?EXEC_BY_ID[ev.assigneeId]||null:null;
+}
+
+function assigneeDisplay(ev){
+  const person=executiveForEvent(ev);
+  return person?person.english_name:(ev.assignee||'');
+}
+
+function assigneeDetail(ev){
+  const person=executiveForEvent(ev);
+  if(!person) return ev.assignee||'';
+  return `${person.english_name} · ${person.korean_name} — ${person.role}`;
+}
 
 function isFixedCategory(id){return FIXED_IDS.has(id)}
 function deptOf(id){return DEPT[id]||{id,name:id,color:'#94A3B8',builtin:false}}
@@ -1413,6 +1483,7 @@ function seed(){
       endDate:null,
       status:'final',
       assignee:'',
+      assigneeId:null,
       linkedEventId:null,
       recur:'weekly',
       details:'Weekly all-hands standup. (sample — delete me)',
@@ -1427,6 +1498,7 @@ function seed(){
       endDate:null,
       status:'final',
       assignee:'',
+      assigneeId:null,
       linkedEventId:null,
       recur:'none',
       details:'Kickoff social. (sample — delete me)',
@@ -1441,6 +1513,7 @@ function seed(){
       endDate:null,
       status:'tentative',
       assignee:'Aisha',
+      assigneeId:null,
       linkedEventId:mixer,
       recur:'none',
       details:'First draft for review. (sample — delete me)',
@@ -1627,13 +1700,13 @@ function renderGrid(){
       const linked=linkedEventFor(ev);
       c.title=
         `${TYPE_NAME[ev.type]} · ${dp.name}`+
-        `${ev.assignee?' · '+ev.assignee:''}`+
+        `${assigneeDisplay(ev)?' · '+assigneeDisplay(ev):''}`+
         `${linked?' · linked to '+linked.title:''}`+
         `${ev.endDate?` · ${ev.date}→${ev.endDate}`:''}`+
         `${ev.status==='tentative'?' · tentative':''}`;
 
       const extraParts=[];
-      if(ev.assignee) extraParts.push(`<span class="card-extra">@${escapeHtml(ev.assignee)}</span>`);
+      if(assigneeDisplay(ev)) extraParts.push(`<span class="card-extra">@${escapeHtml(assigneeDisplay(ev))}</span>`);
       if(linked) extraParts.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
 
       c.innerHTML=
@@ -1737,12 +1810,12 @@ function renderLongEventBars(segments){
 
     bar.title=
       `${seg.ev.title} · ${seg.ev.date} → ${seg.ev.endDate}`+
-      `${seg.ev.assignee?' · '+seg.ev.assignee:''}`+
+      `${assigneeDisplay(seg.ev)?' · '+assigneeDisplay(seg.ev):''}`+
       `${seg.ev.status==='tentative'?' · tentative':''}`;
 
     const linked=linkedEventFor(seg.ev);
     const barExtras=[];
-    if(seg.ev.assignee) barExtras.push(`<span class="card-extra">@${escapeHtml(seg.ev.assignee)}</span>`);
+    if(assigneeDisplay(seg.ev)) barExtras.push(`<span class="card-extra">@${escapeHtml(assigneeDisplay(seg.ev))}</span>`);
     if(linked) barExtras.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
 
     bar.innerHTML=
@@ -1897,7 +1970,7 @@ function openDetail(ev){
   let html='';
   html+=detailRow('Date',escapeHtml(prettyDate(ev.date)));
   if(ev.endDate) html+=detailRow('End date',escapeHtml(prettyDate(ev.endDate)));
-  if(ev.assignee) html+=detailRow('Assignee',`👤 ${escapeHtml(ev.assignee)}`);
+  if(assigneeDetail(ev)) html+=detailRow('Assignee',`👤 ${escapeHtml(assigneeDetail(ev))}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
   if(linked) html+=detailRow('Linked event',`🔗 ${escapeHtml(linked.title)}`,false,'detail-link');
   if(ev.type==='other'&&ev.emoji) html+=detailRow('Emoji',escapeHtml(ev.emoji));
@@ -2005,7 +2078,7 @@ function renderList(){
       meta.push('through '+e.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
     }
 
-    if(ev.assignee) meta.push('→ '+ev.assignee);
+    if(assigneeDisplay(ev)) meta.push('→ '+assigneeDisplay(ev));
     if(ev.recur&&ev.recur!=='none') meta.push('↻ '+recurLabel(ev));
 
     if(ev.linkedEventId){
@@ -2058,6 +2131,87 @@ function buildDeptOptions(keep){
   if(cur&&DEPT[cur]&&cur!=='school') sel.value=cur;
 }
 
+const EXEC_DEPT_BY_CATEGORY={
+  event:'Event',
+  marketing:'Marketing',
+  finance:'Finance',
+  internal:'Internal'
+};
+
+let assigneeShowAll=false;
+
+function currentExecutiveDepartment(){
+  return EXEC_DEPT_BY_CATEGORY[document.getElementById('fDept').value]||null;
+}
+
+function roleRank(role){
+  return ({
+    'President':0,
+    'Vice President':1,
+    'Director':2,
+    'Executive':3
+  })[role] ?? 9;
+}
+
+function buildAssigneeOptions(keepId=null,{preserveOutside=false}={}){
+  const sel=document.getElementById('fAssignee');
+  const scope=document.getElementById('assigneeScope');
+  const toggle=document.getElementById('assigneeScopeToggle');
+  const help=document.getElementById('assigneeHelp');
+  const dept=currentExecutiveDepartment();
+
+  if(!dept) assigneeShowAll=true;
+
+  let people=EXECUTIVES.slice();
+
+  if(dept&&!assigneeShowAll){
+    people=people.filter(x=>x.department===dept);
+  }
+
+  if(keepId&&preserveOutside&&!people.some(x=>x.id===keepId)){
+    assigneeShowAll=true;
+    people=EXECUTIVES.slice();
+  }
+
+  people.sort((a,b)=>
+    a.department.localeCompare(b.department) ||
+    roleRank(a.role)-roleRank(b.role) ||
+    a.english_name.localeCompare(b.english_name)
+  );
+
+  sel.innerHTML='<option value="">— Unassigned —</option>';
+
+  people.forEach(person=>{
+    const o=document.createElement('option');
+    o.value=person.id;
+    o.textContent=assigneeShowAll
+      ?`${person.english_name} · ${person.korean_name} — ${person.department} · ${person.role}`
+      :`${person.english_name} · ${person.korean_name} — ${person.role}`;
+    sel.appendChild(o);
+  });
+
+  if(keepId&&EXEC_BY_ID[keepId]) sel.value=keepId;
+
+  if(dept){
+    scope.textContent=assigneeShowAll?'All executives':`${dept} team`;
+    toggle.style.display='inline-flex';
+    toggle.textContent=assigneeShowAll?`Back to ${dept}`:'View all executives';
+    help.textContent=assigneeShowAll
+      ?'Showing the full KESA executive roster.'
+      :`Filtered automatically to the ${dept} department.`;
+  }else{
+    scope.textContent='All executives';
+    toggle.style.display='none';
+    help.textContent='This category is not an executive department, so the full roster is shown.';
+  }
+}
+
+function refreshAssigneeScope({keepCurrent=false,preserveOutside=false}={}){
+  const current=keepCurrent?document.getElementById('fAssignee').value:null;
+  assigneeShowAll=false;
+  buildAssigneeOptions(current,{preserveOutside});
+}
+
 let endDateAutoSeeded=true;
 
 function setType(t){
@@ -2103,6 +2257,10 @@ function setType(t){
 
   if(t!=='school'&&dept.value==='school'){
     dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
+  }
+
+  if(t==='due'||t==='meeting'||t==='other'){
+    refreshAssigneeScope({keepCurrent:true,preserveOutside:true});
   }
 }
 
@@ -2191,6 +2349,8 @@ function openAdd(dateStr){
   refreshLinkOptions(null);
   setType('event');
   if(DEPT.all) document.getElementById('fDept').value='all';
+  assigneeShowAll=false;
+  buildAssigneeOptions(null);
   syncEndDateConstraints();
   setStatus('final');
   clearErr();
@@ -2214,7 +2374,7 @@ function openEdit(ev){
   document.getElementById('fDate').value=ev.date;
   document.getElementById('fEnd').value=ev.endDate||ev.date;
   document.getElementById('fEmoji').value=ev.emoji||'📌';
-  document.getElementById('fAssignee').value=ev.assignee||'';
+  document.getElementById('fAssignee').value='';
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
 
@@ -2230,6 +2390,8 @@ function openEdit(ev){
   }
 
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
+  assigneeShowAll=false;
+  buildAssigneeOptions(ev.assigneeId||null,{preserveOutside:true});
   document.getElementById('fLink').value=ev.linkedEventId||'';
 
   clearErr();
@@ -2269,9 +2431,12 @@ async function saveItem(){
     ?'none'
     :document.getElementById('fRecur').value;
 
-  const assignee=(formType==='due'||formType==='meeting'||formType==='other')
-    ?document.getElementById('fAssignee').value.trim()
-    :'';
+  const assigneeId=(formType==='due'||formType==='meeting'||formType==='other')
+    ?(document.getElementById('fAssignee').value||null)
+    :null;
+
+  const selectedAssignee=assigneeId?EXEC_BY_ID[assigneeId]||null:null;
+  const assignee=selectedAssignee?selectedAssignee.english_name:'';
 
   const linkedEventId=(formType==='due'||formType==='other')
     ?(document.getElementById('fLink').value||null)
@@ -2306,6 +2471,7 @@ async function saveItem(){
         endDate,
         status,
         assignee,
+        assigneeId,
         linkedEventId,
         recur:rec,
         details,
@@ -2326,6 +2492,7 @@ async function saveItem(){
         endDate,
         status,
         assignee,
+        assigneeId,
         linkedEventId,
         recur:rec,
         details,
@@ -2655,6 +2822,16 @@ document.querySelectorAll('#typeSeg button')
 document.querySelectorAll('#statusSeg button')
   .forEach(b=>b.onclick=()=>setStatus(b.dataset.status));
 
+document.getElementById('fDept').addEventListener('change',()=>{
+  refreshAssigneeScope();
+});
+
+document.getElementById('assigneeScopeToggle').addEventListener('click',()=>{
+  const current=document.getElementById('fAssignee').value||null;
+  assigneeShowAll=!assigneeShowAll;
+  buildAssigneeOptions(current,{preserveOutside:true});
+});
+
 document.getElementById('schoolStatusToggle').addEventListener('change',e=>{
   setSchoolStatusEnabled(e.target.checked);
   if(e.target.checked) setStatus(formStatus||'final');
@@ -2727,6 +2904,15 @@ document.addEventListener('keydown',e=>{
 
   renderFilters();
   buildDeptOptions();
+
+  try{
+    setExecutives(await executiveLoad());
+  }catch(e){
+    setExecutives([]);
+    showError('Could not load the executive roster — '+e.message);
+  }
+
+  buildAssigneeOptions(null);
 
   try{
     events=await dbLoad();
