@@ -13,34 +13,33 @@
     --canvas:#F6F7F9; --panel:#FFFFFF; --ink:#0F172A; --muted:#64748B;
     --line:#E4E8EE; --line-strong:#CBD3DE; --ink-soft:#334155;
     --today:#FFF7ED; --today-line:#FDBA74;
-    --dept-event:#2563EB; --dept-marketing:#DB2777; --dept-finance:#059669;
-    --dept-internal:#D97706; --dept-all:#7C3AED; --dept-school:#5B6472;
     --display:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
     --body:"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
     --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.18);
     --radius:12px;
+    --cell-ratio:1.42;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--canvas); color:var(--ink); font-family:var(--body); font-size:14px; line-height:1.4; -webkit-font-smoothing:antialiased;}
-  .wrap{max-width:1120px; margin:0 auto; padding:20px 20px 48px}
+  .wrap{max-width:1240px; margin:0 auto; padding:20px 20px 48px}
 
   header.app{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
   .brand h1{font-family:var(--display); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0}
   .brand p{margin:2px 0 0; color:var(--muted); font-size:12.5px}
-  .brand .k{color:var(--dept-event)}
+  .brand .k{color:#2563EB}
   .nav{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
   .month{font-family:var(--display); font-weight:600; font-size:16px; min-width:150px; text-align:center; letter-spacing:-.01em}
   button{font-family:var(--body); cursor:pointer; border:1px solid var(--line-strong); background:var(--panel); color:var(--ink); border-radius:9px; padding:8px 12px; font-size:13px; font-weight:500}
   button:hover{border-color:#9AA6B6}
-  button:focus-visible{outline:2px solid var(--dept-event); outline-offset:2px}
+  button:focus-visible{outline:2px solid #2563EB; outline-offset:2px}
   .icon-btn{width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:16px; line-height:1}
   .primary{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:600}
   .primary:hover{background:#1E293B; border-color:#1E293B}
+  input[type=color]{border:1px solid var(--line-strong); border-radius:8px; background:#fff; cursor:pointer; padding:2px}
 
-  /* view toggle */
   .viewtoggle{display:inline-flex; border:1px solid var(--line-strong); border-radius:9px; overflow:hidden}
-  .viewtoggle button{border:0; border-radius:0; padding:8px 13px}
+  .viewtoggle button{border:0; border-radius:0; width:92px; padding:8px 0; text-align:center}
   .viewtoggle button+button{border-left:1px solid var(--line-strong)}
   .viewtoggle button[aria-pressed="true"]{background:var(--ink); color:#fff}
   #calControls{display:inline-flex; align-items:center; gap:8px}
@@ -54,31 +53,35 @@
   .pill .dot{width:10px; height:10px; border-radius:3px; flex:none}
   .pill[aria-pressed="false"]{opacity:.4; filter:saturate(.4)}
   .pill:hover{border-color:#9AA6B6}
+  .spring{flex:1 1 auto}
+  .sizer{display:inline-flex; align-items:center; gap:8px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600}
+  .sizer input[type=range]{width:120px}
 
-  /* calendar */
+  .board{max-width:1120px; margin:0 auto; transition:max-width .12s ease}
+
   .cal{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
   .dow{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--line)}
   .dow div{padding:9px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
   .grid{display:grid; grid-template-columns:repeat(7,1fr)}
-  .cell{min-height:118px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 6px 8px; position:relative; cursor:pointer; transition:background .12s}
+  .cell{aspect-ratio:var(--cell-ratio); min-height:0; border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:5px 6px 6px; position:relative; cursor:pointer; transition:background .12s; display:flex; flex-direction:column; overflow:hidden}
   .cell:nth-child(7n){border-right:none}
   .grid .cell:hover{background:#FBFCFE}
   .cell.out{background:#FBFBFC}
   .cell.out .num{color:#C2CAD6}
   .cell.today{background:var(--today); box-shadow:inset 0 0 0 1px var(--today-line)}
-  .num{font-family:var(--display); font-weight:600; font-size:12.5px; color:var(--ink-soft); display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:6px}
+  .num{font-family:var(--display); font-weight:600; font-size:12.5px; color:var(--ink-soft); display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:6px; flex:none}
   .cell.today .num{background:var(--today-line); color:#7C2D12}
-  .add-hint{position:absolute; top:7px; right:7px; opacity:0; font-size:15px; color:var(--muted); transition:opacity .12s}
+  .add-hint{position:absolute; top:6px; right:7px; opacity:0; font-size:15px; color:var(--muted); transition:opacity .12s}
   .cell:hover .add-hint{opacity:1}
-  .chips{margin-top:5px; display:flex; flex-direction:column; gap:3px}
-  .chip{display:flex; align-items:center; gap:6px; border-radius:6px; padding:3px 6px; font-size:11.5px; font-weight:500; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border:0; text-align:left; width:100%; line-height:1.25}
+  .chips{margin-top:4px; display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-width:thin}
+  .chips::-webkit-scrollbar{width:6px} .chips::-webkit-scrollbar-thumb{background:#D5DBE4; border-radius:3px}
+  .chip{display:flex; align-items:center; gap:6px; border-radius:6px; padding:3px 6px; font-size:11.5px; font-weight:500; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border:0; text-align:left; width:100%; line-height:1.25; flex:none}
   .chip .g{flex:none; opacity:.92; font-size:11px}
   .chip .t{overflow:hidden; text-overflow:ellipsis}
   .chip .rec{flex:none; opacity:.8; font-size:10px}
   .chip:hover{filter:brightness(1.06)}
-  .more{font-size:11px; color:var(--muted); padding:1px 4px; font-weight:500}
+  .chip.tentative{outline:1.5px dashed rgba(255,255,255,.85); outline-offset:-3px; opacity:.9}
 
-  /* list view */
   .list{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
   .mhead{padding:9px 16px; font-family:var(--display); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:#FBFCFE; border-bottom:1px solid var(--line)}
   .lrow{display:flex; align-items:stretch; gap:12px; padding:11px 16px; border-bottom:1px solid var(--line); cursor:pointer; width:100%; text-align:left; background:none; border-radius:0; border-left:0; border-right:0; border-top:0}
@@ -88,12 +91,12 @@
   .lrow .lbody{min-width:0; flex:1}
   .lrow .ltitle{font-size:13.5px; font-weight:500; color:var(--ink); display:flex; align-items:center; gap:7px}
   .lrow .ltitle .g{flex:none; font-size:11px}
-  .lrow .lmeta{font-size:11.5px; color:var(--muted); margin-top:3px; display:flex; gap:10px; flex-wrap:wrap}
+  .lrow .lmeta{font-size:11.5px; color:var(--muted); margin-top:3px; display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .tent{display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#92400E; background:#FEF3C7; border:1px solid #FDE68A; border-radius:5px; padding:0 6px}
   .list .empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:13px}
   .past .ldate, .past .ltitle{opacity:.55}
 
-  /* modal */
-  .scrim{position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:50}
+  .scrim{position:fixed; inset:0; background:rgba(15,23,42,.42); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:50; overflow:auto}
   .scrim.open{display:flex}
   .modal{background:var(--panel); width:100%; max-width:440px; border-radius:14px; box-shadow:0 24px 60px -12px rgba(15,23,42,.4); padding:20px; margin-top:20px}
   .modal h2{font-family:var(--display); font-size:17px; margin:0 0 2px; letter-spacing:-.01em}
@@ -103,20 +106,28 @@
   label.lb{display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:5px}
   input[type=text], input[type=date], select, textarea{width:100%; font-family:var(--body); font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:9px; padding:9px 10px; background:#fff}
   textarea{resize:vertical; min-height:56px}
-  input:focus, select:focus, textarea:focus{outline:2px solid var(--dept-event); outline-offset:0; border-color:transparent}
+  input:focus, select:focus, textarea:focus{outline:2px solid #2563EB; outline-offset:0; border-color:transparent}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
   .seg{display:flex; gap:6px; flex-wrap:wrap}
-  .seg button{flex:1; min-width:74px; padding:9px 6px; font-size:12.5px; border-radius:9px}
+  .seg button{flex:1; min-width:70px; padding:9px 6px; font-size:12.5px; border-radius:9px}
   .seg button[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
   .modal-actions{display:flex; align-items:center; gap:8px; margin-top:8px}
   .modal-actions .spacer{flex:1}
   .danger{color:#B91C1C; border-color:#F1C4C4}
   .danger:hover{background:#FEF2F2; border-color:#E4A0A0}
-  .err{color:#B91C1C; font-size:12px; margin-top:2px; display:none}
+  .err{color:#B91C1C; font-size:12px; margin-top:6px; display:none}
   .err.show{display:block}
   .saving{opacity:.6; pointer-events:none}
 
-  @media (max-width:640px){ .cell{min-height:92px} .brand h1{font-size:19px} .month{min-width:120px; font-size:14px} .lrow .ldate{width:82px} }
+  .catrow{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+  .catrow .catcolor{width:40px; height:36px; flex:none}
+  .catrow .catname{flex:1}
+  .catrow .catsave,.catrow .catdel{flex:none; padding:8px 10px}
+  .catbuiltin{font-size:11px; color:var(--muted); padding:0 6px; flex:none}
+  .catadd{display:flex; gap:8px; align-items:center; margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+  .catadd .catname{flex:1}
+
+  @media (max-width:640px){ .brand h1{font-size:19px} .month{min-width:120px; font-size:14px} .lrow .ldate{width:82px} .sizer{display:none} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -146,16 +157,21 @@
 
   <div class="filters" id="filters">
     <span class="label">Departments</span>
+    <span class="spring"></span>
+    <span class="sizer" id="sizer">Size <input type="range" id="calSize" min="640" max="1200" step="20"></span>
+    <button id="manageBtn">Manage categories</button>
   </div>
 
-  <div class="cal" id="calView">
-    <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
-    <div class="grid" id="grid"></div>
+  <div class="board" id="board">
+    <div class="cal" id="calView">
+      <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="list" id="listView" hidden></div>
   </div>
-
-  <div class="list" id="listView" hidden></div>
 </div>
 
+<!-- Item modal -->
 <div class="scrim" id="scrim">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle">Add item</h2>
@@ -184,13 +200,20 @@
       </div>
       <div class="field" id="deptField">
         <label class="lb" for="fDept">Department</label>
-        <select id="fDept">
-          <option value="event">Event</option>
-          <option value="marketing">Marketing</option>
-          <option value="finance">Finance</option>
-          <option value="internal">Internal</option>
-          <option value="all">All-hands</option>
-        </select>
+        <select id="fDept"></select>
+      </div>
+    </div>
+
+    <div class="field hide" id="endField">
+      <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional — leave blank for a single day)</span></label>
+      <input type="date" id="fEnd" />
+    </div>
+
+    <div class="field">
+      <label class="lb">Status</label>
+      <div class="seg" id="statusSeg">
+        <button type="button" data-status="final" aria-pressed="true">Final</button>
+        <button type="button" data-status="tentative" aria-pressed="false">Tentative</button>
       </div>
     </div>
 
@@ -228,25 +251,37 @@
   </div>
 </div>
 
+<!-- Manage categories modal -->
+<div class="scrim" id="catScrim">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Manage categories</h2>
+    <p class="sub">Rename or recolor a category and every item under it updates automatically. A category in use can't be deleted until its items are moved.</p>
+    <div id="catList"></div>
+    <div class="catadd">
+      <input type="color" id="newCatColor" class="catcolor" value="#2563EB">
+      <input type="text" id="newCatName" class="catname" placeholder="New category name" autocomplete="off">
+      <button id="newCatAdd" class="primary">Add</button>
+    </div>
+    <div class="err" id="catErr"></div>
+    <div class="modal-actions"><span class="spacer"></span><button id="catClose" class="primary">Done</button></div>
+  </div>
+</div>
+
 <script>
-/* ===========================================================================
-   SUPABASE CONFIG
-   =========================================================================== */
+/* ===== SUPABASE CONFIG ===== */
 const SUPABASE_URL = 'https://eryuvlxrpilrqvwbrazs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_YIivMMyfzhUhO1m_5_PUSQ_ugqDY_do';
 let sb = null;
 
-/* ===========================================================================
-   DATA LAYER
-   =========================================================================== */
+/* ===== DATA LAYER ===== */
 function toRow(ev){
-  return { id:ev.id, title:ev.title, type:ev.type, dept:ev.dept, date:ev.date,
-           assignee:ev.assignee||'', linked_event_id:ev.linkedEventId||null,
+  return { id:ev.id, title:ev.title, type:ev.type, dept:ev.dept, date:ev.date, end_date:ev.endDate||null,
+           status:ev.status||'final', assignee:ev.assignee||'', linked_event_id:ev.linkedEventId||null,
            recur:ev.recur||'none', details:ev.details||'', source:ev.source||'user' };
 }
 function fromRow(r){
-  return { id:r.id, title:r.title, type:r.type, dept:r.dept, date:r.date,
-           assignee:r.assignee||'', linkedEventId:r.linked_event_id||null,
+  return { id:r.id, title:r.title, type:r.type, dept:r.dept, date:r.date, endDate:r.end_date||null,
+           status:r.status||'final', assignee:r.assignee||'', linkedEventId:r.linked_event_id||null,
            recur:r.recur||'none', details:r.details||'', source:r.source||'user' };
 }
 async function q(builder){ const { error } = await builder; if(error) throw new Error(error.message); }
@@ -256,25 +291,36 @@ async function dbInsertMany(list){ await q(sb.from('events').insert(list.map(toR
 async function dbUpdate(ev){ await q(sb.from('events').update(toRow(ev)).eq('id', ev.id)); }
 async function dbDelete(id){ await q(sb.from('events').delete().eq('id', id)); }
 async function dbUnlink(id){ await q(sb.from('events').update({ linked_event_id:null }).eq('id', id)); }
+async function deptLoad(){ const { data, error } = await sb.from('departments').select('*').order('sort'); if(error) throw new Error(error.message); return data||[]; }
+async function deptInsert(d){ await q(sb.from('departments').insert(d)); }
+async function deptUpdate(d){ await q(sb.from('departments').update({ name:d.name, color:d.color }).eq('id', d.id)); }
+async function deptDelete(id){ await q(sb.from('departments').delete().eq('id', id)); }
 
-/* ===========================================================================
-   CONSTANTS
-   =========================================================================== */
-const DEPTS = [
-  {id:'event',     name:'Event',     color:'#2563EB'},
-  {id:'marketing', name:'Marketing', color:'#DB2777'},
-  {id:'finance',   name:'Finance',   color:'#059669'},
-  {id:'internal',  name:'Internal',  color:'#D97706'},
-  {id:'all',       name:'All-hands', color:'#7C3AED'},
-  {id:'school',    name:'School',    color:'#5B6472'},
+/* ===== DEPARTMENTS (loaded from DB, with a safe fallback) ===== */
+const DEFAULT_DEPTS = [
+  {id:'event',name:'Event',color:'#2563EB',sort:1,builtin:false},
+  {id:'marketing',name:'Marketing',color:'#DB2777',sort:2,builtin:false},
+  {id:'finance',name:'Finance',color:'#059669',sort:3,builtin:false},
+  {id:'internal',name:'Internal',color:'#D97706',sort:4,builtin:false},
+  {id:'all',name:'KESA',color:'#7C3AED',sort:5,builtin:false},
+  {id:'school',name:'School',color:'#5B6472',sort:9,builtin:true},
 ];
-const DEPT = Object.fromEntries(DEPTS.map(d=>[d.id,d]));
+let DEPTS = [];
+let DEPT = {};
+const activeDepts = new Set();
+function deptOf(id){ return DEPT[id] || {id, name:id, color:'#94A3B8', builtin:false}; }
+function setDepartments(list){
+  DEPTS = (list && list.length) ? list.slice() : DEFAULT_DEPTS.slice();
+  DEPT = Object.fromEntries(DEPTS.map(d=>[d.id,d]));
+  const ids = new Set(DEPTS.map(d=>d.id));
+  DEPTS.forEach(d=>{ if(!activeDepts.has(d.id)) activeDepts.add(d.id); });
+  [...activeDepts].forEach(id=>{ if(!ids.has(id)) activeDepts.delete(id); });
+}
+
 const TYPE_GLYPH = {event:'●', due:'⚑', meeting:'◇', school:'▲'};
 const TYPE_NAME  = {event:'Event', due:'Due date', meeting:'Meeting', school:'School event'};
 
-/* ===========================================================================
-   DATE HELPERS
-   =========================================================================== */
+/* ===== DATE HELPERS ===== */
 function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d, 12,0,0,0); }
 function fmt(date){ const y=date.getFullYear(); const m=String(date.getMonth()+1).padStart(2,'0'); const d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
 function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
@@ -306,7 +352,7 @@ function recurLabel(ev){
   if(ev.recur==='monthly') return `Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
   return '';
 }
-// next occurrence on/after `fromStr` (for recurring); base date otherwise
+function spanDays(ev){ return ev.endDate ? Math.max(0, daysBetween(parseYMD(ev.date), parseYMD(ev.endDate))) : 0; }
 function nextOccurrence(ev, fromStr){
   if(!ev.recur || ev.recur==='none') return ev.date;
   const end=fmt(addDays(parseYMD(fromStr),400));
@@ -314,66 +360,58 @@ function nextOccurrence(ev, fromStr){
   return occ.length ? occ[0] : ev.date;
 }
 
-/* ===========================================================================
-   STATE
-   =========================================================================== */
+/* ===== STATE ===== */
 let events = [];
 let view = new Date(); view.setDate(1);
 let viewMode = 'calendar';
 let editingId = null;
 let formType = 'event';
-const activeDepts = new Set(DEPTS.map(d=>d.id));
+let formStatus = 'final';
 const uid = ()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24) || 'cat'; }
 
 function seed(){
   const t=new Date(); t.setHours(12,0,0,0);
   const off=n=>{ const d=new Date(t); d.setDate(d.getDate()+n); return fmt(d); };
   const mixer=uid();
   return [
-    {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample — delete me)', source:'seed'},
-    {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample — delete me)', source:'seed'},
-    {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample — delete me)', source:'seed'},
-    {id:uid(), title:'Reading week begins', type:'school', dept:'school', date:off(20), assignee:'', linkedEventId:null, recur:'none', details:'Placeholder. (sample — delete me)', source:'seed'},
+    {id:uid(), title:'Exec sync', type:'meeting', dept:'all', date:off(0), endDate:null, status:'final', assignee:'', linkedEventId:null, recur:'weekly', details:'Weekly all-hands standup. (sample — delete me)', source:'seed'},
+    {id:mixer,  title:'Fall Mixer', type:'event', dept:'event', date:off(3), endDate:null, status:'final', assignee:'', linkedEventId:null, recur:'none', details:'Kickoff social. (sample — delete me)', source:'seed'},
+    {id:uid(), title:'Mixer poster draft', type:'due', dept:'marketing', date:off(5), endDate:null, status:'tentative', assignee:'Aisha', linkedEventId:mixer, recur:'none', details:'First draft for review. (sample — delete me)', source:'seed'},
   ];
 }
 
-/* ===========================================================================
-   ERROR BANNER
-   =========================================================================== */
+/* ===== ERROR BANNER ===== */
 function showError(msg){ const b=document.getElementById('banner'); b.textContent='⚠ '+msg; b.classList.add('show'); }
 function clearBanner(){ document.getElementById('banner').classList.remove('show'); }
 
-/* ===========================================================================
-   RENDER — filter pills
-   =========================================================================== */
+/* ===== FILTER PILLS ===== */
 function renderFilters(){
   const box=document.getElementById('filters');
   box.querySelectorAll('.pill').forEach(p=>p.remove());
+  const anchor=box.querySelector('.spring');
   DEPTS.forEach(d=>{
     const b=document.createElement('button');
     b.className='pill'; b.setAttribute('aria-pressed', activeDepts.has(d.id));
-    b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${d.name}`;
+    b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
     b.onclick=()=>{ activeDepts.has(d.id)?activeDepts.delete(d.id):activeDepts.add(d.id); b.setAttribute('aria-pressed', activeDepts.has(d.id)); renderActive(); };
-    box.appendChild(b);
+    box.insertBefore(b, anchor);
   });
 }
 
-/* ===========================================================================
-   VIEW SWITCHING
-   =========================================================================== */
+/* ===== VIEW SWITCH ===== */
 function setView(mode){
   viewMode=mode;
   document.querySelectorAll('#viewToggle button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.view===mode));
   document.getElementById('calView').hidden  = mode!=='calendar';
   document.getElementById('listView').hidden = mode!=='list';
   document.getElementById('calControls').style.display = mode==='calendar' ? 'inline-flex' : 'none';
+  document.getElementById('sizer').style.display = mode==='calendar' ? 'inline-flex' : 'none';
   renderActive();
 }
 function renderActive(){ if(viewMode==='calendar') renderGrid(); else renderList(); }
 
-/* ===========================================================================
-   RENDER — calendar grid
-   =========================================================================== */
+/* ===== CALENDAR ===== */
 function renderGrid(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   const y=view.getFullYear(), m=view.getMonth();
@@ -387,7 +425,14 @@ function renderGrid(){
   const byDay={};
   events.forEach(ev=>{
     if(!activeDepts.has(ev.dept)) return;
-    occurrences(ev, rangeStart, rangeEnd).forEach(ds=>{ (byDay[ds]=byDay[ds]||[]).push(ev); });
+    const span=spanDays(ev);
+    const searchStart=fmt(addDays(parseYMD(rangeStart), -span));
+    occurrences(ev, searchStart, rangeEnd).forEach(startStr=>{
+      for(let i=0;i<=span;i++){
+        const ds=fmt(addDays(parseYMD(startStr), i));
+        if(ds>=rangeStart && ds<=rangeEnd){ (byDay[ds]=byDay[ds]||[]).push(ev); }
+      }
+    });
   });
 
   const todayStr=fmt(new Date());
@@ -400,91 +445,90 @@ function renderGrid(){
 
     const items=(byDay[ds]||[]).slice().sort((a,b)=> a.type.localeCompare(b.type));
     const chips=document.createElement('div'); chips.className='chips';
-    items.slice(0,3).forEach(ev=>{
+    items.forEach(ev=>{
+      const dp=deptOf(ev.dept);
       const c=document.createElement('button');
-      c.className='chip'; c.style.background=DEPT[ev.dept].color;
-      c.title=`${TYPE_NAME[ev.type]} · ${DEPT[ev.dept].name}${ev.assignee?' · '+ev.assignee:''}`;
+      c.className='chip'+(ev.status==='tentative'?' tentative':''); c.style.background=dp.color;
+      c.title=`${TYPE_NAME[ev.type]} · ${dp.name}${ev.assignee?' · '+ev.assignee:''}${ev.endDate?` · ${ev.date}→${ev.endDate}`:''}${ev.status==='tentative'?' · tentative':''}`;
       c.innerHTML=`<span class="g">${TYPE_GLYPH[ev.type]}</span><span class="t">${escapeHtml(ev.title)}</span>${ev.recur&&ev.recur!=='none'?'<span class="rec">↻</span>':''}`;
       c.onclick=(e)=>{ e.stopPropagation(); openEdit(ev); };
       chips.appendChild(c);
     });
-    if(items.length>3){ const more=document.createElement('div'); more.className='more'; more.textContent=`+${items.length-3} more`; chips.appendChild(more); }
     cell.appendChild(chips);
     grid.appendChild(cell);
   });
 }
 
-/* ===========================================================================
-   RENDER — list view (all events, chronological; recurring shown once)
-   =========================================================================== */
+/* ===== LIST ===== */
 function renderList(){
   const box=document.getElementById('listView'); box.innerHTML='';
   const todayStr=fmt(new Date());
-
-  const rows = events
-    .filter(ev=>activeDepts.has(ev.dept))
+  const rows = events.filter(ev=>activeDepts.has(ev.dept))
     .map(ev=>({ ev, when: nextOccurrence(ev, todayStr) }))
     .sort((a,b)=> a.when.localeCompare(b.when));
 
-  if(rows.length===0){
-    box.innerHTML='<div class="empty">No items match the current filters. Adjust the department filters, or add an item.</div>';
-    return;
-  }
+  if(rows.length===0){ box.innerHTML='<div class="empty">No items match the current filters. Adjust the department filters, or add an item.</div>'; return; }
 
   let currentMonth='';
   rows.forEach(({ev,when})=>{
     const d=parseYMD(when);
     const mk=d.toLocaleDateString('en-US',{month:'long', year:'numeric'});
     if(mk!==currentMonth){ currentMonth=mk; const h=document.createElement('div'); h.className='mhead'; h.textContent=mk; box.appendChild(h); }
-
+    const dp=deptOf(ev.dept);
     const row=document.createElement('button');
     row.className='lrow'+(when<todayStr?' past':'');
     const dateLabel=d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'});
 
     const meta=[];
     meta.push(TYPE_NAME[ev.type]);
-    if(ev.dept!=='school') meta.push(DEPT[ev.dept].name);
-    if(ev.assignee) meta.push('→ '+escapeHtml(ev.assignee));
+    if(ev.dept!=='school') meta.push(dp.name);
+    if(ev.endDate){ const e=parseYMD(ev.endDate); meta.push('through '+e.toLocaleDateString('en-US',{month:'short', day:'numeric'})); }
+    if(ev.assignee) meta.push('→ '+ev.assignee);
     if(ev.recur&&ev.recur!=='none') meta.push('↻ '+recurLabel(ev));
-    if(ev.linkedEventId){ const le=events.find(e=>e.id===ev.linkedEventId); if(le) meta.push('for '+escapeHtml(le.title)); }
+    if(ev.linkedEventId){ const le=events.find(e=>e.id===ev.linkedEventId); if(le) meta.push('for '+le.title); }
 
     row.innerHTML =
       `<span class="ldate">${dateLabel}</span>`+
-      `<span class="lbar" style="background:${DEPT[ev.dept].color}"></span>`+
+      `<span class="lbar" style="background:${dp.color}"></span>`+
       `<span class="lbody">`+
-        `<span class="ltitle"><span class="g" style="color:${DEPT[ev.dept].color}">${TYPE_GLYPH[ev.type]}</span>${escapeHtml(ev.title)}</span>`+
+        `<span class="ltitle"><span class="g" style="color:${dp.color}">${TYPE_GLYPH[ev.type]}</span>${escapeHtml(ev.title)}`+
+          `${ev.status==='tentative'?' <span class="tent">Tentative</span>':''}</span>`+
         `<span class="lmeta">${meta.map(escapeHtml).join(' &nbsp;·&nbsp; ')}</span>`+
       `</span>`;
     row.onclick=()=>openEdit(ev);
     box.appendChild(row);
   });
 }
-
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* ===========================================================================
-   MODAL
-   =========================================================================== */
+/* ===== ITEM MODAL ===== */
 const scrim=document.getElementById('scrim');
+function buildDeptOptions(keep){
+  const sel=document.getElementById('fDept'); const cur=keep||sel.value; sel.innerHTML='';
+  DEPTS.filter(d=>d.id!=='school').forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; sel.appendChild(o); });
+  if(cur && DEPT[cur] && cur!=='school') sel.value=cur;
+}
 function setType(t){
   formType=t;
   document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.type===t));
   const deptField=document.getElementById('deptField');
+  const endField=document.getElementById('endField');
   const assignee=document.getElementById('assigneeField');
   const link=document.getElementById('linkField');
   const recur=document.getElementById('recurField');
   const dept=document.getElementById('fDept');
+  endField.classList.toggle('hide', !(t==='event'||t==='school'));
   if(t==='school'){ deptField.classList.add('hide'); assignee.classList.add('hide'); link.classList.add('hide'); recur.classList.add('hide'); }
   else{
     deptField.classList.remove('hide'); recur.classList.remove('hide');
     assignee.classList.toggle('hide', !(t==='due'||t==='meeting'));
     link.classList.toggle('hide', t!=='due');
   }
-  if(t!=='school' && dept.value==='school') dept.value='event';
+  if(t!=='school' && dept.value==='school') dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
 }
+function setStatus(s){ formStatus=s; document.querySelectorAll('#statusSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.status===s)); }
 function refreshLinkOptions(currentId){
-  const sel=document.getElementById('fLink');
-  sel.innerHTML='<option value="">— None —</option>';
+  const sel=document.getElementById('fLink'); sel.innerHTML='<option value="">— None —</option>';
   events.filter(e=>e.type==='event' && e.id!==currentId).sort((a,b)=>a.date.localeCompare(b.date))
     .forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=`${e.title} (${e.date})`; sel.appendChild(o); });
 }
@@ -495,11 +539,12 @@ function openAdd(dateStr){
   document.getElementById('deleteBtn').style.display='none';
   document.getElementById('fTitle').value='';
   document.getElementById('fDate').value=dateStr||fmt(new Date());
-  document.getElementById('fDept').value='event';
+  document.getElementById('fEnd').value='';
   document.getElementById('fAssignee').value='';
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
-  refreshLinkOptions(null); setType('event'); clearErr(); openModal();
+  buildDeptOptions((DEPTS.find(d=>d.id!=='school')||{}).id);
+  refreshLinkOptions(null); setType('event'); setStatus('final'); clearErr(); openModal();
 }
 function openEdit(ev){
   editingId=ev.id;
@@ -508,10 +553,12 @@ function openEdit(ev){
   document.getElementById('deleteBtn').style.display='inline-flex';
   document.getElementById('fTitle').value=ev.title;
   document.getElementById('fDate').value=ev.date;
+  document.getElementById('fEnd').value=ev.endDate||'';
   document.getElementById('fAssignee').value=ev.assignee||'';
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
-  refreshLinkOptions(ev.id); setType(ev.type);
+  buildDeptOptions(ev.dept!=='school'?ev.dept:undefined);
+  refreshLinkOptions(ev.id); setType(ev.type); setStatus(ev.status||'final');
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
   document.getElementById('fLink').value=ev.linkedEventId||'';
   clearErr(); openModal();
@@ -519,7 +566,7 @@ function openEdit(ev){
 function openModal(){ scrim.classList.add('open'); setTimeout(()=>document.getElementById('fTitle').focus(),30); }
 function closeModal(){ scrim.classList.remove('open'); }
 function clearErr(){ document.getElementById('titleErr').classList.remove('show'); }
-function setBusy(on){ document.querySelector('.modal').classList.toggle('saving', on); }
+function setBusy(on){ document.querySelector('#scrim .modal').classList.toggle('saving', on); }
 
 async function saveItem(){
   const title=document.getElementById('fTitle').value.trim();
@@ -529,15 +576,17 @@ async function saveItem(){
   const rec  = document.getElementById('recurField').classList.contains('hide') ? 'none' : document.getElementById('fRecur').value;
   const assignee = (formType==='due'||formType==='meeting') ? document.getElementById('fAssignee').value.trim() : '';
   const linkedEventId = formType==='due' ? (document.getElementById('fLink').value||null) : null;
+  let endDate = (formType==='event'||formType==='school') ? (document.getElementById('fEnd').value||null) : null;
+  if(endDate && endDate < date) endDate = null;
   const details=document.getElementById('fDetails').value.trim();
 
   setBusy(true); clearBanner();
   try{
     if(editingId){
-      const payload={ id:editingId, title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details, source:(events.find(e=>e.id===editingId)||{}).source||'user' };
+      const payload={ id:editingId, title, type:formType, dept, date, endDate, status:formStatus, assignee, linkedEventId, recur:rec, details, source:(events.find(e=>e.id===editingId)||{}).source||'user' };
       await dbUpdate(payload); Object.assign(events.find(e=>e.id===editingId), payload);
     } else {
-      const payload={ id:uid(), title, type:formType, dept, date, assignee, linkedEventId, recur:rec, details, source:'user' };
+      const payload={ id:uid(), title, type:formType, dept, date, endDate, status:formStatus, assignee, linkedEventId, recur:rec, details, source:'user' };
       await dbInsert(payload); events.push(payload);
     }
   }catch(e){ setBusy(false); showError('Could not save — '+e.message); return; }
@@ -555,9 +604,60 @@ async function deleteItem(){
   setBusy(false); closeModal(); renderActive();
 }
 
-/* ===========================================================================
-   WIRING
-   =========================================================================== */
+/* ===== MANAGE CATEGORIES ===== */
+const catScrim=document.getElementById('catScrim');
+function catError(msg){ const e=document.getElementById('catErr'); e.textContent=msg; e.classList.add('show'); }
+function clearCatError(){ document.getElementById('catErr').classList.remove('show'); }
+function openCat(){ renderCatList(); clearCatError(); catScrim.classList.add('open'); }
+function closeCat(){ catScrim.classList.remove('open'); }
+async function reloadDepartments(){
+  try{ setDepartments(await deptLoad()); }catch(e){ showError('Could not reload categories — '+e.message); }
+  renderFilters(); renderCatList(); renderActive();
+}
+function renderCatList(){
+  const box=document.getElementById('catList'); box.innerHTML='';
+  DEPTS.forEach(d=>{
+    const usedBy=events.filter(e=>e.dept===d.id).length;
+    const row=document.createElement('div'); row.className='catrow';
+    row.innerHTML=`<input type="color" class="catcolor" value="${escapeHtml(d.color)}">`+
+                  `<input type="text" class="catname" value="${escapeHtml(d.name)}">`+
+                  `<button class="catsave">Save</button>`+
+                  (d.builtin?`<span class="catbuiltin">built-in</span>`:`<button class="catdel danger">Delete</button>`);
+    const colorEl=row.querySelector('.catcolor'), nameEl=row.querySelector('.catname');
+    row.querySelector('.catsave').onclick=async()=>{
+      const name=nameEl.value.trim(); if(!name){ catError('Category name can’t be empty.'); return; }
+      clearCatError();
+      try{ await deptUpdate({id:d.id, name, color:colorEl.value}); }catch(e){ catError(e.message); return; }
+      await reloadDepartments();
+    };
+    const del=row.querySelector('.catdel');
+    if(del) del.onclick=async()=>{
+      if(usedBy>0){ catError(`“${d.name}” is used by ${usedBy} item${usedBy>1?'s':''}. Reassign those first, then delete.`); return; }
+      clearCatError();
+      try{ await deptDelete(d.id); }catch(e){ catError(e.message); return; }
+      await reloadDepartments();
+    };
+    box.appendChild(row);
+  });
+}
+async function addCategory(){
+  const name=document.getElementById('newCatName').value.trim();
+  if(!name){ catError('Enter a name for the new category.'); return; }
+  clearCatError();
+  const color=document.getElementById('newCatColor').value;
+  const id=slug(name)+'-'+Math.random().toString(36).slice(2,6);
+  const sort=(DEPTS.reduce((mx,d)=>Math.max(mx,d.sort||0),0))+1;
+  try{ await deptInsert({id,name,color,sort,builtin:false}); }catch(e){ catError(e.message); return; }
+  document.getElementById('newCatName').value='';
+  await reloadDepartments();
+}
+
+/* ===== SIZE CONTROL (remembered per browser) ===== */
+const board=document.getElementById('board');
+const sizeEl=document.getElementById('calSize');
+function applySize(px){ board.style.maxWidth=px+'px'; try{ localStorage.setItem('kesa_cal_w', px); }catch(e){} }
+
+/* ===== WIRING ===== */
 document.getElementById('prev').onclick=()=>{ view.setMonth(view.getMonth()-1); renderGrid(); };
 document.getElementById('next').onclick=()=>{ view.setMonth(view.getMonth()+1); renderGrid(); };
 document.getElementById('today').onclick=()=>{ view=new Date(); view.setDate(1); renderGrid(); };
@@ -566,18 +666,30 @@ document.getElementById('cancelBtn').onclick=closeModal;
 document.getElementById('saveBtn').onclick=saveItem;
 document.getElementById('deleteBtn').onclick=deleteItem;
 document.querySelectorAll('#typeSeg button').forEach(b=> b.onclick=()=>setType(b.dataset.type));
+document.querySelectorAll('#statusSeg button').forEach(b=> b.onclick=()=>setStatus(b.dataset.status));
 document.querySelectorAll('#viewToggle button').forEach(b=> b.onclick=()=>setView(b.dataset.view));
+document.getElementById('manageBtn').onclick=openCat;
+document.getElementById('catClose').onclick=closeCat;
+document.getElementById('newCatAdd').onclick=addCategory;
+sizeEl.oninput=()=>applySize(+sizeEl.value);
 scrim.onclick=(e)=>{ if(e.target===scrim) closeModal(); };
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && scrim.classList.contains('open')) closeModal(); });
+catScrim.onclick=(e)=>{ if(e.target===catScrim) closeCat(); };
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ if(scrim.classList.contains('open')) closeModal(); if(catScrim.classList.contains('open')) closeCat(); } });
 
-/* ===========================================================================
-   BOOT
-   =========================================================================== */
+/* ===== BOOT ===== */
 (async function init(){
+  let savedW=1120; try{ const v=localStorage.getItem('kesa_cal_w'); if(v) savedW=+v; }catch(e){}
+  savedW=Math.min(1200, Math.max(640, savedW||1120));
+  sizeEl.value=savedW; board.style.maxWidth=savedW+'px';
+
   if(typeof supabase==='undefined' || !supabase.createClient){ showError('Could not load the database library. Check your connection and refresh.'); return; }
   try{ sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
   catch(e){ showError('Supabase config looks wrong: '+e.message); return; }
+
+  try{ setDepartments(await deptLoad()); }
+  catch(e){ setDepartments(DEFAULT_DEPTS); showError('Using default categories — the departments table isn’t set up yet. Run the migration SQL to enable custom categories.'); }
   renderFilters();
+
   try{
     events = await dbLoad();
     if(events.length===0){ const s=seed(); await dbInsertMany(s); events=s; }
