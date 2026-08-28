@@ -42,6 +42,27 @@
 
   .wrap{width:100%;max-width:none;margin:0;padding:20px 20px 48px;overflow:visible}
 
+  header.app,.banner,.filter-panel{
+    width:min(1200px,calc(100vw - 40px));
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .version-badge{
+    display:inline-flex;
+    align-items:center;
+    margin-left:7px;
+    padding:1px 6px;
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    color:var(--muted);
+    background:var(--panel);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.04em;
+    vertical-align:1px;
+  }
+
   header.app{
     display:flex;
     align-items:flex-end;
@@ -238,7 +259,7 @@
 
   .dow div{
     padding:9px 10px;
-    font-size:11px;
+    font-size:calc(11px * var(--cal-scale,1));
     font-weight:600;
     text-transform:uppercase;
     letter-spacing:.07em;
@@ -268,9 +289,9 @@
     border:0;
     border-radius:6px;
     color:#fff;
-    font-size:11px;
+    font-size:calc(11px * var(--cal-scale,1));
     font-weight:600;
-    line-height:18px;
+    line-height:1.2;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -323,13 +344,13 @@
   .num{
     font-family:var(--display);
     font-weight:600;
-    font-size:12.5px;
+    font-size:calc(12.5px * var(--cal-scale,1));
     color:var(--ink-soft);
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    min-width:22px;
-    height:22px;
+    min-width:calc(22px * var(--cal-scale,1));
+    height:calc(22px * var(--cal-scale,1));
     border-radius:6px;
     flex:none;
   }
@@ -364,11 +385,12 @@
 
   .chip{
     display:flex;
-    align-items:center;
-    gap:6px;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:1px;
     border-radius:6px;
     padding:3px 6px;
-    font-size:11.5px;
+    font-size:calc(11.5px * var(--cal-scale,1));
     font-weight:500;
     color:#fff;
     overflow:hidden;
@@ -381,9 +403,39 @@
     flex:none;
   }
 
-  .chip .g{flex:none;opacity:.92;font-size:11px}
+  .chip .g{flex:none;opacity:.92;font-size:calc(11px * var(--cal-scale,1))}
   .chip .t{overflow:hidden;text-overflow:ellipsis}
-  .chip .rec{flex:none;opacity:.8;font-size:10px}
+  .chip .rec{flex:none;opacity:.8;font-size:calc(10px * var(--cal-scale,1))}
+  .chip-main{display:flex;align-items:center;gap:6px;min-width:0;width:100%}
+  .chip-meta{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    opacity:.88;
+    font-size:calc(9.5px * var(--cal-scale,1));
+    font-weight:500;
+  }
+  .chip-link{
+    text-decoration:underline;
+    text-decoration-thickness:1px;
+    text-underline-offset:2px;
+    cursor:pointer;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .event-focus{
+    outline:3px solid #0F172A !important;
+    outline-offset:2px !important;
+    animation:eventFocusPulse 1.25s ease;
+  }
+  @keyframes eventFocusPulse{
+    0%,100%{filter:brightness(1)}
+    40%{filter:brightness(1.3)}
+  }
   .chip:hover{filter:brightness(1.06)}
   .chip.tentative{outline:1.5px dashed rgba(255,255,255,.85);outline-offset:-3px;opacity:.9}
 
@@ -538,6 +590,8 @@
   .danger:hover{background:#FEF2F2;border-color:#E4A0A0}
   .err{color:#B91C1C;font-size:12px;margin-top:6px;display:none}
   .err.show{display:block}
+  .emoji-row{display:flex;align-items:center;gap:8px}
+  .emoji-row select{width:100%}
   .saving{opacity:.6;pointer-events:none}
 
   .catrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -557,6 +611,7 @@
 
   @media (max-width:700px){
     .wrap{padding-left:12px;padding-right:12px}
+    header.app,.banner,.filter-panel{width:calc(100vw - 24px)}
     .brand h1{font-size:19px}
     .filter-row{grid-template-columns:1fr}
     .filter-label{padding-top:2px}
@@ -576,7 +631,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates</p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v6</span></p>
     </div>
 
     <div class="nav">
@@ -641,6 +696,7 @@
         <button type="button" data-type="due" aria-pressed="false">Due date</button>
         <button type="button" data-type="meeting" aria-pressed="false">Meeting</button>
         <button type="button" data-type="school" aria-pressed="false">School</button>
+        <button type="button" data-type="other" aria-pressed="false">Other</button>
       </div>
     </div>
 
@@ -648,6 +704,44 @@
       <label class="lb" for="fTitle">Title</label>
       <input type="text" id="fTitle" placeholder="e.g. Fall Mixer" autocomplete="off" />
       <div class="err" id="titleErr">Add a title so people know what this is.</div>
+    </div>
+
+    <div class="field hide" id="emojiField">
+      <label class="lb" for="fEmoji">Emoji</label>
+      <div class="emoji-row">
+        <select id="fEmoji">
+          <option value="📌">📌 Pin</option>
+          <option value="⭐">⭐ Star</option>
+          <option value="🎉">🎉 Celebration</option>
+          <option value="📣">📣 Announcement</option>
+          <option value="💡">💡 Idea</option>
+          <option value="✅">✅ Check</option>
+          <option value="🔔">🔔 Reminder</option>
+          <option value="📅">📅 Calendar</option>
+          <option value="📝">📝 Note</option>
+          <option value="💬">💬 Message</option>
+          <option value="🤝">🤝 Collaboration</option>
+          <option value="🧑‍💻">🧑‍💻 Work</option>
+          <option value="📦">📦 Package</option>
+          <option value="🚀">🚀 Launch</option>
+          <option value="🎯">🎯 Goal</option>
+          <option value="🏆">🏆 Award</option>
+          <option value="🍽️">🍽️ Food</option>
+          <option value="☕">☕ Coffee</option>
+          <option value="🎓">🎓 School</option>
+          <option value="🛠️">🛠️ Tools</option>
+          <option value="💰">💰 Money</option>
+          <option value="❤️">❤️ Heart</option>
+          <option value="⚡">⚡ Priority</option>
+          <option value="🌟">🌟 Highlight</option>
+          <option value="📍">📍 Location</option>
+          <option value="🧠">🧠 Brainstorm</option>
+          <option value="🎤">🎤 Presentation</option>
+          <option value="📸">📸 Photo</option>
+          <option value="🎨">🎨 Creative</option>
+          <option value="🚌">🚌 Travel</option>
+        </select>
+      </div>
     </div>
 
     <div class="row2">
@@ -665,6 +759,7 @@
     <div class="field hide" id="endField">
       <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional — leave blank for a single day)</span></label>
       <input type="date" id="fEnd" />
+      <div class="err" id="endErr">End date cannot be before the starting date.</div>
     </div>
 
     <div class="field">
@@ -755,6 +850,7 @@ function toRow(ev){
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
     details:ev.details||'',
+    emoji:ev.emoji||'',
     source:ev.source||'user'
   };
 }
@@ -772,6 +868,7 @@ function fromRow(r){
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
+    emoji:r.emoji||'',
     source:r.source||'user'
   };
 }
@@ -852,8 +949,10 @@ function setDepartments(list){
   });
 }
 
-const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲'};
-const TYPE_NAME={event:'Event',due:'Due date',meeting:'Meeting',school:'School event'};
+const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'};
+const TYPE_NAME={event:'Event',due:'Due date',meeting:'Meeting',school:'School event',other:'Other'};
+function glyphFor(ev){return ev.type==='other'?(ev.emoji||'📌'):(TYPE_GLYPH[ev.type]||'•');}
+function linkedEventFor(ev){return ev.linkedEventId?events.find(e=>e.id===ev.linkedEventId&&e.type==='event'):null;}
 
 /* ===== DATE HELPERS ===== */
 function parseYMD(s){
@@ -1198,16 +1297,36 @@ function renderGrid(){
 
       c.className='chip'+(ev.status==='tentative'?' tentative':'');
       c.style.background=dp.color;
+      c.dataset.eventId=ev.id;
+
+      const linked=linkedEventFor(ev);
       c.title=
         `${TYPE_NAME[ev.type]} · ${dp.name}`+
         `${ev.assignee?' · '+ev.assignee:''}`+
+        `${linked?' · linked to '+linked.title:''}`+
         `${ev.endDate?` · ${ev.date}→${ev.endDate}`:''}`+
         `${ev.status==='tentative'?' · tentative':''}`;
 
+      const metaParts=[];
+      if(ev.assignee) metaParts.push(`<span>👤 ${escapeHtml(ev.assignee)}</span>`);
+      if(linked) metaParts.push(`<span class="chip-link" data-linked-id="${escapeHtml(linked.id)}">🔗 ${escapeHtml(linked.title)}</span>`);
+      if(ev.details) metaParts.push(`<span>📝 ${escapeHtml(ev.details)}</span>`);
+
       c.innerHTML=
-        `<span class="g">${TYPE_GLYPH[ev.type]}</span>`+
-        `<span class="t">${escapeHtml(ev.title)}</span>`+
-        `${ev.recur&&ev.recur!=='none'?'<span class="rec">↻</span>':''}`;
+        `<span class="chip-main">`+
+          `<span class="g">${glyphFor(ev)}</span>`+
+          `<span class="t">${escapeHtml(ev.title)}</span>`+
+          `${ev.recur&&ev.recur!=='none'?'<span class="rec">↻</span>':''}`+
+        `</span>`+
+        `${metaParts.length?`<span class="chip-meta">${metaParts.join('<span>·</span>')}</span>`:''}`;
+
+      const jump=c.querySelector('.chip-link');
+      if(jump){
+        jump.onclick=e=>{
+          e.stopPropagation();
+          jumpToEventById(jump.dataset.linkedId);
+        };
+      }
 
       c.onclick=e=>{
         e.stopPropagation();
@@ -1279,8 +1398,14 @@ function renderLongEventBars(segments){
       (seg.ev.status==='tentative'?' tentative':'');
 
     bar.style.background=dp.color;
+    bar.dataset.eventId=seg.ev.id;
+    const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
+    const barHeight=Math.round(18*calScale);
+    const laneStep=barHeight+2;
+
+    bar.style.height=barHeight+'px';
     bar.style.left=(firstCell.offsetLeft+4)+'px';
-    bar.style.top=(firstCell.offsetTop+30+lane*20)+'px';
+    bar.style.top=(firstCell.offsetTop+Math.round(30*calScale)+lane*laneStep)+'px';
     bar.style.width=(lastCell.offsetLeft+lastCell.offsetWidth-firstCell.offsetLeft-8)+'px';
 
     bar.title=
@@ -1288,9 +1413,20 @@ function renderLongEventBars(segments){
       `${seg.ev.assignee?' · '+seg.ev.assignee:''}`+
       `${seg.ev.status==='tentative'?' · tentative':''}`;
 
+    const linked=linkedEventFor(seg.ev);
     bar.innerHTML=
-      `<span>${TYPE_GLYPH[seg.ev.type]}</span>`+
-      `<span class="bar-title">${escapeHtml(seg.ev.title)}</span>`;
+      `<span>${glyphFor(seg.ev)}</span>`+
+      `<span class="bar-title">${escapeHtml(seg.ev.title)}</span>`+
+      `${seg.ev.assignee?`<span>· 👤 ${escapeHtml(seg.ev.assignee)}</span>`:''}`+
+      `${linked?`<span class="chip-link" data-linked-id="${escapeHtml(linked.id)}">· 🔗 ${escapeHtml(linked.title)}</span>`:''}`;
+
+    const barJump=bar.querySelector('.chip-link');
+    if(barJump){
+      barJump.onclick=e=>{
+        e.stopPropagation();
+        jumpToEventById(barJump.dataset.linkedId);
+      };
+    }
 
     bar.onclick=e=>{
       e.stopPropagation();
@@ -1300,10 +1436,13 @@ function renderLongEventBars(segments){
     layer.appendChild(bar);
   });
 
+  const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
+  const laneStep=Math.round(18*calScale)+2;
+
   rowLaneCount.forEach((count,row)=>{
     if(!count) return;
 
-    const margin=8+count*20;
+    const margin=8+count*laneStep;
     for(let col=0;col<7;col++){
       const chips=cellEls[row*7+col].querySelector('.chips');
       if(chips) chips.style.marginTop=margin+'px';
@@ -1313,6 +1452,30 @@ function renderLongEventBars(segments){
 
 function refreshLongEventLayout(){
   if(viewMode==='calendar') renderGrid();
+}
+
+function jumpToEventById(id){
+  const target=events.find(e=>e.id===id&&e.type==='event');
+  if(!target) return;
+
+  activeDepts.add(target.dept);
+  renderFilters();
+
+  const d=parseYMD(target.date);
+  view=new Date(d.getFullYear(),d.getMonth(),1,12);
+  setView('calendar');
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const el=[...document.querySelectorAll('[data-event-id]')]
+        .find(node=>node.dataset.eventId===target.id);
+
+      if(!el) return;
+      el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+      el.classList.add('event-focus');
+      setTimeout(()=>el.classList.remove('event-focus'),1400);
+    });
+  });
 }
 
 /* ===== LIST ===== */
@@ -1379,7 +1542,7 @@ function renderList(){
       `<span class="lbar" style="background:${dp.color}"></span>`+
       `<span class="lbody">`+
         `<span class="ltitle">`+
-          `<span class="g" style="color:${dp.color}">${TYPE_GLYPH[ev.type]}</span>`+
+          `<span class="g" style="color:${dp.color}">${glyphFor(ev)}</span>`+
           `${escapeHtml(ev.title)}`+
           `${ev.status==='tentative'?' <span class="tent">Tentative</span>':''}`+
         `</span>`+
@@ -1419,6 +1582,8 @@ function buildDeptOptions(keep){
   if(cur&&DEPT[cur]&&cur!=='school') sel.value=cur;
 }
 
+let endDateAutoSeeded=true;
+
 function setType(t){
   formType=t;
 
@@ -1430,9 +1595,11 @@ function setType(t){
   const assignee=document.getElementById('assigneeField');
   const link=document.getElementById('linkField');
   const recur=document.getElementById('recurField');
+  const emojiField=document.getElementById('emojiField');
   const dept=document.getElementById('fDept');
 
   endField.classList.toggle('hide',!(t==='event'||t==='school'));
+  emojiField.classList.toggle('hide',t!=='other');
 
   if(t==='school'){
     deptField.classList.add('hide');
@@ -1442,13 +1609,38 @@ function setType(t){
   }else{
     deptField.classList.remove('hide');
     recur.classList.remove('hide');
-    assignee.classList.toggle('hide',!(t==='due'||t==='meeting'));
-    link.classList.toggle('hide',t!=='due');
+    assignee.classList.toggle('hide',!(t==='due'||t==='meeting'||t==='other'));
+    link.classList.toggle('hide',!(t==='due'||t==='other'));
   }
+
+  if(t==='event'||t==='school') syncEndDateConstraints();
 
   if(t!=='school'&&dept.value==='school'){
     dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
   }
+}
+
+function syncEndDateConstraints(){
+  const start=document.getElementById('fDate').value;
+  const end=document.getElementById('fEnd');
+
+  if(start) end.min=start;
+
+  if((formType==='event'||formType==='school') && start && (endDateAutoSeeded||!end.value)){
+    end.value=start;
+  }
+
+  validateEndDate();
+}
+
+function validateEndDate(){
+  const err=document.getElementById('endErr');
+  const start=document.getElementById('fDate').value;
+  const end=document.getElementById('fEnd').value;
+  const invalid=!!(start&&end&&end<start);
+
+  err.classList.toggle('show',invalid);
+  return !invalid;
 }
 
 function setStatus(s){
@@ -1474,13 +1666,15 @@ function refreshLinkOptions(currentId){
 
 function openAdd(dateStr){
   editingId=null;
+  endDateAutoSeeded=true;
 
   document.getElementById('mTitle').textContent='Add item';
   document.getElementById('mSub').textContent='Fill in the details and save to the calendar.';
   document.getElementById('deleteBtn').style.display='none';
   document.getElementById('fTitle').value='';
   document.getElementById('fDate').value=dateStr||fmt(new Date());
-  document.getElementById('fEnd').value='';
+  document.getElementById('fEnd').value=document.getElementById('fDate').value;
+  document.getElementById('fEmoji').value='📌';
   document.getElementById('fAssignee').value='';
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
@@ -1488,6 +1682,7 @@ function openAdd(dateStr){
   buildDeptOptions((DEPTS.find(d=>d.id!=='school')||{}).id);
   refreshLinkOptions(null);
   setType('event');
+  syncEndDateConstraints();
   setStatus('final');
   clearErr();
   openModal();
@@ -1495,6 +1690,7 @@ function openAdd(dateStr){
 
 function openEdit(ev){
   editingId=ev.id;
+  endDateAutoSeeded=!ev.endDate;
 
   document.getElementById('mTitle').textContent='Edit item';
   document.getElementById('mSub').textContent=
@@ -1505,7 +1701,8 @@ function openEdit(ev){
   document.getElementById('deleteBtn').style.display='inline-flex';
   document.getElementById('fTitle').value=ev.title;
   document.getElementById('fDate').value=ev.date;
-  document.getElementById('fEnd').value=ev.endDate||'';
+  document.getElementById('fEnd').value=ev.endDate||ev.date;
+  document.getElementById('fEmoji').value=ev.emoji||'📌';
   document.getElementById('fAssignee').value=ev.assignee||'';
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
@@ -1513,6 +1710,7 @@ function openEdit(ev){
   buildDeptOptions(ev.dept!=='school'?ev.dept:undefined);
   refreshLinkOptions(ev.id);
   setType(ev.type);
+  syncEndDateConstraints();
   setStatus(ev.status||'final');
 
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
@@ -1533,6 +1731,7 @@ function closeModal(){
 
 function clearErr(){
   document.getElementById('titleErr').classList.remove('show');
+  document.getElementById('endErr').classList.remove('show');
 }
 
 function setBusy(on){
@@ -1554,11 +1753,11 @@ async function saveItem(){
     ?'none'
     :document.getElementById('fRecur').value;
 
-  const assignee=(formType==='due'||formType==='meeting')
+  const assignee=(formType==='due'||formType==='meeting'||formType==='other')
     ?document.getElementById('fAssignee').value.trim()
     :'';
 
-  const linkedEventId=formType==='due'
+  const linkedEventId=(formType==='due'||formType==='other')
     ?(document.getElementById('fLink').value||null)
     :null;
 
@@ -1566,8 +1765,14 @@ async function saveItem(){
     ?(document.getElementById('fEnd').value||null)
     :null;
 
-  if(endDate&&endDate<date) endDate=null;
+  if((formType==='event'||formType==='school')&&!validateEndDate()){
+    document.getElementById('fEnd').focus();
+    return;
+  }
 
+  if(endDate===date) endDate=null;
+
+  const emoji=formType==='other'?document.getElementById('fEmoji').value:'';
   const details=document.getElementById('fDetails').value.trim();
 
   setBusy(true);
@@ -1587,6 +1792,7 @@ async function saveItem(){
         linkedEventId,
         recur:rec,
         details,
+        emoji,
         source:(events.find(e=>e.id===editingId)||{}).source||'user'
       };
 
@@ -1606,6 +1812,7 @@ async function saveItem(){
         linkedEventId,
         recur:rec,
         details,
+        emoji,
         source:'user'
       };
 
@@ -1805,11 +2012,15 @@ function clampBoardWidth(px){
 function applyBoardWidth(px,remember=true){
   if(window.innerWidth<=700){
     board.style.width='100%';
+    board.style.setProperty('--cal-scale','1');
     return;
   }
 
   const width=clampBoardWidth(px);
   board.style.width=width+'px';
+
+  const scale=Math.max(1,width/DEFAULT_BOARD_WIDTH);
+  board.style.setProperty('--cal-scale',String(scale));
 
   if(remember){
     try{
@@ -1883,6 +2094,7 @@ resizeHandle.addEventListener('pointercancel',endResize);
 window.addEventListener('resize',()=>{
   if(window.innerWidth<=700){
     board.style.width='100%';
+    board.style.setProperty('--cal-scale','1');
     refreshLongEventLayout();
     return;
   }
@@ -1932,6 +2144,12 @@ document.querySelectorAll('#viewToggle button')
 document.getElementById('manageBtn').onclick=openCat;
 document.getElementById('catClose').onclick=closeCat;
 document.getElementById('newCatAdd').onclick=addCategory;
+
+document.getElementById('fDate').addEventListener('change',syncEndDateConstraints);
+document.getElementById('fEnd').addEventListener('change',()=>{
+  endDateAutoSeeded=false;
+  validateEndDate();
+});
 
 scrim.onclick=e=>{
   if(e.target===scrim) closeModal();
