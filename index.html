@@ -329,10 +329,32 @@
   }
 
   .chip.assigned-to-me,.long-event-bar.assigned-to-me{
-    box-shadow:inset 0 0 0 1.5px #3B82F6,0 1px 2px rgba(15,23,42,.06);
+    box-shadow:0 1px 2px rgba(15,23,42,.06);
   }
-  .lrow.assigned-to-me{background:#EFF6FF}
-  .lrow.assigned-to-me:hover{background:#DBEAFE}
+
+  .mine-badge{
+    flex:none;
+    margin-left:auto;
+    padding:calc(1px * var(--cal-scale,1)) calc(5px * var(--cal-scale,1));
+    border-radius:999px;
+    background:#111827;
+    color:#fff;
+    font-size:calc(6.8px * var(--cal-scale,1));
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    line-height:1.35;
+  }
+
+  .assigned-to-me .mine-badge + .status-pill{
+    margin-left:0;
+  }
+
+  .lrow.assigned-to-me{
+    background:#FFFBEB;
+    box-shadow:inset 3px 0 0 #F59E0B;
+  }
+  .lrow.assigned-to-me:hover{background:#FEF3C7}
 
   .others-row[hidden]{display:none}
 
@@ -1512,13 +1534,29 @@ function viewerScopeAllows(ev){
   if(!viewer) return true;
   if(isAssignedToViewer(ev)) return true;
   if(ev.dept==='all'||ev.dept==='school') return true;
+
+  // Custom/non-department categories are general rather than belonging to
+  // another core department, so keep them in the viewer's personal scope.
+  if(!DEPARTMENT_IDS.has(ev.dept)) return true;
+
   const viewerDept=executiveDepartmentId(viewer);
   return !!(viewerDept&&ev.dept===viewerDept);
 }
 
 function eventMatchesView(ev){
   if(!viewerScopeAllows(ev)) return false;
-  return selectedDeptFilter==='all'||ev.dept===selectedDeptFilter;
+  if(selectedDeptFilter==='all') return true;
+
+  // For the four core department filters, hide only the other three core
+  // departments plus School. KESA/general and custom categories stay visible.
+  if(DEPARTMENT_IDS.has(selectedDeptFilter)){
+    if(ev.dept==='school') return false;
+    if(DEPARTMENT_IDS.has(ev.dept)) return ev.dept===selectedDeptFilter;
+    return true;
+  }
+
+  // Non-core filters (KESA, School, custom categories) remain exact-match.
+  return ev.dept===selectedDeptFilter;
 }
 
 function executivesForEvent(ev){
@@ -1993,6 +2031,7 @@ function renderGrid(){
           `<span class="type-glyph">${glyphFor(ev)}</span>`+
           `<span class="type-label">${escapeHtml(TYPE_NAME[ev.type])}</span>`+
           `${ev.time?`<span class="card-time">${escapeHtml(prettyTime(ev.time))}</span>`:''}`+
+          `${isAssignedToViewer(ev)?'<span class="mine-badge">You</span>':''}`+
           `${ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
         `</span>`+
         `<span class="card-bottom">`+
@@ -2108,6 +2147,7 @@ function renderLongEventBars(segments){
         `<span class="type-glyph">${glyphFor(seg.ev)}</span>`+
         `<span class="type-label">${escapeHtml(TYPE_NAME[seg.ev.type])}</span>`+
         `${seg.ev.time?`<span class="card-time">${escapeHtml(prettyTime(seg.ev.time))}</span>`:''}`+
+        `${isAssignedToViewer(seg.ev)?'<span class="mine-badge">You</span>':''}`+
         `${seg.ev.status?`<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
       `</span>`+
       `<span class="card-bottom">`+
