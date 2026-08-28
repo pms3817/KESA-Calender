@@ -333,35 +333,36 @@
 
   .long-event-bar{
     position:absolute;
-    height:18px;
+    min-height:38px;
     display:flex;
-    align-items:center;
-    gap:5px;
-    padding:0 7px;
-    border:0;
-    border-radius:6px;
-    color:#fff;
-    font-size:calc(11px * var(--cal-scale,1));
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:center;
+    gap:2px;
+    padding:4px 8px 5px;
+    border:1px solid var(--line-strong);
+    border-left-width:3px;
+    border-radius:7px;
+    color:var(--ink);
+    font-size:calc(10.5px * var(--cal-scale,1));
     font-weight:600;
-    line-height:1.2;
+    line-height:1.15;
     white-space:nowrap;
     overflow:hidden;
-    text-overflow:ellipsis;
-    box-shadow:0 1px 2px rgba(15,23,42,.12);
+    box-shadow:0 1px 2px rgba(15,23,42,.06);
     pointer-events:auto;
     z-index:3;
   }
 
   .long-event-bar.continues-left{
-    border-top-left-radius:2px;
-    border-bottom-left-radius:2px;
+    border-top-left-radius:3px;
+    border-bottom-left-radius:3px;
   }
 
   .long-event-bar.continues-right{
-    border-top-right-radius:2px;
-    border-bottom-right-radius:2px;
+    border-top-right-radius:3px;
+    border-bottom-right-radius:3px;
   }
-
 
   .long-event-bar .bar-title{
     overflow:hidden;
@@ -433,151 +434,162 @@
   .chip{
     display:flex;
     flex-direction:column;
-    align-items:flex-start;
-    gap:1px;
-    border-radius:6px;
-    padding:3px 6px;
-    font-size:calc(11.5px * var(--cal-scale,1));
+    align-items:stretch;
+    justify-content:center;
+    gap:2px;
+    min-height:40px;
+    border-radius:7px;
+    padding:4px 7px 5px;
+    font-size:calc(10.5px * var(--cal-scale,1));
     font-weight:500;
-    color:#fff;
+    color:var(--ink);
     overflow:hidden;
     white-space:nowrap;
-    text-overflow:ellipsis;
-    border:0;
+    border:1px solid var(--line-strong);
+    border-left-width:3px;
     text-align:left;
     width:100%;
-    line-height:1.25;
+    line-height:1.15;
     flex:none;
+    box-shadow:0 1px 2px rgba(15,23,42,.05);
   }
 
-  .chip .g{flex:none;opacity:.92;font-size:calc(11px * var(--cal-scale,1))}
-  .chip .t{overflow:hidden;text-overflow:ellipsis}
-  .chip .rec{flex:none;opacity:.8;font-size:calc(10px * var(--cal-scale,1))}
-  .chip-main{display:flex;align-items:center;gap:6px;min-width:0;width:100%}
-  .chip-meta{
+  .chip,.long-event-bar{
+    --item-color:#64748B;
+    --type-bg:#FFFFFF;
+    --type-line:#64748B;
+    --type-ink:#334155;
+    background:color-mix(in srgb,var(--item-color) 7%,var(--type-bg) 93%);
+    border-color:color-mix(in srgb,var(--item-color) 24%,#CBD5E1 76%);
+    border-left-color:var(--type-line);
+  }
+
+  .chip.type-event,.long-event-bar.type-event{
+    --type-bg:#FFFFFF;
+    --type-line:#2563EB;
+    --type-ink:#1D4ED8;
+  }
+  .chip.type-due,.long-event-bar.type-due{
+    --type-bg:#FFFBEB;
+    --type-line:#D97706;
+    --type-ink:#92400E;
+  }
+  .chip.type-meeting,.long-event-bar.type-meeting{
+    --type-bg:#F0FDFA;
+    --type-line:#0F766E;
+    --type-ink:#115E59;
+  }
+  .chip.type-school,.long-event-bar.type-school{
+    --type-bg:#F8FAFC;
+    --type-line:#475569;
+    --type-ink:#334155;
+    background:#F1F5F9;
+    border-color:#CBD5E1;
+    border-left-color:#475569;
+  }
+  .chip.type-other,.long-event-bar.type-other{
+    --type-bg:#FAF5FF;
+    --type-line:#7E22CE;
+    --type-ink:#6B21A8;
+  }
+
+  .card-top{
     display:flex;
     align-items:center;
     gap:5px;
-    width:100%;
-    overflow:hidden;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-    opacity:.88;
-    font-size:calc(9.5px * var(--cal-scale,1));
-    font-weight:500;
-  }
-  .chip-link{
-    text-decoration:underline;
-    text-decoration-thickness:1px;
-    text-underline-offset:2px;
-    cursor:pointer;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .event-focus{
-    outline:3px solid #0F172A !important;
-    outline-offset:2px !important;
-    animation:eventFocusPulse 1.25s ease;
-  }
-  @keyframes eventFocusPulse{
-    0%,100%{filter:brightness(1)}
-    40%{filter:brightness(1.3)}
-  }
-  .chip:hover{filter:brightness(1.06)}
-
-  .chip,.long-event-bar{
-    position:relative;
-    --item-color:#64748B;
-    --type-accent:#BFDBFE;
-    color:#fff;
-    background:
-      linear-gradient(135deg,
-        color-mix(in srgb,var(--item-color) 92%,#0F172A 8%),
-        color-mix(in srgb,var(--item-color) 72%,#0F172A 28%));
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.24),
-      inset 3px 0 0 var(--type-accent),
-      0 2px 5px rgba(15,23,42,.12);
+    min-width:0;
+    height:calc(14px * var(--cal-scale,1));
   }
 
-  .chip::before,.long-event-bar::before{
-    content:"";
-    position:absolute;
-    left:0;right:0;top:0;
-    height:2px;
-    background:linear-gradient(90deg,var(--type-accent),rgba(255,255,255,.2));
-    opacity:.95;
-    pointer-events:none;
-  }
-
-  .chip.type-event,.long-event-bar.type-event{--type-accent:#93C5FD}
-  .chip.type-due,.long-event-bar.type-due{--type-accent:#FDE68A}
-  .chip.type-meeting,.long-event-bar.type-meeting{--type-accent:#A5F3FC}
-  .chip.type-school,.long-event-bar.type-school{
-    --item-color:#334155;
-    --type-accent:#E2E8F0;
-    background:linear-gradient(135deg,#475569,#1E293B);
-  }
-  .chip.type-other,.long-event-bar.type-other{--type-accent:#E9D5FF}
-
-  .type-medallion{
-    width:calc(19px * var(--cal-scale,1));
-    height:calc(19px * var(--cal-scale,1));
-    border-radius:calc(5px * var(--cal-scale,1));
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
+  .type-glyph{
     flex:none;
-    background:color-mix(in srgb,var(--type-accent) 24%,rgba(255,255,255,.08));
-    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--type-accent) 70%,transparent);
     font-size:calc(10px * var(--cal-scale,1));
+    line-height:1;
   }
 
   .type-label{
     flex:none;
-    display:inline-flex;
-    align-items:center;
-    padding:calc(1px * var(--cal-scale,1)) calc(4px * var(--cal-scale,1));
-    border-radius:999px;
-    background:rgba(255,255,255,.16);
-    color:#fff;
+    color:var(--type-ink);
     font-size:calc(7.5px * var(--cal-scale,1));
-    line-height:1.25;
     font-weight:800;
+    letter-spacing:.055em;
     text-transform:uppercase;
-    letter-spacing:.05em;
   }
 
-  .status-token{
-    position:absolute;
-    top:calc(3px * var(--cal-scale,1));
-    right:calc(4px * var(--cal-scale,1));
-    z-index:4;
-    width:calc(17px * var(--cal-scale,1));
-    height:calc(17px * var(--cal-scale,1));
+  .status-pill{
+    flex:none;
+    margin-left:auto;
+    padding:calc(1px * var(--cal-scale,1)) calc(5px * var(--cal-scale,1));
+    border-radius:999px;
+    font-size:calc(6.8px * var(--cal-scale,1));
+    font-weight:800;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    line-height:1.35;
+  }
+
+  .status-final .status-pill{
+    color:#166534;
+    background:#ECFDF3;
+    border:1px solid #BBF7D0;
+  }
+
+  .status-tentative .status-pill{
+    color:#92400E;
+    background:#FFF7ED;
+    border:1px solid #FED7AA;
+  }
+
+  .card-bottom{
     display:flex;
     align-items:center;
-    justify-content:center;
-    border-radius:50%;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    overflow:hidden;
+  }
+
+  .card-title{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:var(--ink);
+    font-size:calc(10.5px * var(--cal-scale,1));
+    font-weight:650;
+  }
+
+  .card-extra{
+    flex:none;
+    max-width:42%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    color:var(--muted);
     font-size:calc(8px * var(--cal-scale,1));
-    font-weight:900;
-    box-shadow:0 1px 3px rgba(15,23,42,.25),inset 0 1px 0 rgba(255,255,255,.5);
-    pointer-events:none;
+    font-weight:500;
   }
 
-  .status-final .status-token{
-    color:#14532D;
-    background:linear-gradient(135deg,#DCFCE7,#86EFAC);
-    border:1px solid rgba(22,101,52,.28);
+  .chip-link{
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .chip-link:hover{text-decoration:underline;text-underline-offset:2px}
+
+  .event-focus{
+    outline:2px solid #2563EB !important;
+    outline-offset:2px !important;
+    animation:eventFocusPulse 1.25s ease;
+  }
+  @keyframes eventFocusPulse{
+    0%,100%{box-shadow:0 1px 2px rgba(15,23,42,.05)}
+    45%{box-shadow:0 0 0 4px rgba(37,99,235,.14)}
   }
 
-  .status-tentative .status-token{
-    color:#78350F;
-    background:linear-gradient(135deg,#FEF3C7,#FBBF24);
-    border:1px solid rgba(146,64,14,.28);
+  .chip:hover,.long-event-bar:hover{
+    border-color:color-mix(in srgb,var(--item-color) 42%,#94A3B8 58%);
+    background:color-mix(in srgb,var(--item-color) 10%,var(--type-bg) 90%);
   }
 
-  .chip.status-tentative,.long-event-bar.status-tentative{filter:saturate(.82) brightness(.98)}
   .resize-handle{
     position:absolute;
     top:0;
@@ -794,7 +806,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v8</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v9</span></p>
     </div>
 
     <div class="nav">
@@ -1497,19 +1509,21 @@ function renderGrid(){
         `${ev.endDate?` · ${ev.date}→${ev.endDate}`:''}`+
         `${ev.status==='tentative'?' · tentative':''}`;
 
-      const metaParts=[];
-      if(ev.assignee) metaParts.push(`<span>👤 ${escapeHtml(ev.assignee)}</span>`);
-      if(linked) metaParts.push(`<span class="chip-link" data-linked-id="${escapeHtml(linked.id)}">🔗 ${escapeHtml(linked.title)}</span>`);
+      const extraParts=[];
+      if(ev.assignee) extraParts.push(`<span class="card-extra">@${escapeHtml(ev.assignee)}</span>`);
+      if(linked) extraParts.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
 
       c.innerHTML=
-        `<span class="status-token" title="${ev.status==='tentative'?'Tentative':'Final'}">${ev.status==='tentative'?'⏳':'✓'}</span>`+
-        `<span class="chip-main">`+
-          `<span class="type-medallion">${glyphFor(ev)}</span>`+
+        `<span class="card-top">`+
+          `<span class="type-glyph">${glyphFor(ev)}</span>`+
           `<span class="type-label">${escapeHtml(TYPE_NAME[ev.type])}</span>`+
-          `<span class="t">${escapeHtml(ev.title)}</span>`+
-          `${ev.recur&&ev.recur!=='none'?'<span class="rec">↻</span>':''}`+
+          `<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`+
         `</span>`+
-        `${metaParts.length?`<span class="chip-meta">${metaParts.join('<span>·</span>')}</span>`:''}`;
+        `<span class="card-bottom">`+
+          `<span class="card-title">${escapeHtml(ev.title)}</span>`+
+          `${extraParts.length?`<span class="card-extra">·</span>${extraParts.join('<span class="card-extra">·</span>')}`:''}`+
+          `${ev.recur&&ev.recur!=='none'?'<span class="card-extra">↻</span>':''}`+
+        `</span>`;
 
       const jump=c.querySelector('.chip-link');
       if(jump){
@@ -1590,7 +1604,7 @@ function renderLongEventBars(segments){
     bar.style.setProperty('--item-color',dp.color);
     bar.dataset.eventId=seg.ev.id;
     const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
-    const barHeight=Math.round(18*calScale);
+    const barHeight=Math.round(40*calScale);
     const laneStep=barHeight+2;
 
     bar.style.height=barHeight+'px';
@@ -1604,13 +1618,20 @@ function renderLongEventBars(segments){
       `${seg.ev.status==='tentative'?' · tentative':''}`;
 
     const linked=linkedEventFor(seg.ev);
+    const barExtras=[];
+    if(seg.ev.assignee) barExtras.push(`<span class="card-extra">@${escapeHtml(seg.ev.assignee)}</span>`);
+    if(linked) barExtras.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
+
     bar.innerHTML=
-      `<span class="status-token" title="${seg.ev.status==='tentative'?'Tentative':'Final'}">${seg.ev.status==='tentative'?'⏳':'✓'}</span>`+
-      `<span class="type-medallion">${glyphFor(seg.ev)}</span>`+
-      `<span class="type-label">${escapeHtml(TYPE_NAME[seg.ev.type])}</span>`+
-      `<span class="bar-title">${escapeHtml(seg.ev.title)}</span>`+
-      `${seg.ev.assignee?`<span>· 👤 ${escapeHtml(seg.ev.assignee)}</span>`:''}`+
-      `${linked?`<span class="chip-link" data-linked-id="${escapeHtml(linked.id)}">· 🔗 ${escapeHtml(linked.title)}</span>`:''}`;
+      `<span class="card-top">`+
+        `<span class="type-glyph">${glyphFor(seg.ev)}</span>`+
+        `<span class="type-label">${escapeHtml(TYPE_NAME[seg.ev.type])}</span>`+
+        `<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`+
+      `</span>`+
+      `<span class="card-bottom">`+
+        `<span class="card-title">${escapeHtml(seg.ev.title)}</span>`+
+        `${barExtras.length?`<span class="card-extra">·</span>${barExtras.join('<span class="card-extra">·</span>')}`:''}`+
+      `</span>`;
 
     const barJump=bar.querySelector('.chip-link');
     if(barJump){
@@ -1629,7 +1650,7 @@ function renderLongEventBars(segments){
   });
 
   const calScale=parseFloat(getComputedStyle(board).getPropertyValue('--cal-scale'))||1;
-  const laneStep=Math.round(18*calScale)+2;
+  const laneStep=Math.round(40*calScale)+3;
 
   rowLaneCount.forEach((count,row)=>{
     if(!count) return;
