@@ -519,8 +519,10 @@
   .status-pill{
     flex:none;
     margin-left:auto;
-    padding:calc(1px * var(--cal-scale,1)) calc(5px * var(--cal-scale,1));
-    border-radius:999px;
+    padding:0;
+    border:0;
+    background:transparent;
+    border-radius:0;
     font-size:calc(6.8px * var(--cal-scale,1));
     font-weight:800;
     letter-spacing:.055em;
@@ -528,17 +530,8 @@
     line-height:1.35;
   }
 
-  .status-final .status-pill{
-    color:#166534;
-    background:#ECFDF3;
-    border:1px solid #BBF7D0;
-  }
-
-  .status-tentative .status-pill{
-    color:#92400E;
-    background:#FFF7ED;
-    border:1px solid #FED7AA;
-  }
+  .status-final .status-pill{color:#64748B}
+  .status-tentative .status-pill{color:#B45309}
 
   .card-bottom{
     display:flex;
@@ -745,31 +738,163 @@
   .emoji-row select{width:100%}
   .saving{opacity:.6;pointer-events:none}
 
-  .detail-modal{max-width:520px;padding:0;overflow:hidden}
+  #detailScrim{
+    align-items:stretch;
+    justify-content:flex-end;
+    padding:0;
+    background:rgba(15,23,42,.20);
+    overflow:hidden;
+  }
+
+  #detailScrim.open{display:flex}
+
+  .detail-modal{
+    width:min(430px,92vw);
+    max-width:none;
+    height:100vh;
+    margin:0;
+    padding:0;
+    border-radius:0;
+    border-left:1px solid var(--line);
+    box-shadow:-18px 0 48px rgba(15,23,42,.14);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transform:translateX(16px);
+    animation:detailSlideIn .18s ease forwards;
+  }
+
+  @keyframes detailSlideIn{
+    to{transform:translateX(0)}
+  }
+
   .detail-hero{
     position:relative;
     padding:22px 22px 18px;
-    color:#fff;
-    background:linear-gradient(135deg,#1E293B,#0F172A);
+    color:var(--ink);
+    background:#fff !important;
+    border-bottom:1px solid var(--line);
   }
-  .detail-hero::after{
-    content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.16),transparent 30%);
+
+  .detail-hero::after{display:none}
+
+  .detail-topline{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
   }
-  .detail-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;position:relative;z-index:1}
-  .detail-type{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
-  .detail-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);font-size:18px}
-  .detail-status{padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(255,255,255,.14)}
-  .detail-title{position:relative;z-index:1;font-family:var(--display);font-size:24px;line-height:1.1;margin:0;letter-spacing:-.025em}
-  .detail-category{position:relative;z-index:1;margin-top:7px;font-size:12px;opacity:.82}
-  .detail-body{padding:18px 20px 20px}
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .detail-card{background:#F8FAFC;border:1px solid var(--line);border-radius:10px;padding:10px 11px;min-width:0}
+
+  .detail-type{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    color:var(--ink-soft);
+  }
+
+  .detail-icon{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#F8FAFC;
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-size:15px;
+  }
+
+  .detail-status{
+    padding:0;
+    border:0;
+    border-radius:0;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    background:transparent;
+    color:var(--muted);
+  }
+
+  .detail-title{
+    font-family:var(--display);
+    font-size:23px;
+    line-height:1.15;
+    margin:0;
+    letter-spacing:-.025em;
+    color:var(--ink);
+  }
+
+  .detail-category{
+    margin-top:7px;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .detail-body{
+    padding:18px 20px 20px;
+    overflow:auto;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .detail-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    min-width:0;
+  }
+
   .detail-card.full{grid-column:1/-1}
-  .detail-key{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-  .detail-value{font-size:13px;font-weight:600;color:var(--ink);word-break:break-word}
-  .detail-value.detail-link{color:#2563EB;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
-  .detail-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+  .detail-key{
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+
+  .detail-value{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    word-break:break-word;
+  }
+
+  .detail-value.detail-link{
+    color:#2563EB;
+    text-decoration:none;
+    cursor:pointer;
+  }
+
+  .detail-value.detail-link:hover{
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+
+  .detail-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:auto;
+    padding-top:18px;
+  }
   .catrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .catrow .catcolor{width:40px;height:36px;flex:none}
   .catrow .catname{flex:1}
@@ -806,7 +931,7 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v9</span></p>
+      <p>Shared club calendar · events, due dates, meetings & school dates <span class="version-badge">v10</span></p>
     </div>
 
     <div class="nav">
@@ -1746,12 +1871,13 @@ function openDetail(ev){
   detailEventId=ev.id;
   const dp=deptOf(ev.dept);
   const linked=linkedEventFor(ev);
-  const hero=document.getElementById('detailHero');
-  hero.style.background=`linear-gradient(135deg, color-mix(in srgb, ${dp.color} 78%, #0F172A 22%), #0F172A)`;
+  document.getElementById('detailHero').style.background='#fff';
 
   document.getElementById('detailIcon').textContent=glyphFor(ev);
   document.getElementById('detailType').textContent=TYPE_NAME[ev.type]||ev.type;
-  document.getElementById('detailStatus').textContent=ev.status==='tentative'?'⏳ Tentative':'✓ Final';
+  const statusEl=document.getElementById('detailStatus');
+  statusEl.textContent=ev.status==='tentative'?'Tentative':'Final';
+  statusEl.style.color=ev.status==='tentative'?'#B45309':'#64748B';
   document.getElementById('detailTitle').textContent=ev.title;
   document.getElementById('detailCategory').textContent=ev.type==='school'?'School':dp.name;
 
