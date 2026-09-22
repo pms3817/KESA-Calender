@@ -1088,17 +1088,47 @@
   }
 
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  [hidden]{display:none!important}
+  body.signed-out > .wrap{display:none}
+  .login-screen{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .login-card{width:min(440px,100%);padding:32px;background:white;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+  .login-card h1{font-family:var(--display);margin:6px 0 12px}
+  .login-card p{color:var(--muted)}
+  .login-card label{display:block;margin:18px 0 7px;font-weight:600}
+  .login-card select,.login-card input{width:100%;padding:12px;border:1px solid var(--line-strong);border-radius:9px;font:inherit}
+  .login-card button{width:100%;margin-top:22px}
+  .login-error{color:#991b1b!important;min-height:20px}
+  .account-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+  .audience{display:flex;flex-wrap:wrap;gap:8px 14px;width:100%;font-size:12px;margin:7px 0 12px}
+  .audience label{display:inline-flex;gap:5px;align-items:center}
+  .audience input{width:auto}
+  .catrow{flex-wrap:wrap}
+  body.read-only .add-hint{display:none}
+  .scope-note{font-size:12px;color:var(--muted);margin-right:8px}
 </style>
 </head>
 
-<body>
+<body class="signed-out">
+<section class="login-screen" id="loginScreen">
+ <form class="login-card" id="loginForm">
+  <span class="version-badge">KESA · v20</span><h1>Welcome to KESA Calendar</h1>
+  <p>Select your name to open your calendar.</p>
+  <label for="loginPerson">Who are you?</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
+  <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
+  <p id="loginHint">Executives have read-only access. Directors and the presidential team sign in with a password.</p>
+  <button type="submit" class="primary" id="loginSubmit" disabled>Open calendar</button>
+  <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
+ </form>
+</section>
 <div class="wrap">
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>바쁜 디렉분들에게 도움이 되었으면 좋겠네요~ <span class="version-badge">v19</span></p>
+      <p>바쁜 디렉분들에게 도움이 되었으면 좋겠네요~ <span class="version-badge">v20</span></p>
     </div>
 
+    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button></div>
     <div class="nav">
       <div class="viewtoggle" id="viewToggle">
         <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
@@ -1132,8 +1162,8 @@
     <div class="cal" id="calView">
       <div class="calendar-toolbar">
         <div class="viewer-control toolbar-viewer">
-          <label for="viewerSelect">Who are you?</label>
-          <select id="viewerSelect">
+          <span class="scope-note" id="scopeLabel">My calendar</span><label for="viewerSelect" hidden>Current member</label>
+          <select id="viewerSelect" hidden disabled>
             <option value="">Everyone</option>
           </select>
         </div>
@@ -1329,6 +1359,7 @@
 
     <div id="catList"></div>
 
+    <p class="scope-note">New category audience (leave empty for leadership only):</p><div class="audience" id="newCatAudience"></div>
     <div class="catadd">
       <input type="color" id="newCatColor" class="catcolor" value="#2563EB">
       <input type="text" id="newCatName" class="catname" placeholder="New category name" autocomplete="off">
@@ -1392,96 +1423,42 @@ function fromRow(r){
   };
 }
 
-async function q(builder){
-  const {error}=await builder;
-  if(error) throw new Error(error.message);
+
+let sessionToken='';
+let sessionExpires=0;
+let expiryTimer=null;
+let allDepartments=false;
+let loginBusy=false;
+function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
+function isPresidential(){return ['President','Vice President'].includes(currentViewer()?.role)}
+async function api(action,data={}){
+ if(!sessionToken||Date.now()>=sessionExpires){resetLogin('Session expired. Please sign in again.');throw new Error('Please sign in again.');}
+ const {data:result,error}=await sb.rpc('kesa_api',{p_token:sessionToken,p_action:action,p_data:data});
+ if(error){if(error.code==='28000') resetLogin('Session expired. Please sign in again.');throw new Error(error.message);}
+ return result;
 }
-
-async function loadEventAssigneeMap(){
-  const {data,error}=await sb.from('event_assignees').select('event_id,executive_id');
-  if(error) throw new Error(error.message);
-  const map={};
-  (data||[]).forEach(r=>{
-    (map[r.event_id]=map[r.event_id]||[]).push(r.executive_id);
-  });
-  return map;
+function unpackEvents(data){
+ const map={};(data.assignees||[]).forEach(a=>(map[a.event_id]??=[]).push(a.executive_id));
+ return (data.events||[]).map(r=>{const ev=fromRow(r);ev.assigneeIds=map[r.id]||[];return ev;});
 }
-
-async function dbLoad(){
-  const [{data,error},assignMap]=await Promise.all([
-    sb.from('events').select('*'),
-    loadEventAssigneeMap()
-  ]);
-  if(error) throw new Error(error.message);
-  return (data||[]).map(r=>{
-    const ev=fromRow(r);
-    ev.assigneeIds=(assignMap[ev.id]||[]).slice();
-    if(!ev.assigneeIds.length&&ev.assigneeId) ev.assigneeIds=[ev.assigneeId];
-    return ev;
-  });
+async function dbLoad(){return unpackEvents(await api('load'));}
+async function saveEvent(ev,action){
+ const r=await api(action,{event:toRow(ev),assignees:ev.assigneeIds||[]});
+ const saved=fromRow(r);saved.assigneeIds=(ev.assigneeIds||[]).slice();return saved;
 }
-
-async function syncEventAssignees(eventId,ids){
-  const clean=[...new Set((ids||[]).filter(id=>EXEC_BY_ID[id]))];
-  const {error:delError}=await sb.from('event_assignees').delete().eq('event_id',eventId);
-  if(delError) throw new Error(delError.message);
-  if(!clean.length) return;
-  const {error:insError}=await sb.from('event_assignees').insert(clean.map(executive_id=>({event_id:eventId,executive_id})));
-  if(insError) throw new Error(insError.message);
-}
-
-async function dbInsert(ev){
-  const {data,error}=await sb.from('events').insert(toRow(ev)).select('*').single();
-  if(error) throw new Error(error.message);
-  await syncEventAssignees(data.id,ev.assigneeIds||[]);
-  const saved=fromRow(data);
-  saved.assigneeIds=(ev.assigneeIds||[]).slice();
-  return saved;
-}
-
-async function dbInsertMany(list){
-  const {data,error}=await sb.from('events').insert(list.map(toRow)).select('*');
-  if(error) throw new Error(error.message);
-  const saved=(data||[]).map(fromRow);
-  for(let i=0;i<saved.length;i++){
-    const ids=(list[i]&&list[i].assigneeIds)||[];
-    await syncEventAssignees(saved[i].id,ids);
-    saved[i].assigneeIds=ids.slice();
-  }
-  return saved;
-}
-
-async function dbUpdate(ev){
-  const {data,error}=await sb.from('events').update(toRow(ev)).eq('id',ev.id).select('*').single();
-  if(error) throw new Error(error.message);
-  await syncEventAssignees(ev.id,ev.assigneeIds||[]);
-  const saved=fromRow(data);
-  saved.assigneeIds=(ev.assigneeIds||[]).slice();
-  return saved;
-}
-async function dbDelete(id){await q(sb.from('events').delete().eq('id',id))}
-async function dbUnlink(id){await q(sb.from('events').update({linked_event_id:null}).eq('id',id))}
-
-async function deptLoad(){
-  const {data,error}=await sb.from('departments').select('*').order('sort');
-  if(error) throw new Error(error.message);
-  return data||[];
-}
-
-async function deptInsert(d){await q(sb.from('departments').insert(d))}
-async function deptUpdate(d){await q(sb.from('departments').update({name:d.name,color:d.color}).eq('id',d.id))}
-async function deptDelete(id){await q(sb.from('departments').delete().eq('id',id))}
-
+async function dbInsert(ev){return saveEvent(ev,'event_insert');}
+async function dbUpdate(ev){return saveEvent(ev,'event_update');}
+async function dbDelete(id){await api('event_delete',{id});}
+// Server deletion unlinks related items in the same transaction.
+async function dbUnlink(id){}
+async function deptLoad(){return (await api('load')).departments;}
+async function deptInsert(d){await api('category_insert',d);}
+async function deptUpdate(d){await api('category_update',d);}
+async function deptDelete(id){await api('category_delete',{id});}
 async function executiveLoad(){
-  const {data,error}=await sb
-    .from('executives')
-    .select('id,english_name,korean_name,department,role')
-    .order('department')
-    .order('english_name');
-
-  if(error) throw new Error(error.message);
-  return data||[];
+ const {data,error}=await sb.rpc('kesa_roster');if(error)throw new Error(error.message);return data||[];
 }
+
 
 /* ===== CATEGORIES ===== */
 const FIXED_IDS = new Set(['event','marketing','finance','internal','all','school']);
@@ -1499,7 +1476,7 @@ const DEFAULT_DEPTS = [
 
 let DEPTS=[];
 let DEPT={};
-let selectedDeptFilter='all';
+let selectedDeptFilter='__all__';
 let selectedViewerId='';
 
 let EXECUTIVES=[];
@@ -1529,35 +1506,23 @@ function isAssignedToViewer(ev){
   return !!(selectedViewerId&&eventAssigneeIds(ev).includes(selectedViewerId));
 }
 
+
+function categoryInMyScope(id){
+ const viewer=currentViewer();if(!viewer)return false;
+ if(id==='all'||id==='school')return true;
+ const dept=executiveDepartmentId(viewer);
+ if(DEPARTMENT_IDS.has(id))return id===dept;
+ return !!dept&&(DEPT[id]?.visible_departments||[]).includes(dept);
+}
 function viewerScopeAllows(ev){
-  const viewer=currentViewer();
-  if(!viewer) return true;
-  if(isAssignedToViewer(ev)) return true;
-  if(ev.dept==='all'||ev.dept==='school') return true;
-
-  // Custom/non-department categories are general rather than belonging to
-  // another core department, so keep them in the viewer's personal scope.
-  if(!DEPARTMENT_IDS.has(ev.dept)) return true;
-
-  const viewerDept=executiveDepartmentId(viewer);
-  return !!(viewerDept&&ev.dept===viewerDept);
+ if(!currentViewer()||!sessionToken)return false;
+ return (canEdit()&&allDepartments)||categoryInMyScope(ev.dept);
 }
-
 function eventMatchesView(ev){
-  if(!viewerScopeAllows(ev)) return false;
-  if(selectedDeptFilter==='all') return true;
-
-  // For the four core department filters, hide only the other three core
-  // departments plus School. KESA/general and custom categories stay visible.
-  if(DEPARTMENT_IDS.has(selectedDeptFilter)){
-    if(ev.dept==='school') return false;
-    if(DEPARTMENT_IDS.has(ev.dept)) return ev.dept===selectedDeptFilter;
-    return true;
-  }
-
-  // Non-core filters (KESA, School, custom categories) remain exact-match.
-  return ev.dept===selectedDeptFilter;
+ if(!viewerScopeAllows(ev))return false;
+ return selectedDeptFilter==='__all__'||ev.dept===selectedDeptFilter;
 }
+
 
 function executivesForEvent(ev){
   if(!ev) return [];
@@ -1595,7 +1560,7 @@ function deptOf(id){return DEPT[id]||{id,name:id,color:'#94A3B8',builtin:false}}
 function setDepartments(list){
   DEPTS=(list&&list.length)?list.slice():DEFAULT_DEPTS.slice();
   DEPT=Object.fromEntries(DEPTS.map(d=>[d.id,d]));
-  if(selectedDeptFilter!=='all'&&!DEPT[selectedDeptFilter]) selectedDeptFilter='all';
+  if(selectedDeptFilter!=='__all__'&&!DEPT[selectedDeptFilter]) selectedDeptFilter='__all__';
 }
 
 const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'};
@@ -1794,11 +1759,11 @@ function clearBanner(){
 function makeFilterPill(d,{all=false}={}){
   const b=document.createElement('button');
   b.className='pill'+(all?' all-pill':'');
-  const id=all?'all':d.id;
+  const id=all?'__all__':d.id;
   b.style.setProperty('--pill-color',all?'#475569':d.color);
   b.setAttribute('aria-pressed',selectedDeptFilter===id);
   b.innerHTML=all
-    ?`<span class="dot"></span>All`
+    ?`<span class="dot"></span>All visible`
     :`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
 
   b.onclick=()=>{
@@ -1810,17 +1775,12 @@ function makeFilterPill(d,{all=false}={}){
   return b;
 }
 
-function allowedFilterDepartments(){
-  const viewer=currentViewer();
-  if(!viewer) return DEPTS.slice();
 
-  const viewerDept=executiveDepartmentId(viewer);
-  return DEPTS.filter(d=>
-    d.id==='all'||
-    d.id==='school'||
-    (viewerDept&&d.id===viewerDept)
-  );
+function allowedFilterDepartments(){
+ if(!currentViewer())return [];
+ return DEPTS.filter(d=>(canEdit()&&allDepartments)||categoryInMyScope(d.id));
 }
+
 
 function renderFilters(){
   const deptBox=document.getElementById('departmentFilters');
@@ -1829,7 +1789,7 @@ function renderFilters(){
   const allowed=allowedFilterDepartments();
   const allowedIds=new Set(allowed.map(d=>d.id));
 
-  if(selectedDeptFilter!=='all'&&!allowedIds.has(selectedDeptFilter)) selectedDeptFilter='all';
+  if(selectedDeptFilter!=='__all__'&&!allowedIds.has(selectedDeptFilter)) selectedDeptFilter='__all__';
 
   deptBox.innerHTML='';
   otherBox.innerHTML='';
@@ -2274,6 +2234,9 @@ function detailRow(label,value,full=false,extraClass=''){
 }
 
 function openDetail(ev){
+  if(!viewerScopeAllows(ev))return;
+  document.getElementById("detailEdit").hidden=!canEdit();
+  document.getElementById("detailDelete").hidden=!canEdit();
   detailEventId=ev.id;
   const deleteBtn=document.getElementById('detailDelete');
   deleteBtn.disabled=false;
@@ -2320,6 +2283,7 @@ function openDetail(ev){
 function closeDetail(){detailScrim.classList.remove('open')}
 
 async function deleteFromDetail(){
+  if(!canEdit()) return;
   const delId=detailEventId;
   const ev=events.find(e=>e.id===delId);
   if(!delId||!ev) return;
@@ -2353,6 +2317,7 @@ async function deleteFromDetail(){
 }
 
 function editFromDetail(){
+  if(!canEdit()) return;
   const ev=events.find(e=>e.id===detailEventId);
   if(!ev) return;
   closeDetail();
@@ -2697,6 +2662,7 @@ function refreshLinkOptions(currentId){
 }
 
 function openAdd(dateStr){
+  if(!canEdit()) return;
   editingId=null;
   endDateAutoSeeded=true;
   schoolStatusEnabled=false;
@@ -2727,6 +2693,7 @@ function openAdd(dateStr){
 }
 
 function openEdit(ev){
+  if(!canEdit()) return;
   editingId=ev.id;
   endDateAutoSeeded=!ev.endDate;
   schoolStatusEnabled=ev.type==='school'&&!!ev.status;
@@ -2787,6 +2754,7 @@ function setBusy(on){
 }
 
 async function saveItem(){
+  if(!canEdit()) return;
   const title=document.getElementById('fTitle').value.trim();
 
   if(!title){
@@ -2893,6 +2861,7 @@ async function saveItem(){
 }
 
 async function deleteItem(){
+  if(!canEdit()) return;
   if(!editingId) return;
 
   const delId=editingId;
@@ -2932,6 +2901,7 @@ function clearCatError(){
 }
 
 function openCat(){
+  if(!canEdit()) return;
   renderCatList();
   clearCatError();
   catScrim.classList.add('open');
@@ -2973,6 +2943,10 @@ function renderCatList(){
         ?`<span class="catfixed">fixed</span>`
         :`<button class="catdel danger">Delete</button>`);
 
+    if(!fixed){
+      const audience=document.createElement('div');audience.className='audience';
+      audience.innerHTML=audienceMarkup(d.visible_departments||[]);row.appendChild(audience);
+    }
     const colorEl=row.querySelector('.catcolor');
     const nameEl=row.querySelector('.catname');
 
@@ -2990,7 +2964,8 @@ function renderCatList(){
         await deptUpdate({
           id:d.id,
           name,
-          color:colorEl.value
+          color:colorEl.value,
+          visible_departments:readAudience(row)
         });
       }catch(e){
         catError(e.message);
@@ -3030,6 +3005,7 @@ function renderCatList(){
 }
 
 async function addCategory(){
+  if(!canEdit()) return;
   const name=document.getElementById('newCatName').value.trim();
 
   if(!name){
@@ -3049,7 +3025,8 @@ async function addCategory(){
       name,
       color,
       sort,
-      builtin:false
+      builtin:false,
+      visible_departments:readAudience(document.getElementById("newCatAudience"))
     });
   }catch(e){
     catError(e.message);
@@ -3057,6 +3034,7 @@ async function addCategory(){
   }
 
   document.getElementById('newCatName').value='';
+  document.querySelectorAll('#newCatAudience input').forEach(x=>x.checked=false);
   await reloadDepartments();
 }
 
@@ -3218,12 +3196,8 @@ document.querySelectorAll('#viewToggle button')
   .forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 document.getElementById('manageBtn').onclick=openCat;
-document.getElementById('viewerSelect').addEventListener('change',e=>{
-  selectedViewerId=e.target.value||'';
-  selectedDeptFilter='all';
-  renderFilters();
-  renderActive();
-});
+
+
 document.getElementById('catClose').onclick=closeCat;
 document.getElementById('newCatAdd').onclick=addCategory;
 document.getElementById('detailClose').onclick=closeDetail;
@@ -3255,62 +3229,89 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-/* ===== BOOT ===== */
+
+/* ===== SIGN IN & BOOT ===== */
+function audienceMarkup(ids){
+ return ['event','marketing','finance','internal'].map(id=>`<label><input type="checkbox" value="${id}" ${ids.includes(id)?'checked':''}>${escapeHtml(DEPT[id]?.name||id[0].toUpperCase()+id.slice(1))}</label>`).join('');
+}
+function readAudience(root){return [...root.querySelectorAll('.audience input:checked, input[type="checkbox"]:checked')].map(x=>x.value);}
+function refreshAccountUI(){
+ const v=currentViewer();
+ document.getElementById('accountName').textContent=v?`${v.english_name} · ${v.role} · ${v.department}`:'';
+ document.body.classList.toggle('read-only',!canEdit());
+ for(const id of ['addBtn','manageBtn','detailEdit','detailDelete'])document.getElementById(id).hidden=!canEdit();
+ document.getElementById('scopeToggle').hidden=!canEdit();
+ document.getElementById('scopeToggle').textContent=allDepartments?'View my department':'View all departments';
+ document.getElementById('scopeLabel').textContent=allDepartments?'All departments':'My department + shared';
+ document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
+}
+function resetLogin(message=''){
+ clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;
+ events=[];DEPTS=[];DEPT={};selectedDeptFilter='__all__';
+ closeModal();closeDetail();closeCat();
+ document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
+ document.body.classList.add('signed-out');document.getElementById('loginScreen').hidden=false;
+ document.getElementById('loginPerson').value='';document.getElementById('loginPassword').value='';
+ document.getElementById('loginPasswordField').hidden=true;document.getElementById('loginPassword').required=false;
+ document.getElementById('loginError').textContent=message;
+ document.getElementById('loginPerson').focus();
+}
+document.getElementById('loginPerson').onchange=()=>{
+ const v=EXEC_BY_ID[document.getElementById('loginPerson').value];
+ const required=!!v&&v.role!=='Executive';
+ document.getElementById('loginPasswordField').hidden=!required;
+ document.getElementById('loginPassword').required=required;
+ document.getElementById('loginPassword').value='';document.getElementById('loginError').textContent='';
+};
+document.getElementById('loginForm').onsubmit=async e=>{
+ e.preventDefault();if(loginBusy)return;
+ const id=document.getElementById('loginPerson').value;if(!EXEC_BY_ID[id])return;
+ loginBusy=true;document.getElementById('loginSubmit').disabled=true;document.getElementById('loginError').textContent='';
+ try{
+  const {data,error}=await sb.rpc('kesa_login',{p_id:id,p_password:document.getElementById('loginPassword').value});
+  document.getElementById('loginPassword').value='';
+  if(error||data?.error)throw new Error(error?.message||data.error);
+  sessionToken=data.token;sessionExpires=Date.parse(data.expires_at);
+  if(!sessionToken||!Number.isFinite(sessionExpires))throw new Error('Invalid login response');
+  EXEC_BY_ID[data.person.id]=data.person;selectedViewerId=data.person.id;
+  const loaded=await api('load');
+  EXEC_BY_ID[selectedViewerId]=loaded.person;
+  setDepartments(loaded.departments);events=unpackEvents(loaded);
+  allDepartments=isPresidential();selectedDeptFilter='__all__';
+  buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);
+  document.body.classList.remove('signed-out');document.getElementById('loginScreen').hidden=true;
+  clearBanner();setView('calendar');
+  expiryTimer=setTimeout(()=>resetLogin('Session expired. Please sign in again.'),Math.max(0,sessionExpires-Date.now()));
+ }catch(err){
+  if(sessionToken){try{await api('logout');}catch(_){}}
+  resetLogin(err.message);
+ }finally{loginBusy=false;document.getElementById('loginSubmit').disabled=false;}
+};
+document.getElementById('switchUser').onclick=async()=>{
+ const token=sessionToken;resetLogin();
+ if(token)await sb.rpc('kesa_api',{p_token:token,p_action:'logout',p_data:{}});
+};
+document.getElementById('scopeToggle').onclick=()=>{
+ if(!canEdit())return;allDepartments=!allDepartments;selectedDeptFilter='__all__';
+ refreshAccountUI();renderFilters();renderActive();
+};
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&sessionToken&&Date.now()>=sessionExpires)resetLogin('Session expired. Please sign in again.');
+});
 (async function init(){
-  let savedW=DEFAULT_BOARD_WIDTH;
-
-  try{
-    const v=localStorage.getItem('kesa_cal_w');
-    if(v) savedW=+v;
-  }catch(e){}
-
-  applyBoardWidth(savedW,false);
-
-  if(typeof supabase==='undefined'||!supabase.createClient){
-    showError('Could not load the database library. Check your connection and refresh.');
-    return;
-  }
-
-  try{
-    sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  }catch(e){
-    showError('Supabase config looks wrong: '+e.message);
-    return;
-  }
-
-  try{
-    setDepartments(await deptLoad());
-  }catch(e){
-    setDepartments(DEFAULT_DEPTS);
-    showError('Using default categories — the departments table could not be loaded.');
-  }
-
-  buildDeptOptions();
-
-  try{
-    setExecutives(await executiveLoad());
-  }catch(e){
-    setExecutives([]);
-    showError('Could not load the executive roster — '+e.message);
-  }
-
-  populateViewerSelect();
-  renderFilters();
-  setSelectedAssignees([]);
-
-  try{
-    events=await dbLoad();
-
-    if(events.length===0){
-      const s=seed();
-      events=await dbInsertMany(s);
-    }
-  }catch(e){
-    showError('Could not reach the database — '+e.message);
-  }
-
-  setView('calendar');
+ let savedW=DEFAULT_BOARD_WIDTH;try{savedW=+localStorage.getItem('kesa_cal_w')||savedW;}catch(_){}
+ applyBoardWidth(savedW,false);
+ try{
+  if(typeof supabase==='undefined')throw new Error('Database library failed to load. Refresh to retry.');
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  setExecutives(await executiveLoad());populateViewerSelect();
+  const login=document.getElementById('loginPerson');login.innerHTML=document.getElementById('viewerSelect').innerHTML;
+  login.options[0].textContent='Select your name';login.value='';login.disabled=false;
+  document.getElementById('loginSubmit').disabled=false;
+ }catch(err){document.getElementById('loginError').textContent='Could not load members. Apply the v20 SQL first, then refresh. '+err.message;}
 })();
+
+
 </script>
 </body>
 </html>
