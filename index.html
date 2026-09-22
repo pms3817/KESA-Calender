@@ -1106,17 +1106,67 @@
   .catrow{flex-wrap:wrap}
   body.read-only .add-hint{display:none}
   .scope-note{font-size:12px;color:var(--muted);margin-right:8px}
+
+  .member-list{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    max-height:310px;
+    overflow:auto;
+    margin:10px 0 14px;
+  }
+  .member-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+    padding:10px 11px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+  }
+  .member-main{min-width:0}
+  .member-name{font-weight:700;font-size:13px;color:var(--ink)}
+  .member-meta{margin-top:2px;font-size:11px;color:var(--muted)}
+  .member-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  .member-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 6px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    font-size:9px;
+    font-weight:700;
+    color:var(--ink-soft);
+    background:#F8FAFC;
+  }
+  .member-badge.admin{background:#EEF2FF;border-color:#C7D2FE;color:#3730A3}
+  .member-badge.password{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+  .member-badge.no-password{background:#F8FAFC;color:#64748B}
+  .member-form{
+    margin-top:12px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .member-form h3{font-family:var(--display);font-size:14px;margin:0 0 12px}
+  .member-checks{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 12px}
+  .member-checks label{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+  .member-checks input{width:auto}
+  .member-help{font-size:10.5px;color:var(--muted);margin-top:5px}
+  .member-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .member-toolbar .sub{margin:0}
+  .member-empty{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v20</span><h1>Welcome to KESA Calendar</h1>
-  <p>Select your name to open your calendar.</p>
-  <label for="loginPerson">Who are you?</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
-  <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
-  <p id="loginHint">Executives have read-only access. Directors and the presidential team sign in with a password.</p>
+  <span class="version-badge">KESA · v21</span><h1>KESA Calendar</h1>
+  <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
+  <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
+  <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
   <button type="submit" class="primary" id="loginSubmit" disabled>Open calendar</button>
   <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
  </form>
@@ -1125,10 +1175,10 @@
   <header class="app">
     <div class="brand">
       <h1><span class="k">KESA</span> Calendar</h1>
-      <p>바쁜 디렉분들에게 도움이 되었으면 좋겠네요~ <span class="version-badge">v20</span></p>
+      <p>바쁜 디렉분들에게 도움이 되었으면 좋겠네요~ <span class="version-badge">v21</span></p>
     </div>
 
-    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button></div>
+    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button><button id="membersBtn" hidden>Manage members</button></div>
     <div class="nav">
       <div class="viewtoggle" id="viewToggle">
         <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
@@ -1375,6 +1425,85 @@
   </div>
 </div>
 
+
+<!-- Manage members modal -->
+<div class="scrim" id="memberScrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="memberTitle">
+    <div class="member-toolbar">
+      <div>
+        <h2 id="memberTitle">Manage members</h2>
+        <p class="sub">Add, edit, remove, and manage login passwords.</p>
+      </div>
+      <button type="button" class="primary" id="memberAdd">+ Add member</button>
+    </div>
+
+    <div class="member-list" id="memberList"></div>
+
+    <div class="member-form" id="memberForm" hidden>
+      <h3 id="memberFormTitle">Add member</h3>
+      <input type="hidden" id="memberId">
+
+      <div class="row2">
+        <div class="field">
+          <label class="lb" for="memberEnglish">English name</label>
+          <input type="text" id="memberEnglish" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="lb" for="memberKorean">Korean name</label>
+          <input type="text" id="memberKorean" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label class="lb" for="memberDepartment">Department</label>
+          <select id="memberDepartment">
+            <option value="Event">Event</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Finance">Finance</option>
+            <option value="Internal">Internal</option>
+            <option value="Presidential">Presidential</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lb" for="memberRole">Role</label>
+          <select id="memberRole">
+            <option value="Executive">Executive</option>
+            <option value="Director">Director</option>
+            <option value="Vice President">Vice President</option>
+            <option value="President">President</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="member-checks">
+        <label><input type="checkbox" id="memberAdmin"> Administrator</label>
+        <label><input type="checkbox" id="memberPasswordRequired"> Require password</label>
+      </div>
+
+      <div class="field" id="memberPasswordWrap">
+        <label class="lb" for="memberPassword">New password <span style="text-transform:none;color:#94A3B8;font-weight:500">(6+ characters)</span></label>
+        <input type="password" id="memberPassword" autocomplete="new-password" maxlength="72">
+        <div class="member-help" id="memberPasswordHelp">Required when password login is enabled for a new member.</div>
+      </div>
+
+      <div class="err" id="memberErr"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="danger" id="memberDelete" hidden>Remove member</button>
+        <span class="spacer"></span>
+        <button type="button" id="memberCancelEdit">Cancel</button>
+        <button type="button" class="primary" id="memberSave">Save</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <span class="spacer"></span>
+      <button type="button" id="memberClose" class="primary">Done</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===== SUPABASE CONFIG ===== */
 const SUPABASE_URL = 'https://eryuvlxrpilrqvwbrazs.supabase.co';
@@ -1430,6 +1559,7 @@ let expiryTimer=null;
 let allDepartments=false;
 let loginBusy=false;
 function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
+function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
 function isPresidential(){return ['President','Vice President'].includes(currentViewer()?.role)}
 async function api(action,data={}){
  if(!sessionToken||Date.now()>=sessionExpires){resetLogin('Session expired. Please sign in again.');throw new Error('Please sign in again.');}
@@ -3038,6 +3168,242 @@ async function addCategory(){
   await reloadDepartments();
 }
 
+
+/* ===== MANAGE MEMBERS ===== */
+const memberScrim=document.getElementById('memberScrim');
+let ADMIN_MEMBERS=[];
+let editingMemberId=null;
+
+function memberError(msg=''){
+  const el=document.getElementById('memberErr');
+  el.textContent=msg;
+  el.classList.toggle('show',!!msg);
+}
+
+function memberSlug(name){
+  return String(name||'')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'')
+    .slice(0,48);
+}
+
+function uniqueMemberId(name){
+  const base=memberSlug(name)||'member';
+  const used=new Set(ADMIN_MEMBERS.map(x=>x.id));
+  if(!used.has(base)) return base;
+  let n=2;
+  while(used.has(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
+}
+
+function normalizeMemberRoleDepartment(){
+  const role=document.getElementById('memberRole').value;
+  const dept=document.getElementById('memberDepartment');
+
+  if(role==='President'||role==='Vice President'){
+    dept.value='Presidential';
+    [...dept.options].forEach(o=>o.disabled=o.value!=='Presidential');
+  }else{
+    if(dept.value==='Presidential') dept.value='Event';
+    [...dept.options].forEach(o=>o.disabled=o.value==='Presidential');
+  }
+}
+
+function renderMemberList(){
+  const box=document.getElementById('memberList');
+  box.innerHTML='';
+
+  if(!ADMIN_MEMBERS.length){
+    box.innerHTML='<div class="member-empty">No members found.</div>';
+    return;
+  }
+
+  const order=['Presidential','Event','Marketing','Finance','Internal'];
+  const roleOrder={'President':0,'Vice President':1,'Director':2,'Executive':3};
+
+  ADMIN_MEMBERS.slice().sort((a,b)=>
+    (order.indexOf(a.department)-order.indexOf(b.department)) ||
+    ((roleOrder[a.role]??9)-(roleOrder[b.role]??9)) ||
+    a.english_name.localeCompare(b.english_name)
+  ).forEach(person=>{
+    const row=document.createElement('div');
+    row.className='member-row';
+
+    const badges=[];
+    if(person.is_admin) badges.push('<span class="member-badge admin">ADMIN</span>');
+    badges.push(
+      person.password_required
+        ?`<span class="member-badge password">${person.has_password?'PASSWORD ON':'PASSWORD NOT SET'}</span>`
+        :'<span class="member-badge no-password">NO PASSWORD</span>'
+    );
+
+    row.innerHTML=
+      `<div class="member-main">`+
+        `<div class="member-name">${escapeHtml(person.english_name)} · ${escapeHtml(person.korean_name)}</div>`+
+        `<div class="member-meta">${escapeHtml(person.role)} · ${escapeHtml(person.department)} · ${escapeHtml(person.id)}</div>`+
+        `<div class="member-badges">${badges.join('')}</div>`+
+      `</div>`+
+      `<button type="button" class="member-edit">Edit</button>`;
+
+    row.querySelector('.member-edit').onclick=()=>openMemberForm(person);
+    box.appendChild(row);
+  });
+}
+
+async function loadAdminMembers(){
+  ADMIN_MEMBERS=await api('member_list');
+  renderMemberList();
+}
+
+function openMemberForm(person=null){
+  editingMemberId=person?.id||null;
+  memberError('');
+  document.getElementById('memberForm').hidden=false;
+  document.getElementById('memberFormTitle').textContent=person?'Edit member':'Add member';
+  document.getElementById('memberId').value=person?.id||'';
+  document.getElementById('memberEnglish').value=person?.english_name||'';
+  document.getElementById('memberKorean').value=person?.korean_name||'';
+  document.getElementById('memberDepartment').value=person?.department||'Event';
+  document.getElementById('memberRole').value=person?.role||'Executive';
+  document.getElementById('memberAdmin').checked=!!person?.is_admin;
+  document.getElementById('memberPasswordRequired').checked=!!person?.password_required;
+  document.getElementById('memberPassword').value='';
+  document.getElementById('memberPasswordHelp').textContent=person
+    ?(person.has_password
+      ?'Leave blank to keep the current password. Uncheck “Require password” to remove it.'
+      :'No password is set. Enter one before enabling password login.')
+    :'Required when password login is enabled for a new member.';
+  document.getElementById('memberDelete').hidden=!person;
+  normalizeMemberRoleDepartment();
+  document.getElementById('memberEnglish').focus();
+}
+
+function closeMemberForm(){
+  editingMemberId=null;
+  document.getElementById('memberForm').hidden=true;
+  memberError('');
+}
+
+async function openMembers(){
+  if(!canAdmin()) return;
+  memberScrim.classList.add('open');
+  closeMemberForm();
+  document.getElementById('memberList').innerHTML='<div class="member-empty">Loading members…</div>';
+  try{
+    await loadAdminMembers();
+  }catch(e){
+    memberError(e.message);
+    document.getElementById('memberList').innerHTML='<div class="member-empty">Could not load members.</div>';
+  }
+}
+
+function closeMembers(){
+  memberScrim.classList.remove('open');
+  closeMemberForm();
+}
+
+async function refreshAfterMemberChange(){
+  const loaded=await api('load');
+  setDepartments(loaded.departments);
+  events=unpackEvents(loaded);
+
+  ADMIN_MEMBERS=await api('member_list');
+  setExecutives(ADMIN_MEMBERS);
+
+  selectedViewerId=loaded.person.id;
+  EXEC_BY_ID[selectedViewerId]={...(EXEC_BY_ID[selectedViewerId]||{}),...loaded.person};
+
+  populateViewerSelect();
+  refreshAccountUI();
+  renderFilters();
+  renderActive();
+  renderMemberList();
+}
+
+async function saveMember(){
+  if(!canAdmin()) return;
+
+  const english=document.getElementById('memberEnglish').value.trim();
+  const korean=document.getElementById('memberKorean').value.trim();
+  const department=document.getElementById('memberDepartment').value;
+  const role=document.getElementById('memberRole').value;
+  const isAdmin=document.getElementById('memberAdmin').checked;
+  const passwordRequired=document.getElementById('memberPasswordRequired').checked;
+  const password=document.getElementById('memberPassword').value;
+
+  if(!english||!korean){
+    memberError('English and Korean names are required.');
+    return;
+  }
+
+  const existing=editingMemberId
+    ?ADMIN_MEMBERS.find(x=>x.id===editingMemberId)
+    :null;
+
+  if(passwordRequired && !password && !existing?.has_password){
+    memberError('Set a password before enabling password login.');
+    return;
+  }
+
+  const id=editingMemberId||uniqueMemberId(english);
+  const payload={
+    id,
+    english_name:english,
+    korean_name:korean,
+    department,
+    role,
+    is_admin:isAdmin,
+    password_required:passwordRequired,
+    password:passwordRequired?password:''
+  };
+
+  const saveBtn=document.getElementById('memberSave');
+  saveBtn.disabled=true;
+  memberError('');
+
+  try{
+    await api(editingMemberId?'member_update':'member_insert',payload);
+
+    if(editingMemberId===selectedViewerId){
+      closeMembers();
+      resetLogin('Your account settings changed. Please sign in again.');
+      return;
+    }
+
+    await refreshAfterMemberChange();
+    closeMemberForm();
+  }catch(e){
+    memberError(e.message);
+  }finally{
+    saveBtn.disabled=false;
+  }
+}
+
+async function deleteMember(){
+  if(!canAdmin()||!editingMemberId) return;
+  const person=ADMIN_MEMBERS.find(x=>x.id===editingMemberId);
+  if(!person) return;
+
+  if(!window.confirm(`Remove ${person.english_name} from KESA Calendar? Their login access will be revoked.`)) return;
+
+  const btn=document.getElementById('memberDelete');
+  btn.disabled=true;
+  memberError('');
+
+  try{
+    await api('member_delete',{id:person.id});
+    await refreshAfterMemberChange();
+    closeMemberForm();
+  }catch(e){
+    memberError(e.message);
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+
 /* ===== DIRECT MOUSE RESIZE ===== */
 const board=document.getElementById('board');
 const resizeHandle=document.getElementById('resizeHandle');
@@ -3196,6 +3562,13 @@ document.querySelectorAll('#viewToggle button')
   .forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 document.getElementById('manageBtn').onclick=openCat;
+document.getElementById('membersBtn').onclick=openMembers;
+document.getElementById('memberAdd').onclick=()=>openMemberForm();
+document.getElementById('memberClose').onclick=closeMembers;
+document.getElementById('memberCancelEdit').onclick=closeMemberForm;
+document.getElementById('memberSave').onclick=saveMember;
+document.getElementById('memberDelete').onclick=deleteMember;
+document.getElementById('memberRole').addEventListener('change',normalizeMemberRoleDepartment);
 
 
 document.getElementById('catClose').onclick=closeCat;
@@ -3217,6 +3590,9 @@ scrim.onclick=e=>{
 catScrim.onclick=e=>{
   if(e.target===catScrim) closeCat();
 };
+memberScrim.onclick=e=>{
+  if(e.target===memberScrim) closeMembers();
+};
 detailScrim.onclick=e=>{
   if(e.target===detailScrim) closeDetail();
 };
@@ -3226,6 +3602,7 @@ document.addEventListener('keydown',e=>{
     if(detailScrim.classList.contains('open')) closeDetail();
     else if(scrim.classList.contains('open')) closeModal();
     else if(catScrim.classList.contains('open')) closeCat();
+    else if(memberScrim.classList.contains('open')) closeMembers();
   }
 });
 
@@ -3241,6 +3618,7 @@ function refreshAccountUI(){
  document.body.classList.toggle('read-only',!canEdit());
  for(const id of ['addBtn','manageBtn','detailEdit','detailDelete'])document.getElementById(id).hidden=!canEdit();
  document.getElementById('scopeToggle').hidden=!canEdit();
+ document.getElementById('membersBtn').hidden=!canAdmin();
  document.getElementById('scopeToggle').textContent=allDepartments?'View my department':'View all departments';
  document.getElementById('scopeLabel').textContent=allDepartments?'All departments':'My department + shared';
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
@@ -3248,7 +3626,7 @@ function refreshAccountUI(){
 function resetLogin(message=''){
  clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;
  events=[];DEPTS=[];DEPT={};selectedDeptFilter='__all__';
- closeModal();closeDetail();closeCat();
+ closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
  document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
  document.body.classList.add('signed-out');document.getElementById('loginScreen').hidden=false;
  document.getElementById('loginPerson').value='';document.getElementById('loginPassword').value='';
@@ -3258,7 +3636,7 @@ function resetLogin(message=''){
 }
 document.getElementById('loginPerson').onchange=()=>{
  const v=EXEC_BY_ID[document.getElementById('loginPerson').value];
- const required=!!v&&v.role!=='Executive';
+ const required=!!v&&!!v.password_required;
  document.getElementById('loginPasswordField').hidden=!required;
  document.getElementById('loginPassword').required=required;
  document.getElementById('loginPassword').value='';document.getElementById('loginError').textContent='';
@@ -3306,7 +3684,7 @@ document.addEventListener('visibilitychange',()=>{
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   setExecutives(await executiveLoad());populateViewerSelect();
   const login=document.getElementById('loginPerson');login.innerHTML=document.getElementById('viewerSelect').innerHTML;
-  login.options[0].textContent='Select your name';login.value='';login.disabled=false;
+  login.options[0].textContent='본인을 선택하세요';login.value='';login.disabled=false;
   document.getElementById('loginSubmit').disabled=false;
  }catch(err){document.getElementById('loginError').textContent='Could not load members. Apply the v20 SQL first, then refresh. '+err.message;}
 })();
