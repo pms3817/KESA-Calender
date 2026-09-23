@@ -1258,13 +1258,71 @@
     color:#64748B;
   }
 
+
+  /* ===== v26 filter architecture ===== */
+  .filter-panel{gap:10px}
+  .filter-row{grid-template-columns:92px minmax(0,1fr) auto;align-items:start}
+  .scope-choice{
+    display:inline-flex;width:max-content;border:1px solid var(--line-strong);
+    border-radius:10px;overflow:hidden;background:#fff
+  }
+  .scope-choice button{
+    border:0;border-radius:0;min-width:132px;padding:8px 14px;background:#fff
+  }
+  .scope-choice button+button{border-left:1px solid var(--line-strong)}
+  .scope-choice button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+  .category-stack{display:flex;flex-direction:column;gap:9px;min-width:0}
+  .category-group{
+    display:flex;align-items:flex-start;gap:10px;min-width:0;
+    padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff
+  }
+  .department-category-group{
+    border-color:#CBD5E1;background:#F8FAFC;
+    box-shadow:inset 3px 0 0 #64748B
+  }
+  .category-group-label{
+    flex:none;width:106px;padding-top:7px;
+    color:#64748B;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase
+  }
+  .category-group .filter-items{flex:1}
+  .category-pill{transition:opacity .12s,border-color .12s,background .12s}
+  .category-pill[aria-pressed="false"]{opacity:.46;background:#F8FAFC}
+  .category-pill[aria-pressed="true"]{opacity:1}
+  .department-pill{font-weight:700}
+  .filter-empty{align-self:center;color:#94A3B8;font-size:11px;padding:6px 0}
+  .category-actions{align-self:start}
+  .category-actions #categorySelectAll{color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF}
+  .category-actions #categoryClearAll{color:#64748B;background:#F8FAFC}
+  .personal-filter-row{align-items:center}
+
+  /* Event participants */
+  .participant-options{display:flex;flex-wrap:wrap;gap:7px}
+  .participant-option{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 10px;
+    border:1px solid var(--line-strong);border-radius:9px;background:#fff;
+    font-size:12px;font-weight:600;cursor:pointer
+  }
+  .participant-option:has(input:checked){
+    border-color:#93C5FD;background:#EFF6FF;color:#1D4ED8
+  }
+  .participant-option input{width:auto;margin:0}
+  .participant-all{font-weight:800}
+
+  @media (max-width:900px){
+    .filter-row{grid-template-columns:1fr}
+    .category-group{flex-direction:column;gap:4px}
+    .category-group-label{width:auto;padding-top:0}
+    .category-actions{justify-content:flex-start}
+  }
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v25</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v26</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1275,10 +1333,10 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v25</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v26</span></h1>
     </div>
 
-    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button><button id="membersBtn" hidden>Manage members</button></div>
+    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
     <div class="nav">
       <div class="viewtoggle" id="viewToggle">
         <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
@@ -1293,17 +1351,37 @@
   <div class="banner" id="banner"></div>
 
   <div class="filter-panel">
-    <div class="filter-row">
-      <span class="filter-label">Departments</span>
-      <div class="filter-items" id="departmentFilters"></div>
-      <div class="manage-slot">
+    <div class="filter-row scope-filter-row" id="scopeRow" hidden>
+      <span class="filter-label">View</span>
+      <div class="scope-choice" id="scopeChoice">
+        <button type="button" id="scopeMyBtn" aria-pressed="true">My department</button>
+        <button type="button" id="scopeAllBtn" aria-pressed="false">All departments</button>
+      </div>
+      <span></span>
+    </div>
+
+    <div class="filter-row category-filter-row">
+      <span class="filter-label">Categories</span>
+      <div class="category-stack">
+        <div class="category-group department-category-group">
+          <span class="category-group-label">Departments</span>
+          <div class="filter-items" id="departmentFilters"></div>
+        </div>
+        <div class="category-group">
+          <span class="category-group-label">Other categories</span>
+          <div class="filter-items" id="otherFilters"></div>
+        </div>
+      </div>
+      <div class="manage-slot category-actions">
+        <button type="button" id="categorySelectAll">Select all</button>
+        <button type="button" id="categoryClearAll">Clear</button>
         <button id="manageBtn">Manage categories</button>
       </div>
     </div>
 
-    <div class="filter-row others-row" id="othersRow" hidden>
-      <span class="filter-label">Others</span>
-      <div class="filter-items" id="otherFilters"></div>
+    <div class="filter-row personal-filter-row">
+      <span class="filter-label">Personal</span>
+      <div class="filter-items" id="personalFilters"></div>
       <span></span>
     </div>
   </div>
@@ -1433,6 +1511,18 @@
         <button type="button" data-status="final" aria-pressed="true">Final</button>
         <button type="button" data-status="tentative" aria-pressed="false">Tentative</button>
       </div>
+    </div>
+
+    <div class="field hide" id="participantField">
+      <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(event only)</span></label>
+      <div class="participant-options" id="participantOptions">
+        <label class="participant-option participant-all"><input type="checkbox" value="all">All departments</label>
+        <label class="participant-option"><input type="checkbox" value="event">Event</label>
+        <label class="participant-option"><input type="checkbox" value="marketing">Marketing</label>
+        <label class="participant-option"><input type="checkbox" value="finance">Finance</label>
+        <label class="participant-option"><input type="checkbox" value="internal">Internal</label>
+      </div>
+      <div class="assignee-help">Participants make the event appear under “Assigned to me” for members of those departments, but do not add a YOU badge.</div>
     </div>
 
     <div class="field hide" id="assigneeField">
@@ -1627,6 +1717,7 @@ function toRow(ev){
     status:ev.status??null,
     assignee:ev.assignee||'',
     assignee_id:ev.assigneeId||null,
+    participant_departments:ev.participantDepartments||[],
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
     details:ev.details||'',
@@ -1648,6 +1739,7 @@ function fromRow(r){
     assignee:r.assignee||'',
     assigneeId:r.assignee_id||null,
     assigneeIds:[],
+    participantDepartments:r.participant_departments||[],
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
@@ -1662,8 +1754,6 @@ let sessionExpires=0;
 let expiryTimer=null;
 let allDepartments=false;
 let assignedOnly=false;
-let showKesa=true;
-let showSchool=true;
 let loginBusy=false;
 function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
@@ -1713,7 +1803,7 @@ const DEFAULT_DEPTS = [
 
 let DEPTS=[];
 let DEPT={};
-let selectedDeptFilter='__all__';
+let selectedCategories=new Set();
 let selectedViewerId='';
 
 let EXECUTIVES=[];
@@ -1743,6 +1833,25 @@ function isAssignedToViewer(ev){
   return !!(selectedViewerId&&eventAssigneeIds(ev).includes(selectedViewerId));
 }
 
+function eventParticipantDepartments(ev){
+  return Array.isArray(ev?.participantDepartments)?ev.participantDepartments:[];
+}
+
+function viewerParticipates(ev){
+  if(!ev||ev.type!=='event') return false;
+  const participants=eventParticipantDepartments(ev);
+  if(participants.includes('all')) return true;
+  const dept=executiveDepartmentId(currentViewer());
+  return !!dept&&participants.includes(dept);
+}
+
+function participantDisplay(ev){
+  if(!ev||ev.type!=='event') return '';
+  const ids=eventParticipantDepartments(ev);
+  if(!ids.length) return '';
+  if(ids.includes('all')) return 'All departments';
+  return ids.map(id=>DEPT[id]?.name||id[0].toUpperCase()+id.slice(1)).join(', ');
+}
 
 function categoryInMyScope(id){
  const viewer=currentViewer();if(!viewer)return false;
@@ -1756,21 +1865,26 @@ function viewerScopeAllows(ev){
  return (canEdit()&&allDepartments)||categoryInMyScope(ev.dept);
 }
 function typeSupportsAssignees(type){
- return type==='due'||type==='meeting'||type==='other';
+ return type==='event'||type==='due'||type==='meeting'||type==='other';
 }
 
 function eventMatchesView(ev){
  if(!viewerScopeAllows(ev))return false;
+ if(!selectedCategories.has(ev.dept))return false;
 
- // "Assigned to me" only filters item types that can actually have assignees.
- // Event and School items have no assignee field, so they remain visible.
- if(assignedOnly&&typeSupportsAssignees(ev.type)&&!isAssignedToViewer(ev))return false;
+ if(!assignedOnly)return true;
 
- // KESA / School visibility remains independently toggleable.
- if(ev.dept==='all') return showKesa;
- if(ev.dept==='school') return showSchool;
+ // School has no assignment/participation concept, so it remains visible.
+ if(ev.type==='school')return true;
 
- return selectedDeptFilter==='__all__'||ev.dept===selectedDeptFilter;
+ // Events can be relevant either through department participation or
+ // an explicit personal assignment. Only explicit assignment gets YOU.
+ if(ev.type==='event')return isAssignedToViewer(ev)||viewerParticipates(ev);
+
+ // Due date / Meeting / Other are personal-assignment based.
+ if(typeSupportsAssignees(ev.type))return isAssignedToViewer(ev);
+
+ return true;
 }
 
 
@@ -1810,7 +1924,7 @@ function deptOf(id){return DEPT[id]||{id,name:id,color:'#94A3B8',builtin:false}}
 function setDepartments(list){
   DEPTS=(list&&list.length)?list.slice():DEFAULT_DEPTS.slice();
   DEPT=Object.fromEntries(DEPTS.map(d=>[d.id,d]));
-  if(selectedDeptFilter!=='__all__'&&!DEPT[selectedDeptFilter]) selectedDeptFilter='__all__';
+  selectedCategories=new Set([...selectedCategories].filter(id=>DEPT[id]));
 }
 
 const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'};
@@ -2005,25 +2119,45 @@ function clearBanner(){
   document.getElementById('banner').classList.remove('show');
 }
 
-/* ===== FILTER PILLS ===== */
-function makeFilterPill(d,{all=false}={}){
+/* ===== FILTERS ===== */
+function allowedFilterDepartments(){
+ if(!currentViewer())return [];
+ return DEPTS.filter(d=>(canEdit()&&allDepartments)||categoryInMyScope(d.id));
+}
+
+function allowedCategoryIds(){
+ return new Set(allowedFilterDepartments().map(d=>d.id));
+}
+
+function selectAllAllowedCategories(){
+ selectedCategories=allowedCategoryIds();
+ renderFilters();
+ renderActive();
+}
+
+function clearAllCategories(){
+ selectedCategories.clear();
+ renderFilters();
+ renderActive();
+}
+
+function resetCategoriesToAllowed(){
+ selectedCategories=allowedCategoryIds();
+}
+
+function makeCategoryPill(d){
   const b=document.createElement('button');
-  b.className='pill'+(all?' all-pill':'');
-  const id=all?'__all__':d.id;
-  b.style.setProperty('--pill-color',all?'#475569':d.color);
-  b.setAttribute('aria-pressed',selectedDeptFilter===id);
-  b.innerHTML=all
-    ?`<span class="dot"></span>All visible`
-    :`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
+  b.className='pill category-pill'+(DEPARTMENT_IDS.has(d.id)?' department-pill':'');
+  b.style.setProperty('--pill-color',d.color);
+  b.setAttribute('aria-pressed',selectedCategories.has(d.id));
+  b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
 
   b.onclick=()=>{
-    if(all&&canEdit()) allDepartments=true;
-    selectedDeptFilter=id;
-    refreshAccountUI();
+    if(selectedCategories.has(d.id)) selectedCategories.delete(d.id);
+    else selectedCategories.add(d.id);
     renderFilters();
     renderActive();
   };
-
   return b;
 }
 
@@ -2041,59 +2175,34 @@ function makeAssignedPill(){
   return b;
 }
 
-function makeIndependentFixedPill(d){
-  const b=document.createElement('button');
-  b.className='pill independent-fixed';
-  const pressed=d.id==='all'?showKesa:showSchool;
-  b.style.setProperty('--pill-color',d.color);
-  b.setAttribute('aria-pressed',pressed);
-  b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
-
-  b.onclick=()=>{
-    if(d.id==='all') showKesa=!showKesa;
-    else if(d.id==='school') showSchool=!showSchool;
-    renderFilters();
-    renderActive();
-  };
-
-  return b;
-}
-
-
-function allowedFilterDepartments(){
- if(!currentViewer())return [];
- return DEPTS.filter(d=>(canEdit()&&allDepartments)||categoryInMyScope(d.id));
-}
-
-
 function renderFilters(){
   const deptBox=document.getElementById('departmentFilters');
   const otherBox=document.getElementById('otherFilters');
-  const othersRow=document.getElementById('othersRow');
+  const personalBox=document.getElementById('personalFilters');
   const allowed=allowedFilterDepartments();
   const allowedIds=new Set(allowed.map(d=>d.id));
 
-  if(selectedDeptFilter!=='__all__'&&!allowedIds.has(selectedDeptFilter)) selectedDeptFilter='__all__';
+  selectedCategories=new Set([...selectedCategories].filter(id=>allowedIds.has(id)));
 
   deptBox.innerHTML='';
   otherBox.innerHTML='';
-  deptBox.appendChild(makeFilterPill(null,{all:true}));
-  deptBox.appendChild(makeAssignedPill());
+  personalBox.innerHTML='';
 
   allowed.filter(d=>DEPARTMENT_IDS.has(d.id))
-    .forEach(d=>deptBox.appendChild(makeFilterPill(d)));
+    .forEach(d=>deptBox.appendChild(makeCategoryPill(d)));
 
-  const secondary=allowed.filter(d=>SECONDARY_FIXED_IDS.has(d.id));
-  if(secondary.length){
-    const group=document.createElement('span');
-    group.className='fixed-secondary';
-    secondary.forEach(d=>group.appendChild(makeIndependentFixedPill(d)));
-    deptBox.appendChild(group);
-  }
+  allowed.filter(d=>!DEPARTMENT_IDS.has(d.id))
+    .forEach(d=>otherBox.appendChild(makeCategoryPill(d)));
 
-  const others=allowed.filter(d=>!FIXED_IDS.has(d.id));
-  others.forEach(d=>otherBox.appendChild(makeFilterPill(d)));
-  othersRow.hidden=others.length===0;
+  if(!deptBox.children.length) deptBox.innerHTML='<span class="filter-empty">No department categories in this view</span>';
+  if(!otherBox.children.length) otherBox.innerHTML='<span class="filter-empty">No other categories in this view</span>';
+
+  personalBox.appendChild(makeAssignedPill());
+
+  const showScope=canEdit();
+  document.getElementById('scopeRow').hidden=!showScope;
+  document.getElementById('scopeMyBtn').setAttribute('aria-pressed',!allDepartments);
+  document.getElementById('scopeAllBtn').setAttribute('aria-pressed',allDepartments);
 }
 
 function populateViewerSelect(){
@@ -2267,6 +2376,7 @@ function renderGrid(){
         `${ev.status==='tentative'?' · tentative':''}`;
 
       const metaParts=[];
+      if(participantDisplay(ev)) metaParts.push(`<span class="card-extra">◎ ${escapeHtml(participantDisplay(ev))}</span>`);
       if(assigneeDisplay(ev)) metaParts.push(`<span class="card-extra">@${escapeHtml(assigneeDisplay(ev))}</span>`);
       if(linked) metaParts.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
       if(ev.recur&&ev.recur!=='none') metaParts.push(`<span class="card-extra">↻</span>`);
@@ -2383,6 +2493,7 @@ function renderLongEventBars(segments){
 
     const linked=linkedEventFor(seg.ev);
     const barMetaParts=[];
+    if(participantDisplay(seg.ev)) barMetaParts.push(`<span class="card-extra">◎ ${escapeHtml(participantDisplay(seg.ev))}</span>`);
     if(assigneeDisplay(seg.ev)) barMetaParts.push(`<span class="card-extra">@${escapeHtml(assigneeDisplay(seg.ev))}</span>`);
     if(linked) barMetaParts.push(`<span class="card-extra chip-link" data-linked-id="${escapeHtml(linked.id)}">↗ ${escapeHtml(linked.title)}</span>`);
     if(seg.ev.recur&&seg.ev.recur!=='none') barMetaParts.push(`<span class="card-extra">↻</span>`);
@@ -2436,11 +2547,7 @@ function jumpToEventById(id){
   const target=events.find(e=>e.id===id&&e.type==='event');
   if(!target) return;
 
-  if(viewerScopeAllows(target)){
-    if(target.dept==='all') showKesa=true;
-    else if(target.dept==='school') showSchool=true;
-    else selectedDeptFilter=target.dept;
-  }
+  if(viewerScopeAllows(target)) selectedCategories.add(target.dept);
   renderFilters();
 
   const d=parseYMD(target.date);
@@ -2554,6 +2661,7 @@ function openDetail(ev){
   html+=detailRow('Date',escapeHtml(prettyDate(ev.date)));
   if(ev.time) html+=detailRow('Time',escapeHtml(prettyTime(ev.time)));
   if(ev.endDate) html+=detailRow('End date',escapeHtml(prettyDate(ev.endDate)));
+  if(participantDisplay(ev)) html+=detailRow('Participants',`◎ ${escapeHtml(participantDisplay(ev))}`);
   if(assigneeDetail(ev)) html+=detailRow('Assignees',`👤 ${assigneeDetailHtml(ev)}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
   if(linked) html+=detailRow('Linked event',`🔗 ${escapeHtml(linked.title)}`,false,'detail-link');
@@ -2670,6 +2778,7 @@ function renderList(){
       meta.push('through '+e.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
     }
 
+    if(participantDisplay(ev)) meta.push('Participants: '+participantDisplay(ev));
     if(assigneeDisplay(ev)) meta.push('→ '+assigneeDisplay(ev));
     if(ev.recur&&ev.recur!=='none') meta.push('↻ '+recurLabel(ev));
 
@@ -2732,6 +2841,31 @@ const EXEC_DEPT_BY_CATEGORY={
 
 let assigneeShowAll=false;
 let selectedAssigneeIds=new Set();
+let selectedParticipantDepartments=new Set();
+
+function setSelectedParticipants(ids=[]){
+  selectedParticipantDepartments=new Set((ids||[]).filter(id=>['all','event','marketing','finance','internal'].includes(id)));
+  if(selectedParticipantDepartments.has('all')) selectedParticipantDepartments=new Set(['all']);
+  renderParticipantPicker();
+}
+
+function renderParticipantPicker(){
+  document.querySelectorAll('#participantOptions input[type="checkbox"]').forEach(cb=>{
+    cb.checked=selectedParticipantDepartments.has(cb.value);
+  });
+}
+
+function onParticipantChange(e){
+  const id=e.target.value;
+  if(e.target.checked){
+    if(id==='all') selectedParticipantDepartments=new Set(['all']);
+    else{
+      selectedParticipantDepartments.delete('all');
+      selectedParticipantDepartments.add(id);
+    }
+  }else selectedParticipantDepartments.delete(id);
+  renderParticipantPicker();
+}
 
 function currentExecutiveDepartment(){
   return EXEC_DEPT_BY_CATEGORY[document.getElementById('fDept').value]||null;
@@ -2860,6 +2994,7 @@ function setType(t){
 
   const deptField=document.getElementById('deptField');
   const endField=document.getElementById('endField');
+  const participant=document.getElementById('participantField');
   const assignee=document.getElementById('assigneeField');
   const link=document.getElementById('linkField');
   const recur=document.getElementById('recurField');
@@ -2871,6 +3006,7 @@ function setType(t){
 
   if(t==='school'){
     deptField.classList.add('hide');
+    participant.classList.add('hide');
     assignee.classList.add('hide');
     link.classList.add('hide');
     recur.classList.add('hide');
@@ -2879,7 +3015,8 @@ function setType(t){
   }else{
     deptField.classList.remove('hide');
     recur.classList.remove('hide');
-    assignee.classList.toggle('hide',!(t==='due'||t==='meeting'||t==='other'));
+    participant.classList.toggle('hide',t!=='event');
+    assignee.classList.toggle('hide',!(t==='event'||t==='due'||t==='meeting'||t==='other'));
     link.classList.toggle('hide',!(t==='due'||t==='other'));
     schoolStatusEnabled=false;
     if(!formStatus) formStatus='final';
@@ -2896,9 +3033,10 @@ function setType(t){
     dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
   }
 
-  if(t==='due'||t==='meeting'||t==='other'){
+  if(t==='event'||t==='due'||t==='meeting'||t==='other'){
     refreshAssigneeScope({keepCurrent:true,preserveOutside:true});
   }
+  if(t==='event') renderParticipantPicker();
 }
 
 function syncEndDateConstraints(){
@@ -2981,6 +3119,7 @@ function openAdd(dateStr){
   document.getElementById('fEnd').value=document.getElementById('fDate').value;
   document.getElementById('fEmoji').value='📌';
   selectedAssigneeIds=new Set();
+  selectedParticipantDepartments=new Set();
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
 
@@ -2990,6 +3129,7 @@ function openAdd(dateStr){
   if(DEPT.all) document.getElementById('fDept').value='all';
   assigneeShowAll=false;
   setSelectedAssignees([]);
+  setSelectedParticipants([]);
   syncEndDateConstraints();
   setStatus('final');
   clearErr();
@@ -3016,6 +3156,7 @@ function openEdit(ev){
   document.getElementById('fEnd').value=ev.endDate||ev.date;
   document.getElementById('fEmoji').value=ev.emoji||'📌';
   selectedAssigneeIds=new Set();
+  selectedParticipantDepartments=new Set();
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
 
@@ -3033,6 +3174,7 @@ function openEdit(ev){
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
   assigneeShowAll=false;
   setSelectedAssignees((ev.assigneeIds&&ev.assigneeIds.length)?ev.assigneeIds:(ev.assigneeId?[ev.assigneeId]:[]));
+  setSelectedParticipants(ev.participantDepartments||[]);
   document.getElementById('fLink').value=ev.linkedEventId||'';
 
   clearErr();
@@ -3074,8 +3216,12 @@ async function saveItem(){
     ?'none'
     :document.getElementById('fRecur').value;
 
-  const assigneeIds=(formType==='due'||formType==='meeting'||formType==='other')
+  const assigneeIds=(formType==='event'||formType==='due'||formType==='meeting'||formType==='other')
     ?[...selectedAssigneeIds].filter(id=>EXEC_BY_ID[id])
+    :[];
+
+  const participantDepartments=formType==='event'
+    ?[...selectedParticipantDepartments]
     :[];
 
   const selectedPeople=assigneeIds.map(id=>EXEC_BY_ID[id]).filter(Boolean);
@@ -3120,6 +3266,7 @@ async function saveItem(){
         assignee,
         assigneeId,
         assigneeIds,
+        participantDepartments,
         linkedEventId,
         recur:rec,
         details,
@@ -3143,6 +3290,7 @@ async function saveItem(){
         assignee,
         assigneeId,
         assigneeIds,
+        participantDepartments,
         linkedEventId,
         recur:rec,
         details,
@@ -3727,6 +3875,9 @@ document.getElementById('assigneeScopeToggle').addEventListener('click',()=>{
   renderAssigneePicker();
 });
 
+document.querySelectorAll('#participantOptions input[type="checkbox"]')
+  .forEach(cb=>cb.addEventListener('change',onParticipantChange));
+
 document.getElementById('assigneeSelectAll').addEventListener('click',selectAllVisibleAssignees);
 document.getElementById('assigneeClearAll').addEventListener('click',clearAllAssignees);
 
@@ -3794,15 +3945,13 @@ function refreshAccountUI(){
  document.getElementById('accountName').textContent=v?`${v.english_name} · ${v.role} · ${v.department}`:'';
  document.body.classList.toggle('read-only',!canEdit());
  for(const id of ['addBtn','manageBtn','detailEdit','detailDelete'])document.getElementById(id).hidden=!canEdit();
- document.getElementById('scopeToggle').hidden=!canEdit();
  document.getElementById('membersBtn').hidden=!canAdmin();
- document.getElementById('scopeToggle').textContent=allDepartments?'View my department':'View all departments';
  document.getElementById('scopeLabel').textContent=allDepartments?'All departments':'My department + shared';
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
 }
 function resetLogin(message=''){
- clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;showKesa=true;showSchool=true;
- events=[];DEPTS=[];DEPT={};selectedDeptFilter='__all__';
+ clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
+ events=[];DEPTS=[];DEPT={};selectedCategories=new Set();
  closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
  document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
  document.body.classList.add('signed-out');document.getElementById('loginScreen').hidden=false;
@@ -3832,8 +3981,9 @@ document.getElementById('loginForm').onsubmit=async e=>{
   const loaded=await api('load');
   EXEC_BY_ID[selectedViewerId]=loaded.person;
   setDepartments(loaded.departments);events=unpackEvents(loaded);
-  allDepartments=isPresidential();assignedOnly=false;showKesa=true;showSchool=true;selectedDeptFilter='__all__';
-  buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);
+  allDepartments=isPresidential();assignedOnly=false;
+  resetCategoriesToAllowed();
+  buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);setSelectedParticipants([]);
   document.body.classList.remove('signed-out');document.getElementById('loginScreen').hidden=true;
   clearBanner();setView('calendar');
   expiryTimer=setTimeout(()=>resetLogin('Session expired. Please sign in again.'),Math.max(0,sessionExpires-Date.now()));
@@ -3846,10 +3996,20 @@ document.getElementById('switchUser').onclick=async()=>{
  const token=sessionToken;resetLogin();
  if(token)await sb.rpc('kesa_api',{p_token:token,p_action:'logout',p_data:{}});
 };
-document.getElementById('scopeToggle').onclick=()=>{
- if(!canEdit())return;allDepartments=!allDepartments;selectedDeptFilter='__all__';
+document.getElementById('scopeMyBtn').onclick=()=>{
+ if(!canEdit())return;
+ allDepartments=false;
+ resetCategoriesToAllowed();
  refreshAccountUI();renderFilters();renderActive();
 };
+document.getElementById('scopeAllBtn').onclick=()=>{
+ if(!canEdit())return;
+ allDepartments=true;
+ resetCategoriesToAllowed();
+ refreshAccountUI();renderFilters();renderActive();
+};
+document.getElementById('categorySelectAll').onclick=selectAllAllowedCategories;
+document.getElementById('categoryClearAll').onclick=clearAllCategories;
 document.addEventListener('visibilitychange',()=>{
  if(!document.hidden&&sessionToken&&Date.now()>=sessionExpires)resetLogin('Session expired. Please sign in again.');
 });
