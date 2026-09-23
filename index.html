@@ -1239,13 +1239,32 @@
     opacity:1;
   }
 
+
+  /* v24 assignee bulk actions */
+  .assignee-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  #assigneeSelectAll{
+    background:#EFF6FF;
+    border-color:#BFDBFE;
+    color:#1D4ED8;
+  }
+  #assigneeClearAll{
+    background:#F8FAFC;
+    color:#64748B;
+  }
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v23</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v25</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1256,7 +1275,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v23</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v25</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1420,7 +1439,11 @@
       <label class="lb">Assignees <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <div class="assignee-toolbar">
         <span class="assignee-scope" id="assigneeScope">All executives</span>
-        <button type="button" class="assignee-toggle" id="assigneeScopeToggle" style="display:none">View all executives</button>
+        <div class="assignee-actions">
+          <button type="button" class="assignee-toggle" id="assigneeSelectAll">Select all</button>
+          <button type="button" class="assignee-toggle" id="assigneeClearAll">Clear</button>
+          <button type="button" class="assignee-toggle" id="assigneeScopeToggle" style="display:none">View all executives</button>
+        </div>
       </div>
       <div class="assignee-selected" id="assigneeSelected"></div>
       <div class="assignee-list" id="assigneeList"></div>
@@ -1732,10 +1755,18 @@ function viewerScopeAllows(ev){
  if(!currentViewer()||!sessionToken)return false;
  return (canEdit()&&allDepartments)||categoryInMyScope(ev.dept);
 }
+function typeSupportsAssignees(type){
+ return type==='due'||type==='meeting'||type==='other';
+}
+
 function eventMatchesView(ev){
  if(!viewerScopeAllows(ev))return false;
- if(assignedOnly&&!isAssignedToViewer(ev))return false;
 
+ // "Assigned to me" only filters item types that can actually have assignees.
+ // Event and School items have no assignee field, so they remain visible.
+ if(assignedOnly&&typeSupportsAssignees(ev.type)&&!isAssignedToViewer(ev))return false;
+
+ // KESA / School visibility remains independently toggleable.
  if(ev.dept==='all') return showKesa;
  if(ev.dept==='school') return showSchool;
 
@@ -2745,6 +2776,15 @@ function renderSelectedAssignees(){
   });
 }
 
+function visibleAssigneePeople(){
+  const dept=currentExecutiveDepartment();
+  if(!dept) assigneeShowAll=true;
+
+  let people=EXECUTIVES.slice();
+  if(dept&&!assigneeShowAll) people=people.filter(x=>x.department===dept);
+  return sortedExecutives(people);
+}
+
 function renderAssigneePicker(){
   const list=document.getElementById('assigneeList');
   const scope=document.getElementById('assigneeScope');
@@ -2752,11 +2792,7 @@ function renderAssigneePicker(){
   const help=document.getElementById('assigneeHelp');
   const dept=currentExecutiveDepartment();
 
-  if(!dept) assigneeShowAll=true;
-
-  let people=EXECUTIVES.slice();
-  if(dept&&!assigneeShowAll) people=people.filter(x=>x.department===dept);
-  people=sortedExecutives(people);
+  const people=visibleAssigneePeople();
 
   list.innerHTML='';
   people.forEach(person=>{
@@ -2795,6 +2831,16 @@ function renderAssigneePicker(){
 
 function setSelectedAssignees(ids=[]){
   selectedAssigneeIds=new Set((ids||[]).filter(id=>EXEC_BY_ID[id]));
+  renderAssigneePicker();
+}
+
+function selectAllVisibleAssignees(){
+  visibleAssigneePeople().forEach(person=>selectedAssigneeIds.add(person.id));
+  renderAssigneePicker();
+}
+
+function clearAllAssignees(){
+  selectedAssigneeIds.clear();
   renderAssigneePicker();
 }
 
@@ -3680,6 +3726,9 @@ document.getElementById('assigneeScopeToggle').addEventListener('click',()=>{
   assigneeShowAll=!assigneeShowAll;
   renderAssigneePicker();
 });
+
+document.getElementById('assigneeSelectAll').addEventListener('click',selectAllVisibleAssignees);
+document.getElementById('assigneeClearAll').addEventListener('click',clearAllAssignees);
 
 document.getElementById('schoolStatusToggle').addEventListener('change',e=>{
   setSchoolStatusEnabled(e.target.checked);
