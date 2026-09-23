@@ -1316,13 +1316,142 @@
     .category-actions{justify-content:flex-start}
   }
 
+
+  /* ===== v27 compact filters ===== */
+  .compact-filters{
+    padding:8px 10px;
+    margin-bottom:10px;
+  }
+  .compact-filter-line{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .compact-category-block{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+    padding:5px 8px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+  }
+  .compact-category-block.department-category-group{
+    background:#F8FAFC;
+    border-color:#CBD5E1;
+    box-shadow:inset 3px 0 0 #64748B;
+  }
+  .compact-group-label{
+    flex:none;
+    color:#64748B;
+    font-size:8.5px;
+    font-weight:800;
+    letter-spacing:.065em;
+    text-transform:uppercase;
+  }
+  .compact-filter-line .scope-choice{
+    flex:none;
+  }
+  .compact-filter-line .scope-choice button{
+    min-width:auto;
+    padding:7px 10px;
+    font-size:11.5px;
+  }
+  .compact-filter-line .pill{
+    min-height:30px;
+    padding:5px 9px 5px 8px;
+    font-size:11.5px;
+  }
+  .personal-inline{
+    flex:none;
+  }
+  .category-actions{
+    margin-left:auto;
+    flex-wrap:nowrap;
+  }
+  .category-actions button{
+    min-height:30px;
+    padding:6px 9px;
+    font-size:11px;
+  }
+
+  /* neutralize old vertical v26 wrappers */
+  .category-stack,.category-group,.category-group-label,
+  .personal-filter-row,.category-filter-row,.scope-filter-row{
+    all:unset;
+  }
+
+  /* ===== v27 list range control ===== */
+  .list-toolbar{
+    position:sticky;
+    top:0;
+    z-index:4;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+    background:rgba(251,252,254,.96);
+    backdrop-filter:blur(8px);
+  }
+  .list-toolbar-note{
+    margin-right:auto;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:600;
+  }
+  #listShowAll{
+    padding:6px 10px;
+    font-size:11px;
+    background:#fff;
+  }
+  #listShowAll[aria-pressed="true"]{
+    background:#F8FAFC;
+    color:var(--ink-soft);
+  }
+  .lrow.past{
+    opacity:.42;
+  }
+  .lrow.past:hover{
+    opacity:.72;
+  }
+  .lrow.list-today{
+    background:#FFF7ED;
+    box-shadow:inset 3px 0 0 #FDBA74;
+  }
+  .today-chip{
+    display:inline-flex;
+    margin-left:4px;
+    padding:1px 5px;
+    border-radius:999px;
+    background:#FDBA74;
+    color:#7C2D12;
+    font-size:8px;
+    font-weight:800;
+    text-transform:uppercase;
+    vertical-align:1px;
+  }
+
+  @media (max-width:1100px){
+    .category-actions{margin-left:0}
+  }
+  @media (max-width:700px){
+    .compact-filter-line{align-items:flex-start}
+    .compact-category-block{width:100%;flex-wrap:wrap}
+    .compact-group-label{width:100%}
+    .category-actions{width:100%;justify-content:flex-start}
+  }
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v26</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v27</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1333,7 +1462,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v26</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v27</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1350,39 +1479,30 @@
 
   <div class="banner" id="banner"></div>
 
-  <div class="filter-panel">
-    <div class="filter-row scope-filter-row" id="scopeRow" hidden>
-      <span class="filter-label">View</span>
-      <div class="scope-choice" id="scopeChoice">
+  <div class="filter-panel compact-filters">
+    <div class="compact-filter-line">
+      <div class="scope-choice" id="scopeRow" hidden>
         <button type="button" id="scopeMyBtn" aria-pressed="true">My department</button>
         <button type="button" id="scopeAllBtn" aria-pressed="false">All departments</button>
       </div>
-      <span></span>
-    </div>
 
-    <div class="filter-row category-filter-row">
-      <span class="filter-label">Categories</span>
-      <div class="category-stack">
-        <div class="category-group department-category-group">
-          <span class="category-group-label">Departments</span>
-          <div class="filter-items" id="departmentFilters"></div>
-        </div>
-        <div class="category-group">
-          <span class="category-group-label">Other categories</span>
-          <div class="filter-items" id="otherFilters"></div>
-        </div>
+      <div class="compact-category-block department-category-group">
+        <span class="compact-group-label">Departments</span>
+        <div class="filter-items" id="departmentFilters"></div>
       </div>
+
+      <div class="compact-category-block">
+        <span class="compact-group-label">Categories</span>
+        <div class="filter-items" id="otherFilters"></div>
+      </div>
+
+      <div class="filter-items personal-inline" id="personalFilters"></div>
+
       <div class="manage-slot category-actions">
-        <button type="button" id="categorySelectAll">Select all</button>
+        <button type="button" id="categorySelectAll">All on</button>
         <button type="button" id="categoryClearAll">Clear</button>
-        <button id="manageBtn">Manage categories</button>
+        <button id="manageBtn">Manage</button>
       </div>
-    </div>
-
-    <div class="filter-row personal-filter-row">
-      <span class="filter-label">Personal</span>
-      <div class="filter-items" id="personalFilters"></div>
-      <span></span>
     </div>
   </div>
 
@@ -1412,7 +1532,13 @@
       <div class="grid" id="grid"></div>
     </div>
 
-    <div class="list" id="listView" hidden></div>
+    <div class="list" id="listView" hidden>
+      <div class="list-toolbar">
+        <span class="list-toolbar-note" id="listRangeNote">Today onward</span>
+        <button type="button" id="listShowAll" aria-pressed="false">Show all</button>
+      </div>
+      <div id="listContent"></div>
+    </div>
     <div class="resize-handle" id="resizeHandle" aria-hidden="true"></div>
   </div>
 </div>
@@ -2030,6 +2156,7 @@ let view=new Date();
 view.setDate(1);
 
 let viewMode='calendar';
+let listShowPast=false;
 let editingId=null;
 let formType='event';
 let formStatus='final';
@@ -2253,7 +2380,17 @@ function setView(mode){
   const board=document.getElementById('board');
   board.classList.toggle('calendar-mode',mode==='calendar');
 
+  // Entering List always re-anchors the list to the current date.
+  if(mode==='list'){
+    view=new Date();
+    view.setDate(1);
+  }
+
   renderActive();
+
+  if(mode==='list'){
+    requestAnimationFrame(()=>scrollListToToday());
+  }
 }
 
 function renderActive(){
@@ -2723,14 +2860,21 @@ function editFromDetail(){
 
 /* ===== LIST ===== */
 function renderList(){
-  const box=document.getElementById('listView');
+  const box=document.getElementById('listContent');
   box.innerHTML='';
 
   const todayStr=fmt(new Date());
+  const toggle=document.getElementById('listShowAll');
+  const note=document.getElementById('listRangeNote');
+
+  toggle.setAttribute('aria-pressed',listShowPast);
+  toggle.textContent=listShowPast?'Upcoming only':'Show all';
+  note.textContent=listShowPast?'All dates · past items are faded':'Today onward';
 
   const rows=events
     .filter(eventMatchesView)
     .map(ev=>({ev,when:nextOccurrence(ev,todayStr)}))
+    .filter(({when})=>listShowPast||when>=todayStr)
     .sort((a,b)=>
       a.when.localeCompare(b.when) ||
       Number(a.ev.type==='school')-Number(b.ev.type==='school') ||
@@ -2739,7 +2883,7 @@ function renderList(){
     );
 
   if(rows.length===0){
-    box.innerHTML='<div class="empty">No items match the current filters. Adjust the category filters, or add an item.</div>';
+    box.innerHTML='<div class="empty">No upcoming items match the current filters.</div>';
     return;
   }
 
@@ -2759,7 +2903,10 @@ function renderList(){
 
     const dp=deptOf(ev.dept);
     const row=document.createElement('button');
-    row.className='lrow'+(when<todayStr?' past':'')+(isAssignedToViewer(ev)?' assigned-to-me':'');
+    const isPast=when<todayStr;
+    const isToday=when===todayStr;
+    row.className='lrow'+(isPast?' past':'')+(isToday?' list-today':'')+(isAssignedToViewer(ev)?' assigned-to-me':'');
+    row.dataset.when=when;
 
     const dateLabel=d.toLocaleDateString('en-US',{
       weekday:'short',
@@ -2770,25 +2917,21 @@ function renderList(){
     const meta=[];
     meta.push(TYPE_NAME[ev.type]);
     if(ev.time) meta.push(prettyTime(ev.time));
-
     if(ev.dept!=='school') meta.push(dp.name);
-
     if(ev.endDate){
       const e=parseYMD(ev.endDate);
       meta.push('through '+e.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
     }
-
     if(participantDisplay(ev)) meta.push('Participants: '+participantDisplay(ev));
     if(assigneeDisplay(ev)) meta.push('→ '+assigneeDisplay(ev));
     if(ev.recur&&ev.recur!=='none') meta.push('↻ '+recurLabel(ev));
-
     if(ev.linkedEventId){
       const linked=events.find(e=>e.id===ev.linkedEventId);
       if(linked) meta.push('for '+linked.title);
     }
 
     row.innerHTML=
-      `<span class="ldate">${dateLabel}</span>`+
+      `<span class="ldate">${dateLabel}${isToday?' <span class="today-chip">Today</span>':''}</span>`+
       `<span class="lbar" style="background:${dp.color}"></span>`+
       `<span class="lbody">`+
         `<span class="ltitle">`+
@@ -2802,6 +2945,18 @@ function renderList(){
     row.onclick=()=>openDetail(ev);
     box.appendChild(row);
   });
+}
+
+function scrollListToToday(){
+  if(viewMode!=='list')return;
+  const box=document.getElementById('listContent');
+  if(!box)return;
+
+  const today=fmt(new Date());
+  const exact=box.querySelector(`.lrow[data-when="${today}"]`);
+  const future=[...box.querySelectorAll('.lrow[data-when]')].find(el=>el.dataset.when>=today);
+  const target=exact||future;
+  if(target) target.scrollIntoView({block:'start',behavior:'auto'});
 }
 
 function escapeHtml(s){
@@ -3889,6 +4044,12 @@ document.getElementById('schoolStatusToggle').addEventListener('change',e=>{
 document.querySelectorAll('#viewToggle button')
   .forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
+document.getElementById('listShowAll').onclick=()=>{
+  listShowPast=!listShowPast;
+  renderList();
+  requestAnimationFrame(()=>scrollListToToday());
+};
+
 document.getElementById('manageBtn').onclick=openCat;
 document.getElementById('membersBtn').onclick=openMembers;
 document.getElementById('memberAdd').onclick=()=>openMemberForm();
@@ -3953,7 +4114,7 @@ function resetLogin(message=''){
  clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
  events=[];DEPTS=[];DEPT={};selectedCategories=new Set();
  closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
- document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
+ document.getElementById('grid').innerHTML='';document.getElementById('listContent').innerHTML='';
  document.body.classList.add('signed-out');document.getElementById('loginScreen').hidden=false;
  document.getElementById('loginPerson').value='';document.getElementById('loginPassword').value='';
  document.getElementById('loginPasswordField').hidden=true;document.getElementById('loginPassword').required=false;
