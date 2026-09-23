@@ -1214,13 +1214,38 @@
     .filter-row{grid-template-columns:1fr}
   }
 
+
+  /* v23: KESA / School are independent visibility toggles */
+  .fixed-secondary{
+    position:relative;
+  }
+  .fixed-secondary::before{
+    content:"ALWAYS";
+    align-self:center;
+    margin-right:1px;
+    color:#94A3B8;
+    font-size:8px;
+    font-weight:800;
+    letter-spacing:.08em;
+  }
+  .independent-fixed{
+    position:relative;
+  }
+  .independent-fixed[aria-pressed="false"]{
+    opacity:.48;
+    background:#F8FAFC;
+  }
+  .independent-fixed[aria-pressed="true"]{
+    opacity:1;
+  }
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v22</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v23</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1231,7 +1256,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v22</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v23</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1614,6 +1639,8 @@ let sessionExpires=0;
 let expiryTimer=null;
 let allDepartments=false;
 let assignedOnly=false;
+let showKesa=true;
+let showSchool=true;
 let loginBusy=false;
 function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
@@ -1708,6 +1735,10 @@ function viewerScopeAllows(ev){
 function eventMatchesView(ev){
  if(!viewerScopeAllows(ev))return false;
  if(assignedOnly&&!isAssignedToViewer(ev))return false;
+
+ if(ev.dept==='all') return showKesa;
+ if(ev.dept==='school') return showSchool;
+
  return selectedDeptFilter==='__all__'||ev.dept===selectedDeptFilter;
 }
 
@@ -1979,6 +2010,24 @@ function makeAssignedPill(){
   return b;
 }
 
+function makeIndependentFixedPill(d){
+  const b=document.createElement('button');
+  b.className='pill independent-fixed';
+  const pressed=d.id==='all'?showKesa:showSchool;
+  b.style.setProperty('--pill-color',d.color);
+  b.setAttribute('aria-pressed',pressed);
+  b.innerHTML=`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
+
+  b.onclick=()=>{
+    if(d.id==='all') showKesa=!showKesa;
+    else if(d.id==='school') showSchool=!showSchool;
+    renderFilters();
+    renderActive();
+  };
+
+  return b;
+}
+
 
 function allowedFilterDepartments(){
  if(!currentViewer())return [];
@@ -2007,7 +2056,7 @@ function renderFilters(){
   if(secondary.length){
     const group=document.createElement('span');
     group.className='fixed-secondary';
-    secondary.forEach(d=>group.appendChild(makeFilterPill(d)));
+    secondary.forEach(d=>group.appendChild(makeIndependentFixedPill(d)));
     deptBox.appendChild(group);
   }
 
@@ -2356,7 +2405,11 @@ function jumpToEventById(id){
   const target=events.find(e=>e.id===id&&e.type==='event');
   if(!target) return;
 
-  if(viewerScopeAllows(target)) selectedDeptFilter=target.dept;
+  if(viewerScopeAllows(target)){
+    if(target.dept==='all') showKesa=true;
+    else if(target.dept==='school') showSchool=true;
+    else selectedDeptFilter=target.dept;
+  }
   renderFilters();
 
   const d=parseYMD(target.date);
@@ -3699,7 +3752,7 @@ function refreshAccountUI(){
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
 }
 function resetLogin(message=''){
- clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
+ clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;showKesa=true;showSchool=true;
  events=[];DEPTS=[];DEPT={};selectedDeptFilter='__all__';
  closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
  document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
@@ -3730,7 +3783,7 @@ document.getElementById('loginForm').onsubmit=async e=>{
   const loaded=await api('load');
   EXEC_BY_ID[selectedViewerId]=loaded.person;
   setDepartments(loaded.departments);events=unpackEvents(loaded);
-  allDepartments=isPresidential();assignedOnly=false;selectedDeptFilter='__all__';
+  allDepartments=isPresidential();assignedOnly=false;showKesa=true;showSchool=true;selectedDeptFilter='__all__';
   buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);
   document.body.classList.remove('signed-out');document.getElementById('loginScreen').hidden=true;
   clearBanner();setView('calendar');
