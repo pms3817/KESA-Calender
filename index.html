@@ -1157,13 +1157,70 @@
   .member-toolbar .sub{margin:0}
   .member-empty{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 
+
+  /* ===== v22 header / control polish ===== */
+  header.app{align-items:center;padding:4px 0 2px}
+  .brand{display:flex;align-items:center;min-height:44px}
+  .brand h1{display:flex;align-items:center;gap:8px;font-size:24px}
+  .brand h1 .version-badge{margin-left:2px;transform:translateY(1px)}
+
+  .account-bar{
+    margin-top:0;padding:6px;gap:6px;background:rgba(255,255,255,.9);
+    border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04)
+  }
+  #accountName{
+    display:inline-flex;align-items:center;min-height:36px;padding:0 10px;margin-right:2px;
+    border-right:1px solid var(--line);color:var(--ink-soft);font-weight:650;white-space:nowrap
+  }
+  .account-bar button{min-height:36px;padding:7px 12px;background:#fff;border-color:var(--line-strong);font-weight:600}
+  .account-bar #switchUser{color:var(--muted);background:#F8FAFC}
+  .account-bar #scopeToggle{color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF}
+  .account-bar #membersBtn{color:#fff;border-color:#334155;background:#334155}
+  .account-bar #membersBtn:hover{background:#1E293B;border-color:#1E293B}
+
+  .nav{
+    padding:5px;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)
+  }
+  .nav > #today{background:#F8FAFC}
+
+  .filter-panel{
+    padding:10px 12px;background:rgba(255,255,255,.72);
+    border:1px solid var(--line);border-radius:12px
+  }
+  .filter-row{grid-template-columns:128px minmax(0,1fr) auto}
+  .filter-label{font-weight:800;color:#475569}
+  .pill{min-height:34px;padding:6px 12px 6px 10px}
+  .assigned-filter-icon{
+    width:12px;height:12px;display:inline-flex;border:2px solid #F59E0B;border-radius:999px;
+    box-shadow:inset 0 0 0 2px #fff;background:#F59E0B;flex:none
+  }
+  .assigned-filter[aria-pressed="true"]{
+    border-color:#F59E0B;background:#FFFBEB;color:#92400E
+  }
+  .manage-slot #manageBtn{min-height:34px;background:#fff;font-weight:650}
+
+  @media (max-width:1050px){
+    header.app{align-items:flex-start}
+    .account-bar{width:100%;order:3}
+    #accountName{margin-right:auto}
+  }
+  @media (max-width:700px){
+    .brand h1{font-size:21px}
+    .account-bar{overflow-x:auto;flex-wrap:nowrap}
+    #accountName{display:none}
+    .filter-panel{padding:8px}
+    .filter-row{grid-template-columns:1fr}
+  }
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v21</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v22</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1174,8 +1231,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar</h1>
-      <p>바쁜 디렉분들에게 도움이 되었으면 좋겠네요~ <span class="version-badge">v21</span></p>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v22</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="scopeToggle" hidden>View all departments</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1557,6 +1613,7 @@ let sessionToken='';
 let sessionExpires=0;
 let expiryTimer=null;
 let allDepartments=false;
+let assignedOnly=false;
 let loginBusy=false;
 function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
@@ -1650,6 +1707,7 @@ function viewerScopeAllows(ev){
 }
 function eventMatchesView(ev){
  if(!viewerScopeAllows(ev))return false;
+ if(assignedOnly&&!isAssignedToViewer(ev))return false;
  return selectedDeptFilter==='__all__'||ev.dept===selectedDeptFilter;
 }
 
@@ -1897,11 +1955,27 @@ function makeFilterPill(d,{all=false}={}){
     :`<span class="dot" style="background:${d.color}"></span>${escapeHtml(d.name)}`;
 
   b.onclick=()=>{
+    if(all&&canEdit()) allDepartments=true;
     selectedDeptFilter=id;
+    refreshAccountUI();
     renderFilters();
     renderActive();
   };
 
+  return b;
+}
+
+function makeAssignedPill(){
+  const b=document.createElement('button');
+  b.className='pill assigned-filter';
+  b.style.setProperty('--pill-color','#F59E0B');
+  b.setAttribute('aria-pressed',assignedOnly);
+  b.innerHTML=`<span class="assigned-filter-icon"></span>Assigned to me`;
+  b.onclick=()=>{
+    assignedOnly=!assignedOnly;
+    renderFilters();
+    renderActive();
+  };
   return b;
 }
 
@@ -1924,6 +1998,7 @@ function renderFilters(){
   deptBox.innerHTML='';
   otherBox.innerHTML='';
   deptBox.appendChild(makeFilterPill(null,{all:true}));
+  deptBox.appendChild(makeAssignedPill());
 
   allowed.filter(d=>DEPARTMENT_IDS.has(d.id))
     .forEach(d=>deptBox.appendChild(makeFilterPill(d)));
@@ -3624,7 +3699,7 @@ function refreshAccountUI(){
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
 }
 function resetLogin(message=''){
- clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;
+ clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
  events=[];DEPTS=[];DEPT={};selectedDeptFilter='__all__';
  closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
  document.getElementById('grid').innerHTML='';document.getElementById('listView').innerHTML='';
@@ -3655,7 +3730,7 @@ document.getElementById('loginForm').onsubmit=async e=>{
   const loaded=await api('load');
   EXEC_BY_ID[selectedViewerId]=loaded.person;
   setDepartments(loaded.departments);events=unpackEvents(loaded);
-  allDepartments=isPresidential();selectedDeptFilter='__all__';
+  allDepartments=isPresidential();assignedOnly=false;selectedDeptFilter='__all__';
   buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);
   document.body.classList.remove('signed-out');document.getElementById('loginScreen').hidden=true;
   clearBanner();setView('calendar');
