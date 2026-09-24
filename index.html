@@ -1463,13 +1463,19 @@
   #confirmError{color:#B91C1C;font-size:12px;white-space:pre-wrap}
   .confirm-modal .modal-actions{position:sticky;bottom:0;background:var(--panel);padding:12px 0 0}
   @media(max-width:480px){.confirm-summary{grid-template-columns:100px minmax(0,1fr)}}
+  /* v30 individual participants */
+  .participant-people{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px}
+  .participant-people summary{cursor:pointer;font-size:12px;font-weight:600}
+  .participant-people .assignee-list{margin-top:10px;max-height:240px;overflow:auto}
+  .participant-covered{opacity:.55;background:#F1F5F9;cursor:not-allowed}
+  #participantSelected{margin-top:8px}
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v29</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v30</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1480,7 +1486,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v29</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v30</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1666,7 +1672,13 @@
         <label class="participant-option"><input type="checkbox" value="finance">Finance</label>
         <label class="participant-option"><input type="checkbox" value="internal">Internal</label>
       </div>
-      <div class="assignee-help">Participants make the item appear under “Assigned to me” for members of those departments, but do not add a YOU badge.</div>
+      <div class="assignee-help">Department and individual Participants appear under “Assigned to me”. YOU badges are reserved for Assignees.</div>
+      <div class="assignee-selected" id="participantSelected"></div>
+      <details class="participant-people" id="participantPeople">
+        <summary>Individual participants <span id="participantPeopleCount">(0 selected)</span></summary>
+        <div class="assignee-help">Select people from other departments individually. People covered by a selected department cannot be selected separately. Selecting their department removes their individual selection. All departments covers everyone.</div>
+        <div class="assignee-list" id="participantPeopleList"></div>
+      </details>
     </div>
 
     <div class="field hide" id="assigneeField">
@@ -1904,6 +1916,7 @@ function fromRow(r){
     assigneeId:r.type==='meeting'?null:(r.assignee_id||null),
     assigneeIds:[],
     participantDepartments:r.participant_departments||[],
+    participantIds:r.participant_ids||[],
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
@@ -1930,12 +1943,19 @@ async function api(action,data={}){
 }
 function unpackEvents(data){
  const map={};(data.assignees||[]).forEach(a=>(map[a.event_id]??=[]).push(a.executive_id));
- return (data.events||[]).map(r=>{const ev=fromRow(r);ev.assigneeIds=ev.type==='meeting'?[]:(map[r.id]||[]);return ev;});
+ const participants={};(data.participants||[]).forEach(p=>(participants[p.event_id]??=[]).push(p.executive_id));
+ return (data.events||[]).map(r=>{
+   const ev=fromRow(r);
+   ev.assigneeIds=ev.type==='meeting'?[]:(map[r.id]||[]);
+   ev.participantIds=typeSupportsParticipants(ev.type)?(participants[r.id]||[]):[];
+   return ev;
+ });
 }
 async function dbLoad(){return unpackEvents(await api('load'));}
 async function saveEvent(ev,action){
  const assignees=ev.type==='meeting'?[]:(ev.assigneeIds||[]);
- const r=await api(action,{event:toRow(ev),assignees});
+ const participants=typeSupportsParticipants(ev.type)?eventParticipantIds(ev):[];
+ const r=await api(action,{event:toRow(ev),assignees,participants});
  const saved=fromRow(r);saved.assigneeIds=assignees.slice();return saved;
 }
 async function dbInsert(ev){return saveEvent(ev,'event_insert');}
@@ -2002,8 +2022,18 @@ function eventParticipantDepartments(ev){
   return Array.isArray(ev?.participantDepartments)?ev.participantDepartments:[];
 }
 
+function participantCovered(person,departments){
+  return departments.includes('all')||departments.includes(executiveDepartmentId(person));
+}
+
+function eventParticipantIds(ev){
+  if(!ev||!typeSupportsParticipants(ev.type)) return [];
+  return [...new Set(ev.participantIds||[])].filter(id=>!participantCovered(EXEC_BY_ID[id],eventParticipantDepartments(ev)));
+}
+
 function viewerParticipates(ev){
   if(!ev||!typeSupportsParticipants(ev.type)) return false;
+  if(selectedViewerId&&eventParticipantIds(ev).includes(selectedViewerId)) return true;
   const participants=eventParticipantDepartments(ev);
   if(participants.includes('all')) return true;
   const dept=executiveDepartmentId(currentViewer());
@@ -2013,9 +2043,12 @@ function viewerParticipates(ev){
 function participantDisplay(ev){
   if(!ev||!typeSupportsParticipants(ev.type)) return '';
   const ids=eventParticipantDepartments(ev);
-  if(!ids.length) return '';
   if(ids.includes('all')) return 'All departments';
-  return ids.map(id=>DEPT[id]?.name||id[0].toUpperCase()+id.slice(1)).join(', ');
+  const departments=ids.map(id=>DEPT[id]?.name||id[0].toUpperCase()+id.slice(1));
+  const people=eventParticipantIds(ev).map(id=>{
+    const p=EXEC_BY_ID[id];return p?`${p.english_name} (${p.department})`:id;
+  });
+  return [...departments,...people].join(', ');
 }
 
 function categoryInMyScope(id){
@@ -2049,7 +2082,7 @@ function eventMatchesView(ev){
  // an explicit personal assignment. Only explicit assignment gets YOU.
  if(ev.type==='event')return isAssignedToViewer(ev)||viewerParticipates(ev);
 
- // Meetings use department participation only, without a YOU badge.
+ // Meetings use department or individual participation, without a YOU badge.
  if(ev.type==='meeting')return viewerParticipates(ev);
 
  // Due date / Other are personal-assignment based.
@@ -3017,16 +3050,51 @@ const EXEC_DEPT_BY_CATEGORY={
 let assigneeShowAll=false;
 let selectedAssigneeIds=new Set();
 let selectedParticipantDepartments=new Set();
+let selectedParticipantIds=new Set();
 
-function setSelectedParticipants(ids=[]){
+function setSelectedParticipants(ids=[],people=[]){
   selectedParticipantDepartments=new Set((ids||[]).filter(id=>['all','event','marketing','finance','internal'].includes(id)));
   if(selectedParticipantDepartments.has('all')) selectedParticipantDepartments=new Set(['all']);
+  selectedParticipantIds=new Set(people.filter(id=>EXEC_BY_ID[id]));
   renderParticipantPicker();
 }
 
 function renderParticipantPicker(){
   document.querySelectorAll('#participantOptions input[type="checkbox"]').forEach(cb=>{
     cb.checked=selectedParticipantDepartments.has(cb.value);
+  });
+  renderParticipantPeople();
+}
+
+function renderParticipantPeople(){
+  const departments=[...selectedParticipantDepartments];
+  selectedParticipantIds=new Set([...selectedParticipantIds].filter(id=>EXEC_BY_ID[id]&&!participantCovered(EXEC_BY_ID[id],departments)));
+  document.getElementById('participantPeopleCount').textContent=`(${selectedParticipantIds.size} selected)`;
+  const selected=document.getElementById('participantSelected');
+  selected.innerHTML='';
+  sortedExecutives([...selectedParticipantIds].map(id=>EXEC_BY_ID[id])).forEach(person=>{
+    const chip=document.createElement('span');
+    chip.className='assignee-chip';
+    chip.innerHTML=`<span>${escapeHtml(person.english_name)}</span><button type="button" aria-label="Remove participant ${escapeHtml(person.english_name)}">×</button>`;
+    chip.querySelector('button').onclick=()=>{selectedParticipantIds.delete(person.id);renderParticipantPeople();};
+    selected.appendChild(chip);
+  });
+  const list=document.getElementById('participantPeopleList');
+  list.innerHTML='';
+  sortedExecutives(EXECUTIVES).forEach(person=>{
+    const covered=participantCovered(person,departments);
+    const label=document.createElement('label');
+    label.className='assignee-option'+(covered?' participant-covered':'');
+    label.innerHTML=`<input type="checkbox" value="${escapeHtml(person.id)}" ${covered?'disabled':''} ${selectedParticipantIds.has(person.id)?'checked':''}>
+      <span class="assignee-option-main"><span class="assignee-option-name">${escapeHtml(person.english_name)} · ${escapeHtml(person.korean_name)}</span>
+      <span class="assignee-option-meta">${escapeHtml(person.department)} · ${escapeHtml(person.role)}${covered?' · Included through department':''}</span></span>`;
+    label.querySelector('input').onchange=e=>{
+      if(e.target.checked&&!covered) selectedParticipantIds.add(person.id);
+      else selectedParticipantIds.delete(person.id);
+      renderParticipantPeople();
+      [...list.querySelectorAll('input')].find(input=>input.value===person.id)?.focus();
+    };
+    list.appendChild(label);
   });
 }
 
@@ -3295,6 +3363,8 @@ function openAdd(dateStr){
   document.getElementById('fEmoji').value='📌';
   selectedAssigneeIds=new Set();
   selectedParticipantDepartments=new Set();
+  selectedParticipantIds=new Set();
+  document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
 
@@ -3332,6 +3402,8 @@ function openEdit(ev){
   document.getElementById('fEmoji').value=ev.emoji||'📌';
   selectedAssigneeIds=new Set();
   selectedParticipantDepartments=new Set();
+  selectedParticipantIds=new Set();
+  document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
 
@@ -3349,7 +3421,7 @@ function openEdit(ev){
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
   assigneeShowAll=false;
   setSelectedAssignees((ev.assigneeIds&&ev.assigneeIds.length)?ev.assigneeIds:(ev.assigneeId?[ev.assigneeId]:[]));
-  setSelectedParticipants(ev.participantDepartments||[]);
+  setSelectedParticipants(ev.participantDepartments||[],ev.participantIds||[]);
   document.getElementById('fLink').value=ev.linkedEventId||'';
 
   clearErr();
@@ -3398,6 +3470,9 @@ async function saveItem(){
   const participantDepartments=typeSupportsParticipants(formType)
     ?[...selectedParticipantDepartments]
     :[];
+  const participantIds=typeSupportsParticipants(formType)
+    ?[...selectedParticipantIds].filter(id=>EXEC_BY_ID[id]&&!participantCovered(EXEC_BY_ID[id],participantDepartments))
+    :[];
 
   const selectedPeople=assigneeIds.map(id=>EXEC_BY_ID[id]).filter(Boolean);
   const assigneeId=assigneeIds[0]||null;
@@ -3428,7 +3503,7 @@ async function saveItem(){
   if(editingId&&!original){showError('Item no longer exists. Reopen the calendar.');return;}
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
-    assignee,assigneeId,assigneeIds,participantDepartments,linkedEventId,
+    assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
     recur:rec,details,emoji,source:original?.source||'user'
   };
   const action=original?'edit':'add';
@@ -3516,7 +3591,7 @@ function reminderPreview(ev){
     previous.setUTCDate(previous.getUTCDate()-1);
     timing=`${previous.toISOString().slice(0,10)} at 8:00 PM (America/Toronto) — the previous day.`;
   }
-  const participants=typeSupportsParticipants(ev.type)&&eventParticipantDepartments(ev).length;
+  const participants=typeSupportsParticipants(ev.type)&&(eventParticipantDepartments(ev).length||eventParticipantIds(ev).length);
   const assignees=typeSupportsAssignees(ev.type)&&eventAssigneeIds(ev).length;
   return `Planned reminder${repeated?' (series start)':''}: ${timing}`+
     (repeated?'\nEach occurrence will use this timing rule.':'')+
@@ -3538,7 +3613,7 @@ function confirmationRows(ev){
     ['End date',ev.endDate||'None'],
     ['Time',ev.time?prettyTime(ev.time)+' (America/Toronto)':'None',ev.time?ev.time.slice(0,5):''],
     ['Status',ev.status?(ev.status==='tentative'?'Tentative':'Final'):'None'],
-    ['Participants',typeSupportsParticipants(ev.type)?participantDisplay(ev)||'None':'Not applicable',typeSupportsParticipants(ev.type)?participants:null],
+    ['Participants',typeSupportsParticipants(ev.type)?participantDisplay(ev)||'None':'Not applicable',typeSupportsParticipants(ev.type)?[participants,eventParticipantIds(ev).slice().sort()]:null],
     ['Assignees',typeSupportsAssignees(ev.type)?people.map(id=>{
       const p=EXEC_BY_ID[id];return p?`${p.english_name} (${p.department})`:id;
     }).join('\n')||ev.assignee||'None':'Not applicable',typeSupportsAssignees(ev.type)?[people,ev.assignee||'']:null],
