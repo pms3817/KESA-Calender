@@ -1445,13 +1445,31 @@
     .category-actions{width:100%;justify-content:flex-start}
   }
 
+
+  /* v29 item confirmation */
+  #confirmScrim{z-index:80}
+  .confirm-modal{max-width:620px}
+  .confirm-modal h3{font-size:13px;margin:18px 0 8px}
+  .confirm-summary{margin:0;display:grid;grid-template-columns:125px minmax(0,1fr);gap:0}
+  .confirm-summary dt,.confirm-summary dd{margin:0;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .confirm-summary dt{color:var(--muted);padding-right:12px}
+  .confirm-summary dd{white-space:pre-wrap;overflow-wrap:anywhere}
+  .confirm-note{padding:10px 12px;background:#F1F5F9;border-radius:8px;font-size:12px;white-space:pre-wrap}
+  .confirm-warning{background:#FEF2F2;color:#991B1B}
+  .confirm-change{padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;overflow-wrap:anywhere;white-space:pre-wrap}
+  .confirm-change strong{display:block;margin-bottom:4px}
+  .confirm-before{color:var(--muted)}
+  .confirm-after{color:#166534}
+  #confirmError{color:#B91C1C;font-size:12px;white-space:pre-wrap}
+  .confirm-modal .modal-actions{position:sticky;bottom:0;background:var(--panel);padding:12px 0 0}
+  @media(max-width:480px){.confirm-summary{grid-template-columns:100px minmax(0,1fr)}}
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v28</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v29</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1462,7 +1480,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v28</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v29</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1640,7 +1658,7 @@
     </div>
 
     <div class="field hide" id="participantField">
-      <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(event only)</span></label>
+      <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(Event / Meeting)</span></label>
       <div class="participant-options" id="participantOptions">
         <label class="participant-option participant-all"><input type="checkbox" value="all">All departments</label>
         <label class="participant-option"><input type="checkbox" value="event">Event</label>
@@ -1695,6 +1713,26 @@
   </div>
 </div>
 
+
+<!-- Calendar item confirmation: no database writes until confirmed. -->
+<div class="scrim" id="confirmScrim">
+  <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmIntro">
+    <h2 id="confirmTitle">Review item</h2>
+    <p class="sub" id="confirmIntro"></p>
+    <div id="confirmChanges"></div>
+    <h3 id="confirmSummaryTitle">Final configuration</h3>
+    <dl class="confirm-summary" id="confirmSummary"></dl>
+    <p class="confirm-note" id="confirmReminder"></p>
+    <p class="confirm-note" id="confirmSeries" hidden></p>
+    <p class="confirm-note confirm-warning" id="confirmDeleteWarning" hidden>Deletion cannot be undone.</p>
+    <p id="confirmError" role="alert" hidden></p>
+    <div class="modal-actions">
+      <button type="button" id="confirmBack">Back</button>
+      <span class="spacer"></span>
+      <button type="button" class="primary" id="confirmCommit">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <!-- Item details modal -->
 <div class="scrim" id="detailScrim">
@@ -2826,38 +2864,10 @@ function openDetail(ev){
 
 function closeDetail(){detailScrim.classList.remove('open')}
 
-async function deleteFromDetail(){
+function deleteFromDetail(){
   if(!canEdit()) return;
-  const delId=detailEventId;
-  const ev=events.find(e=>e.id===delId);
-  if(!delId||!ev) return;
-
-  if(!window.confirm(`Delete “${ev.title}”? This cannot be undone.`)) return;
-
-  clearBanner();
-  const btn=document.getElementById('detailDelete');
-  btn.disabled=true;
-  btn.textContent='Deleting…';
-
-  try{
-    await dbDelete(delId);
-    for(const d of events.filter(e=>e.linkedEventId===delId)){
-      await dbUnlink(d.id);
-      d.linkedEventId=null;
-    }
-  }catch(e){
-    btn.disabled=false;
-    btn.textContent='Delete';
-    showError('Could not delete — '+e.message);
-    return;
-  }
-
-  events=events.filter(e=>e.id!==delId);
-  detailEventId=null;
-  btn.disabled=false;
-  btn.textContent='Delete';
-  closeDetail();
-  renderActive();
+  const ev=events.find(e=>e.id===detailEventId);
+  if(ev) requestItemDelete(ev,'detail');
 }
 
 function editFromDetail(){
@@ -3414,95 +3424,220 @@ async function saveItem(){
   const details=document.getElementById('fDetails').value.trim();
   const status=(formType==='school'&&!schoolStatusEnabled)?null:(formStatus||'final');
 
-  setBusy(true);
-  clearBanner();
-
-  try{
-    if(editingId){
-      const payload={
-        id:editingId,
-        title,
-        type:formType,
-        dept,
-        date,
-        time,
-        endDate,
-        status,
-        assignee,
-        assigneeId,
-        assigneeIds,
-        participantDepartments,
-        linkedEventId,
-        recur:rec,
-        details,
-        emoji,
-        source:(events.find(e=>e.id===editingId)||{}).source||'user'
-      };
-
-      const saved=await dbUpdate(payload);
-      const idx=events.findIndex(e=>e.id===editingId);
+  const original=editingId?events.find(e=>e.id===editingId):null;
+  if(editingId&&!original){showError('Item no longer exists. Reopen the calendar.');return;}
+  const payload={
+    id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
+    assignee,assigneeId,assigneeIds,participantDepartments,linkedEventId,
+    recur:rec,details,emoji,source:original?.source||'user'
+  };
+  const action=original?'edit':'add';
+  openItemConfirmation(action,payload,original,async()=>{
+    const saved=action==='edit'?await dbUpdate(payload):await dbInsert(payload);
+    if(action==='edit'){
+      const idx=events.findIndex(e=>e.id===payload.id);
       if(idx>=0) events[idx]=saved;
-    }else{
-      const payload={
-        id:uid(),
-        title,
-        type:formType,
-        dept,
-        date,
-        time,
-        endDate,
-        status,
-        assignee,
-        assigneeId,
-        assigneeIds,
-        participantDepartments,
-        linkedEventId,
-        recur:rec,
-        details,
-        emoji,
-        source:'user'
-      };
-
-      const saved=await dbInsert(payload);
-      events.push(saved);
-    }
-  }catch(e){
-    setBusy(false);
-    showError('Could not save — '+e.message);
-    return;
-  }
-
-  setBusy(false);
-  closeModal();
-  renderActive();
+    }else events.push(saved);
+    closeModal();
+    renderActive();
+  });
 }
 
-async function deleteItem(){
+function deleteItem(){
   if(!canEdit()) return;
-  if(!editingId) return;
+  const ev=events.find(e=>e.id===editingId);
+  if(ev) requestItemDelete(ev,'form');
+}
 
-  const delId=editingId;
-  setBusy(true);
-  clearBanner();
-
-  try{
-    await dbDelete(delId);
-
-    for(const d of events.filter(e=>e.linkedEventId===delId)){
+function requestItemDelete(ev,origin){
+  openItemConfirmation('delete',ev,null,async()=>{
+    await dbDelete(ev.id);
+    for(const d of events.filter(e=>e.linkedEventId===ev.id)){
       await dbUnlink(d.id);
       d.linkedEventId=null;
     }
-  }catch(e){
-    setBusy(false);
-    showError('Could not delete — '+e.message);
-    return;
-  }
-
-  events=events.filter(e=>e.id!==delId);
-  setBusy(false);
-  closeModal();
-  renderActive();
+    events=events.filter(e=>e.id!==ev.id);
+    if(origin==='detail'){detailEventId=null;closeDetail();}
+    else closeModal();
+    renderActive();
+  });
 }
+
+/* ===== ITEM CONFIRMATION (preview only; notifications are not enabled) ===== */
+const confirmScrim=document.getElementById('confirmScrim');
+let pendingItemConfirmation=null;
+let confirmationBusy=false;
+let confirmationFocus=null;
+let confirmationInert=[];
+
+function torontoParts(ms){
+  const parts=new Intl.DateTimeFormat('en-CA',{
+    timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
+  }).formatToParts(new Date(ms));
+  return Object.fromEntries(parts.filter(p=>p.type!=='literal').map(p=>[p.type,Number(p.value)]));
+}
+
+function torontoInstants(date,time){
+  const [y,m,d]=date.split('-').map(Number);
+  const [h,min,sec=0]=time.split(':').map(Number);
+  const wall=Date.UTC(y,m-1,d,h,min,sec);
+  if(!Number.isFinite(wall)) return [];
+  const offsets=new Set();
+  for(const delta of [-36,0,36]){
+    const sample=wall+delta*3600000;
+    const p=torontoParts(sample);
+    offsets.add(Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second)-sample);
+  }
+  return [...offsets].map(offset=>wall-offset).filter(ms=>{
+    const p=torontoParts(ms);
+    return p.year===y&&p.month===m&&p.day===d&&p.hour===h&&p.minute===min&&p.second===sec;
+  }).sort((a,b)=>a-b);
+}
+
+function reminderPreview(ev){
+  if(ev.type==='school') return 'Reminder: None — School items do not send notifications.';
+  if(ev.type==='other') return 'Reminder: Not configured — notification rules for Other have not been defined.';
+  const repeated=ev.recur&&ev.recur!=='none';
+  let timing;
+  if(ev.time){
+    const instants=torontoInstants(ev.date,ev.time);
+    if(instants.length!==1){
+      timing=instants.length?'This Toronto time occurs twice when daylight saving time ends. Choose an unambiguous time to preview the reminder.':'This Toronto time does not exist when daylight saving time starts. Choose another time to preview the reminder.';
+    }else{
+      const display=new Intl.DateTimeFormat('en-CA',{
+        timeZone:'America/Toronto',year:'numeric',month:'short',day:'numeric',
+        hour:'numeric',minute:'2-digit',timeZoneName:'short'
+      }).format(new Date(instants[0]-86400000));
+      timing=`${display} — exactly 24 hours before the configured time.`;
+    }
+  }else{
+    const previous=new Date(ev.date+'T12:00:00Z');
+    previous.setUTCDate(previous.getUTCDate()-1);
+    timing=`${previous.toISOString().slice(0,10)} at 8:00 PM (America/Toronto) — the previous day.`;
+  }
+  const participants=typeSupportsParticipants(ev.type)&&eventParticipantDepartments(ev).length;
+  const assignees=typeSupportsAssignees(ev.type)&&eventAssigneeIds(ev).length;
+  return `Planned reminder${repeated?' (series start)':''}: ${timing}`+
+    (repeated?'\nEach occurrence will use this timing rule.':'')+
+    '\nOnly sent if the item is Final at reminder time.'+
+    (ev.status==='tentative'?' Currently Tentative: no reminder if it remains Tentative.':'')+
+    (!participants&&!assignees?'\nNo recipients selected.':'')+
+    '\nPreview only — Discord notifications are not enabled yet.';
+}
+
+function confirmationRows(ev){
+  const people=eventAssigneeIds(ev).slice().sort();
+  const participants=eventParticipantDepartments(ev).slice().sort();
+  const linked=events.find(e=>e.id===ev.linkedEventId);
+  return [
+    ['Title',ev.title||'None'],
+    ['Type',TYPE_NAME[ev.type]||ev.type],
+    ['Category',deptOf(ev.dept).name,ev.dept],
+    ['Date',ev.date],
+    ['End date',ev.endDate||'None'],
+    ['Time',ev.time?prettyTime(ev.time)+' (America/Toronto)':'None',ev.time?ev.time.slice(0,5):''],
+    ['Status',ev.status?(ev.status==='tentative'?'Tentative':'Final'):'None'],
+    ['Participants',typeSupportsParticipants(ev.type)?participantDisplay(ev)||'None':'Not applicable',typeSupportsParticipants(ev.type)?participants:null],
+    ['Assignees',typeSupportsAssignees(ev.type)?people.map(id=>{
+      const p=EXEC_BY_ID[id];return p?`${p.english_name} (${p.department})`:id;
+    }).join('\n')||ev.assignee||'None':'Not applicable',typeSupportsAssignees(ev.type)?[people,ev.assignee||'']:null],
+    ['Repeats',recurLabel(ev)||'Does not repeat'],
+    ['Linked event',linked?`${linked.title} (${linked.date})`:ev.linkedEventId||'None',ev.linkedEventId||''],
+    ['Emoji',ev.emoji||'None'],
+    ['Details',ev.details||'None']
+  ];
+}
+
+function confirmationChanges(before,after){
+  const old=confirmationRows(before);
+  const rows=confirmationRows(after);
+  return rows.flatMap((row,i)=>{
+    const a=old[i],b=row;
+    const val=x=>JSON.stringify(x.length>2?x[2]:x[1]);
+    return val(a)===val(b)?[]:[[b[0],a[1],b[1]]];
+  });
+}
+
+function openItemConfirmation(action,item,original,commit){
+  if(pendingItemConfirmation||!canEdit()) return;
+  pendingItemConfirmation={commit};
+  confirmationFocus=document.activeElement;
+  const deleting=action==='delete';
+  document.getElementById('confirmTitle').textContent=deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
+  document.getElementById('confirmIntro').textContent=deleting?'Review the saved item before deleting it.':'Nothing is saved until you confirm below.';
+  document.getElementById('confirmSummaryTitle').textContent=deleting?'Item to delete':'Final configuration';
+  document.getElementById('confirmSummary').innerHTML=confirmationRows(item).map(([label,value])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
+  const changes=action==='edit'?confirmationChanges(original,item):[];
+  document.getElementById('confirmChanges').innerHTML=action==='edit'?'<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">No changes.</p>'):'';
+  document.getElementById('confirmReminder').textContent=reminderPreview(item);
+  const series=!!((item.recur&&item.recur!=='none')||(original?.recur&&original.recur!=='none'));
+  document.getElementById('confirmSeries').hidden=!series;
+  document.getElementById('confirmSeries').textContent=deleting?'This deletes the entire recurring series, not just one occurrence.':action==='edit'?'Changes apply to the entire recurring series.':'This creates a recurring series.';
+  document.getElementById('confirmDeleteWarning').hidden=!deleting;
+  const button=document.getElementById('confirmCommit');
+  button.textContent=deleting?'Delete item':action==='edit'?'Confirm changes':'Create item';
+  button.className=deleting?'danger':'primary';
+  button.disabled=false;
+  document.getElementById('confirmBack').disabled=false;
+  document.getElementById('confirmError').hidden=true;
+  confirmationInert=[...document.querySelectorAll('.wrap,.login-screen,.scrim')].filter(el=>el!==confirmScrim).map(el=>[el,el.inert]);
+  confirmationInert.forEach(([el])=>el.inert=true);
+  confirmScrim.classList.add('open');
+  confirmScrim.scrollTop=0;
+  document.getElementById('confirmBack').focus();
+}
+
+function closeItemConfirmation(force=false){
+  if(confirmationBusy&&!force) return;
+  pendingItemConfirmation=null;
+  confirmationBusy=false;
+  confirmScrim.classList.remove('open');
+  confirmationInert.forEach(([el,value])=>el.inert=value);
+  confirmationInert=[];
+  if(confirmationFocus?.isConnected) confirmationFocus.focus();
+  confirmationFocus=null;
+}
+
+async function commitItemConfirmation(){
+  if(!pendingItemConfirmation||confirmationBusy) return;
+  if(!canEdit()){closeItemConfirmation(true);return;}
+  const pending=pendingItemConfirmation;
+  confirmationBusy=true;
+  const button=document.getElementById('confirmCommit');
+  const label=button.textContent;
+  button.disabled=true;button.textContent='Working…';
+  document.getElementById('confirmBack').disabled=true;
+  document.getElementById('confirmError').hidden=true;
+  clearBanner();
+  try{
+    await pending.commit();
+    closeItemConfirmation(true);
+  }catch(err){
+    if(pendingItemConfirmation===pending){
+      const error=document.getElementById('confirmError');
+      error.textContent='Could not complete the action — '+err.message;
+      error.hidden=false;
+    }
+  }finally{
+    confirmationBusy=false;
+    button.disabled=false;button.textContent=label;
+    document.getElementById('confirmBack').disabled=false;
+  }
+}
+
+document.getElementById('confirmBack').onclick=()=>closeItemConfirmation();
+document.getElementById('confirmCommit').onclick=commitItemConfirmation;
+confirmScrim.onclick=e=>{if(e.target===confirmScrim)closeItemConfirmation();};
+confirmScrim.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    const buttons=[...confirmScrim.querySelectorAll('button:not(:disabled)')];
+    if(!buttons.length){e.preventDefault();return;}
+    const first=buttons[0],last=buttons[buttons.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
 
 /* ===== MANAGE CATEGORIES ===== */
 const catScrim=document.getElementById('catScrim');
@@ -4098,6 +4233,7 @@ detailScrim.onclick=e=>{
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
+    if(confirmScrim.classList.contains('open')){closeItemConfirmation();return;}
     if(detailScrim.classList.contains('open')) closeDetail();
     else if(scrim.classList.contains('open')) closeModal();
     else if(catScrim.classList.contains('open')) closeCat();
@@ -4121,6 +4257,7 @@ function refreshAccountUI(){
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
 }
 function resetLogin(message=''){
+ closeItemConfirmation(true);
  clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
  events=[];DEPTS=[];DEPT={};selectedCategories=new Set();
  closeModal();closeDetail();closeCat();if(typeof closeMembers==='function')closeMembers();
