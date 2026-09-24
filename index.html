@@ -1296,7 +1296,7 @@
   .category-actions #categoryClearAll{color:#64748B;background:#F8FAFC}
   .personal-filter-row{align-items:center}
 
-  /* Event participants */
+  /* Event / Meeting participants */
   .participant-options{display:flex;flex-wrap:wrap;gap:7px}
   .participant-option{
     display:inline-flex;align-items:center;gap:6px;padding:7px 10px;
@@ -1451,7 +1451,7 @@
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v27</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v28</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1462,7 +1462,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v27</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v28</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1648,7 +1648,7 @@
         <label class="participant-option"><input type="checkbox" value="finance">Finance</label>
         <label class="participant-option"><input type="checkbox" value="internal">Internal</label>
       </div>
-      <div class="assignee-help">Participants make the event appear under “Assigned to me” for members of those departments, but do not add a YOU badge.</div>
+      <div class="assignee-help">Participants make the item appear under “Assigned to me” for members of those departments, but do not add a YOU badge.</div>
     </div>
 
     <div class="field hide" id="assigneeField">
@@ -1841,8 +1841,8 @@ function toRow(ev){
     event_time:ev.time||null,
     end_date:ev.endDate||null,
     status:ev.status??null,
-    assignee:ev.assignee||'',
-    assignee_id:ev.assigneeId||null,
+    assignee:ev.type==='meeting'?'':(ev.assignee||''),
+    assignee_id:ev.type==='meeting'?null:(ev.assigneeId||null),
     participant_departments:ev.participantDepartments||[],
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
@@ -1862,8 +1862,8 @@ function fromRow(r){
     time:r.event_time||'',
     endDate:r.end_date||null,
     status:r.status??null,
-    assignee:r.assignee||'',
-    assigneeId:r.assignee_id||null,
+    assignee:r.type==='meeting'?'':(r.assignee||''),
+    assigneeId:r.type==='meeting'?null:(r.assignee_id||null),
     assigneeIds:[],
     participantDepartments:r.participant_departments||[],
     linkedEventId:r.linked_event_id||null,
@@ -1892,12 +1892,13 @@ async function api(action,data={}){
 }
 function unpackEvents(data){
  const map={};(data.assignees||[]).forEach(a=>(map[a.event_id]??=[]).push(a.executive_id));
- return (data.events||[]).map(r=>{const ev=fromRow(r);ev.assigneeIds=map[r.id]||[];return ev;});
+ return (data.events||[]).map(r=>{const ev=fromRow(r);ev.assigneeIds=ev.type==='meeting'?[]:(map[r.id]||[]);return ev;});
 }
 async function dbLoad(){return unpackEvents(await api('load'));}
 async function saveEvent(ev,action){
- const r=await api(action,{event:toRow(ev),assignees:ev.assigneeIds||[]});
- const saved=fromRow(r);saved.assigneeIds=(ev.assigneeIds||[]).slice();return saved;
+ const assignees=ev.type==='meeting'?[]:(ev.assigneeIds||[]);
+ const r=await api(action,{event:toRow(ev),assignees});
+ const saved=fromRow(r);saved.assigneeIds=assignees.slice();return saved;
 }
 async function dbInsert(ev){return saveEvent(ev,'event_insert');}
 async function dbUpdate(ev){return saveEvent(ev,'event_update');}
@@ -1949,7 +1950,7 @@ function executiveDepartmentId(person){
 function currentViewer(){return selectedViewerId?EXEC_BY_ID[selectedViewerId]||null:null}
 
 function eventAssigneeIds(ev){
-  if(!ev) return [];
+  if(!ev||ev.type==='meeting') return [];
   return (ev.assigneeIds&&ev.assigneeIds.length)
     ?ev.assigneeIds
     :(ev.assigneeId?[ev.assigneeId]:[]);
@@ -1964,7 +1965,7 @@ function eventParticipantDepartments(ev){
 }
 
 function viewerParticipates(ev){
-  if(!ev||ev.type!=='event') return false;
+  if(!ev||!typeSupportsParticipants(ev.type)) return false;
   const participants=eventParticipantDepartments(ev);
   if(participants.includes('all')) return true;
   const dept=executiveDepartmentId(currentViewer());
@@ -1972,7 +1973,7 @@ function viewerParticipates(ev){
 }
 
 function participantDisplay(ev){
-  if(!ev||ev.type!=='event') return '';
+  if(!ev||!typeSupportsParticipants(ev.type)) return '';
   const ids=eventParticipantDepartments(ev);
   if(!ids.length) return '';
   if(ids.includes('all')) return 'All departments';
@@ -1990,8 +1991,11 @@ function viewerScopeAllows(ev){
  if(!currentViewer()||!sessionToken)return false;
  return (canEdit()&&allDepartments)||categoryInMyScope(ev.dept);
 }
+function typeSupportsParticipants(type){
+ return type==='event'||type==='meeting';
+}
 function typeSupportsAssignees(type){
- return type==='event'||type==='due'||type==='meeting'||type==='other';
+ return type==='event'||type==='due'||type==='other';
 }
 
 function eventMatchesView(ev){
@@ -2007,7 +2011,10 @@ function eventMatchesView(ev){
  // an explicit personal assignment. Only explicit assignment gets YOU.
  if(ev.type==='event')return isAssignedToViewer(ev)||viewerParticipates(ev);
 
- // Due date / Meeting / Other are personal-assignment based.
+ // Meetings use department participation only, without a YOU badge.
+ if(ev.type==='meeting')return viewerParticipates(ev);
+
+ // Due date / Other are personal-assignment based.
  if(typeSupportsAssignees(ev.type))return isAssignedToViewer(ev);
 
  return true;
@@ -2021,6 +2028,7 @@ function executivesForEvent(ev){
 }
 
 function assigneeDisplay(ev){
+  if(ev?.type==='meeting') return '';
   const people=executivesForEvent(ev);
   if(!people.length) return ev&&ev.assignee?ev.assignee:'';
   return people.length===1
@@ -2029,6 +2037,7 @@ function assigneeDisplay(ev){
 }
 
 function assigneeDetail(ev){
+  if(ev?.type==='meeting') return '';
   const people=executivesForEvent(ev);
   if(!people.length) return ev&&ev.assignee?ev.assignee:'';
   return people.map(person=>
@@ -2037,6 +2046,7 @@ function assigneeDetail(ev){
 }
 
 function assigneeDetailHtml(ev){
+  if(ev?.type==='meeting') return '';
   const people=executivesForEvent(ev);
   if(!people.length) return ev&&ev.assignee?escapeHtml(ev.assignee):'';
   return people.map(person=>
@@ -3170,8 +3180,8 @@ function setType(t){
   }else{
     deptField.classList.remove('hide');
     recur.classList.remove('hide');
-    participant.classList.toggle('hide',t!=='event');
-    assignee.classList.toggle('hide',!(t==='event'||t==='due'||t==='meeting'||t==='other'));
+    participant.classList.toggle('hide',!typeSupportsParticipants(t));
+    assignee.classList.toggle('hide',!typeSupportsAssignees(t));
     link.classList.toggle('hide',!(t==='due'||t==='other'));
     schoolStatusEnabled=false;
     if(!formStatus) formStatus='final';
@@ -3188,10 +3198,10 @@ function setType(t){
     dept.value=(DEPTS.find(d=>d.id!=='school')||{}).id||'';
   }
 
-  if(t==='event'||t==='due'||t==='meeting'||t==='other'){
+  if(typeSupportsAssignees(t)){
     refreshAssigneeScope({keepCurrent:true,preserveOutside:true});
   }
-  if(t==='event') renderParticipantPicker();
+  if(typeSupportsParticipants(t)) renderParticipantPicker();
 }
 
 function syncEndDateConstraints(){
@@ -3371,11 +3381,11 @@ async function saveItem(){
     ?'none'
     :document.getElementById('fRecur').value;
 
-  const assigneeIds=(formType==='event'||formType==='due'||formType==='meeting'||formType==='other')
+  const assigneeIds=typeSupportsAssignees(formType)
     ?[...selectedAssigneeIds].filter(id=>EXEC_BY_ID[id])
     :[];
 
-  const participantDepartments=formType==='event'
+  const participantDepartments=typeSupportsParticipants(formType)
     ?[...selectedParticipantDepartments]
     :[];
 
