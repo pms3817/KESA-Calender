@@ -1475,9 +1475,9 @@
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v33</span><h1>KESA Calendar</h1>
-  <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
-  <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
+  <span class="version-badge">KESA · v34</span><h1>KESA Calendar</h1>
+  <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
+  <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
   <button type="submit" class="primary" id="loginSubmit" disabled>Open calendar</button>
   <p class="login-error" id="loginError" role="alert" aria-live="polite"></p>
@@ -1486,7 +1486,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v33</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v34</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1558,7 +1558,7 @@
 
     <div class="list" id="listView" hidden>
       <div class="list-toolbar">
-        <span class="list-toolbar-note" id="listRangeNote">Today onward</span>
+        <span class="list-toolbar-note" id="listRangeNote">오늘 이후의 일정을 표시합니다.</span>
         <button type="button" id="listShowAll" aria-pressed="false">Show all</button>
       </div>
       <div id="listContent"></div>
@@ -1571,7 +1571,7 @@
 <div class="scrim" id="scrim">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle">Add item</h2>
-    <p class="sub" id="mSub">Fill in the details and save to the calendar.</p>
+    <p class="sub" id="mSub">일정 정보를 입력한 뒤 Save를 눌러 확인해 주세요.</p>
 
     <div class="field">
       <label class="lb">Type</label>
@@ -1646,16 +1646,16 @@
     </div>
 
     <div class="field hide" id="endField">
-      <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional — leave blank for a single day)</span></label>
+      <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(하루 일정이면 비워 두세요)</span></label>
       <input type="date" id="fEnd" />
-      <div class="err" id="endErr">End date cannot be before the starting date.</div>
+      <div class="err" id="endErr">종료일은 시작일보다 빠를 수 없습니다.</div>
     </div>
 
     <div class="field" id="statusField">
       <label class="lb">Status</label>
       <label class="school-status-option" id="schoolStatusOption">
         <input type="checkbox" id="schoolStatusToggle">
-        <span>Add a status to this School item</span>
+        <span>Enable status</span>
       </label>
       <div class="seg" id="statusSeg">
         <button type="button" data-status="final" aria-pressed="true">Final</button>
@@ -1672,11 +1672,11 @@
         <label class="participant-option"><input type="checkbox" value="finance">Finance</label>
         <label class="participant-option"><input type="checkbox" value="internal">Internal</label>
       </div>
-      <div class="assignee-help">Department and individual Participants appear under “Assigned to me”. YOU badges are reserved for Assignees.</div>
+      <div class="assignee-help">참석 부서와 개별 참석 대상은 Assigned to me에 포함됩니다. YOU 배지는 개인 담당자에게만 표시됩니다.</div>
       <div class="assignee-selected" id="participantSelected"></div>
       <details class="participant-people" id="participantPeople">
         <summary>Individual participants <span id="participantPeopleCount">(0 selected)</span></summary>
-        <div class="assignee-help">Select people from other departments individually. People covered by a selected department cannot be selected separately. Selecting their department removes their individual selection. All departments covers everyone.</div>
+        <div class="assignee-help">선택한 부서에 포함되지 않은 임원을 개별로 추가할 수 있습니다. 부서를 선택하면 그 부서 임원의 개별 선택은 해제되며, All departments를 선택하면 전원이 포함됩니다.</div>
         <div class="assignee-list" id="participantPeopleList"></div>
       </details>
     </div>
@@ -1693,7 +1693,7 @@
       </div>
       <div class="assignee-selected" id="assigneeSelected"></div>
       <div class="assignee-list" id="assigneeList"></div>
-      <div class="assignee-help" id="assigneeHelp">Choose one or more people from the executive roster.</div>
+      <div class="assignee-help" id="assigneeHelp">담당할 임원을 한 명 이상 선택할 수 있습니다.</div>
     </div>
 
     <div class="field hide" id="linkField">
@@ -1732,8 +1732,8 @@
     <h2 id="confirmTitle">Review item</h2>
     <p class="sub" id="confirmIntro"></p>
     <div class="modal-actions" id="confirmDeleteScope" hidden>
-      <button type="button" id="cancelThisOccurrence">이 회차만 취소</button>
-      <button type="button" id="deleteEntireSeries">전체 반복 일정 삭제</button>
+      <button type="button" id="cancelThisOccurrence">This occurrence</button>
+      <button type="button" id="deleteEntireSeries">Entire series</button>
     </div>
     <div id="confirmChanges"></div>
     <h3 id="confirmSummaryTitle">Final configuration</h3>
@@ -1741,7 +1741,7 @@
     <p class="confirm-note" id="confirmReminder"></p>
     <p class="confirm-note" id="confirmNotifications" aria-live="polite" style="white-space:pre-line"></p>
     <p class="confirm-note" id="confirmSeries" hidden></p>
-    <p class="confirm-note confirm-warning" id="confirmDeleteWarning" hidden>Deletion cannot be undone.</p>
+    <p class="confirm-note confirm-warning" id="confirmDeleteWarning" hidden>삭제한 일정은 되돌릴 수 없습니다.</p>
     <p id="confirmError" role="alert" hidden></p>
     <div class="modal-actions">
       <button type="button" id="confirmBack">Back</button>
@@ -1778,13 +1778,12 @@
   <div class="modal" role="dialog" aria-modal="true">
     <h2>Manage categories</h2>
     <p class="sub">
-      The six original categories are fixed: their colors can change, but their names cannot be changed or deleted.
-      Categories you add can be renamed, recolored, or deleted when they are not in use.
+      기본 카테고리 6개는 색상만 변경할 수 있습니다. 직접 추가한 카테고리는 이름과 색상을 바꿀 수 있으며, 사용 중인 일정이 없으면 삭제할 수 있습니다.
     </p>
 
     <div id="catList"></div>
 
-    <p class="scope-note">New category audience (leave empty for leadership only):</p><div class="audience" id="newCatAudience"></div>
+    <p class="scope-note">공개할 부서를 선택하세요. 선택하지 않으면 회장단과 디렉터만 볼 수 있습니다.</p><div class="audience" id="newCatAudience"></div>
     <div class="catadd">
       <input type="color" id="newCatColor" class="catcolor" value="#2563EB">
       <input type="text" id="newCatName" class="catname" placeholder="New category name" autocomplete="off">
@@ -1807,7 +1806,7 @@
     <div class="member-toolbar">
       <div>
         <h2 id="memberTitle">Manage members</h2>
-        <p class="sub">Add, edit, remove, and manage login passwords.</p>
+        <p class="sub">임원 정보를 추가·수정·삭제하고 로그인 비밀번호를 관리할 수 있습니다.</p>
       </div>
       <button type="button" class="primary" id="memberAdd">+ Add member</button>
     </div>
@@ -1859,7 +1858,7 @@
       <div class="field" id="memberPasswordWrap">
         <label class="lb" for="memberPassword">New password <span style="text-transform:none;color:#94A3B8;font-weight:500">(6+ characters)</span></label>
         <input type="password" id="memberPassword" autocomplete="new-password" maxlength="72">
-        <div class="member-help" id="memberPasswordHelp">Required when password login is enabled for a new member.</div>
+        <div class="member-help" id="memberPasswordHelp">새 임원에게 비밀번호 로그인을 설정하려면 비밀번호를 입력해 주세요.</div>
       </div>
 
       <div class="err" id="memberErr"></div>
@@ -1942,10 +1941,52 @@ let loginBusy=false;
 function canEdit(){return !!sessionToken&&['President','Vice President','Director'].includes(currentViewer()?.role)}
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
 function isPresidential(){return ['President','Vice President'].includes(currentViewer()?.role)}
+function uiErrorText(message){
+  const translations={
+  "Session expired. Please sign in again.": "로그인이 만료되었습니다. 다시 로그인해 주세요.",
+  "Invalid preview action": "알림 확인 요청을 처리할 수 없습니다. 창을 닫고 다시 시도해 주세요.",
+  "Participants must be an array": "참석 대상 정보를 처리할 수 없습니다. 다시 선택해 주세요.",
+  "Unknown action": "요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.",
+  "Item no longer exists": "일정이 더 이상 존재하지 않습니다. 캘린더를 새로고침해 주세요.",
+  "Only recurring items support single-occurrence cancellation": "반복 일정에서만 한 회차를 취소할 수 있습니다.",
+  "This date is not an active occurrence. Refresh the calendar.": "선택한 날짜에 취소할 회차가 없습니다. 캘린더를 새로고침해 주세요.",
+  "Notification preview changed. Close the confirmation and review again.": "일정 또는 알림 상태가 달라졌습니다. 확인창을 닫고 다시 검토해 주세요.",
+  "Administrator access required": "관리자 권한이 필요합니다.",
+  "Read-only access": "현재 계정에는 조회 권한만 있습니다.",
+  "Member ID must use lowercase letters, numbers, and hyphens only": "임원 ID에는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다.",
+  "English and Korean names are required": "영문 이름과 한글 이름을 모두 입력해 주세요.",
+  "Invalid department": "유효한 부서를 선택해 주세요.",
+  "Invalid role": "유효한 직책을 선택해 주세요.",
+  "President and Vice President must use the Presidential department": "President와 Vice President의 부서는 Presidential이어야 합니다.",
+  "Director and Executive must use Event, Marketing, Finance, or Internal": "Director와 Executive의 부서는 Event, Marketing, Finance, Internal 중에서 선택해 주세요.",
+  "That member ID already exists": "이미 사용 중인 임원 ID입니다.",
+  "Set a password before requiring password login": "비밀번호 로그인을 설정하려면 먼저 비밀번호를 입력해 주세요.",
+  "Member no longer exists": "임원 정보가 더 이상 존재하지 않습니다. 목록을 새로고침해 주세요.",
+  "You cannot remove the last administrator": "마지막 관리자 계정은 삭제하거나 관리자 권한을 해제할 수 없습니다.",
+  "You cannot remove your own account": "본인 계정은 삭제할 수 없습니다.",
+  "Invalid participant department": "참석 부서를 다시 선택해 주세요.",
+  "All departments cannot be combined with individual participant departments": "All departments와 개별 부서를 동시에 선택할 수 없습니다.",
+  "Title and ID required": "일정 제목과 ID가 필요합니다.",
+  "Invalid category": "유효한 카테고리를 선택해 주세요.",
+  "Invalid assignee": "담당자 정보를 다시 확인해 주세요.",
+  "Invalid individual participant": "개별 참석 대상 정보를 다시 확인해 주세요.",
+  "Category name required": "카테고리 이름을 입력해 주세요.",
+  "Invalid color": "유효한 색상을 선택해 주세요.",
+  "Invalid audience": "공개할 부서를 다시 선택해 주세요.",
+  "Reserved category ID": "기본 카테고리의 ID는 사용할 수 없습니다.",
+  "Category no longer exists": "카테고리가 더 이상 존재하지 않습니다. 목록을 새로고침해 주세요.",
+  "Fixed category": "기본 카테고리는 삭제할 수 없습니다.",
+  "Reassign category items first": "이 카테고리를 사용하는 일정의 카테고리를 먼저 변경해 주세요.",
+  "Invalid password": "비밀번호를 확인해 주세요.",
+  "Invalid credentials": "로그인 정보를 확인해 주세요.",
+  "Failed to fetch": "서버에 연결하지 못했습니다. 연결 상태를 확인하고 다시 시도해 주세요."
+};
+  return translations[message]||message;
+}
 async function api(action,data={}){
- if(!sessionToken||Date.now()>=sessionExpires){resetLogin('Session expired. Please sign in again.');throw new Error('Please sign in again.');}
+ if(!sessionToken||Date.now()>=sessionExpires){resetLogin('로그인이 만료되었습니다. 다시 로그인해 주세요.');throw new Error('다시 로그인해 주세요.');}
  const {data:result,error}=await sb.rpc('kesa_api',{p_token:sessionToken,p_action:action,p_data:data});
- if(error){if(error.code==='28000') resetLogin('Session expired. Please sign in again.');throw new Error(error.message);}
+ if(error){if(error.code==='28000') resetLogin('로그인이 만료되었습니다. 다시 로그인해 주세요.');throw new Error(uiErrorText(error.message));}
  return result;
 }
 function unpackEvents(data){
@@ -1980,7 +2021,7 @@ async function deptInsert(d){await api('category_insert',d);}
 async function deptUpdate(d){await api('category_update',d);}
 async function deptDelete(id){await api('category_delete',{id});}
 async function executiveLoad(){
- const {data,error}=await sb.rpc('kesa_roster');if(error)throw new Error(error.message);return data||[];
+ const {data,error}=await sb.rpc('kesa_roster');if(error)throw new Error(uiErrorText(error.message));return data||[];
 }
 
 
@@ -2415,8 +2456,8 @@ function renderFilters(){
   allowed.filter(d=>!DEPARTMENT_IDS.has(d.id))
     .forEach(d=>otherBox.appendChild(makeCategoryPill(d)));
 
-  if(!deptBox.children.length) deptBox.innerHTML='<span class="filter-empty">No department categories in this view</span>';
-  if(!otherBox.children.length) otherBox.innerHTML='<span class="filter-empty">No other categories in this view</span>';
+  if(!deptBox.children.length) deptBox.innerHTML='<span class="filter-empty">표시할 부서 카테고리가 없습니다.</span>';
+  if(!otherBox.children.length) otherBox.innerHTML='<span class="filter-empty">표시할 기타 카테고리가 없습니다.</span>';
 
   personalBox.appendChild(makeAssignedPill());
 
@@ -2902,7 +2943,7 @@ function openDetail(ev,occurrenceDate=null){
   if(linked) html+=detailRow('Linked event',`🔗 ${escapeHtml(linked.title)}`,false,'detail-link');
   if(ev.type==='other'&&ev.emoji) html+=detailRow('Emoji',escapeHtml(ev.emoji));
   if(ev.details) html+=detailRow('Details',escapeHtml(ev.details),true);
-  document.getElementById('detailGrid').innerHTML=html||detailRow('Information','No additional information set.',true);
+  document.getElementById('detailGrid').innerHTML=html||detailRow('Information','추가 정보가 없습니다.',true);
 
   const linkEl=document.querySelector('#detailGrid .detail-link');
   if(linkEl&&linked){
@@ -2939,7 +2980,7 @@ function renderList(){
 
   toggle.setAttribute('aria-pressed',listShowPast);
   toggle.textContent=listShowPast?'Upcoming only':'Show all';
-  note.textContent=listShowPast?'All dates · past items are faded':'Today onward';
+  note.textContent=listShowPast?'전체 일정을 표시합니다. 지난 일정은 흐리게 표시됩니다.':'오늘 이후의 일정을 표시합니다.';
 
   const rows=events
     .filter(eventMatchesView)
@@ -2953,7 +2994,7 @@ function renderList(){
     );
 
   if(rows.length===0){
-    box.innerHTML='<div class="empty">No upcoming items match the current filters.</div>';
+    box.innerHTML='<div class="empty">현재 필터에 해당하는 예정 일정이 없습니다.</div>';
     return;
   }
 
@@ -3214,12 +3255,12 @@ function renderAssigneePicker(){
     toggle.style.display='inline-flex';
     toggle.textContent=assigneeShowAll?`Back to ${dept}`:'View all executives';
     help.textContent=assigneeShowAll
-      ?'Showing the full KESA executive roster. Existing selections stay selected when you change scope.'
-      :`Filtered automatically to the ${dept} department.`;
+      ?'전체 임원 목록입니다. 표시 범위를 바꿔도 선택한 담당자는 유지됩니다.'
+      :`${dept} 부서의 임원만 표시하고 있습니다.`;
   }else{
     scope.textContent='All executives';
     toggle.style.display='none';
-    help.textContent='This category is not an executive department, so the full roster is shown.';
+    help.textContent='부서 카테고리가 아니므로 전체 임원 목록을 표시합니다.';
   }
 }
 
@@ -3372,7 +3413,7 @@ function openAdd(dateStr){
   formStatus='final';
 
   document.getElementById('mTitle').textContent='Add item';
-  document.getElementById('mSub').textContent='Fill in the details and save to the calendar.';
+  document.getElementById('mSub').textContent='일정 정보를 입력한 뒤 Save를 눌러 확인해 주세요.';
   document.getElementById('deleteBtn').style.display='none';
   document.getElementById('fTitle').value='';
   document.getElementById('fDate').value=dateStr||fmt(new Date());
@@ -3410,8 +3451,8 @@ function openEdit(ev,occurrenceDate=null){
   document.getElementById('mTitle').textContent='Edit item';
   document.getElementById('mSub').textContent=
     (ev.recur&&ev.recur!=='none')
-      ?`${recurLabel(ev)} — edits apply to the whole series.`
-      :'Update the details or delete this item.';
+      ?`변경 내용은 반복 일정 전체에 적용됩니다.`
+      :'일정 정보를 수정하거나 삭제할 수 있습니다.';
 
   document.getElementById('deleteBtn').style.display='inline-flex';
   document.getElementById('fTitle').value=ev.title;
@@ -3519,7 +3560,7 @@ async function saveItem(){
   const status=(formType==='school'&&!schoolStatusEnabled)?null:(formStatus||'final');
 
   const original=editingId?events.find(e=>e.id===editingId):null;
-  if(editingId&&!original){showError('Item no longer exists. Reopen the calendar.');return;}
+  if(editingId&&!original){showError('일정이 더 이상 존재하지 않습니다. 캘린더를 새로고침해 주세요.');return;}
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
     assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
@@ -3621,37 +3662,34 @@ function torontoInstants(date,time){
 }
 
 function reminderPreview(ev){
-  if(ev.type==='school') return 'Reminder: None — School items do not send notifications.';
-  if(ev.type==='other') return 'Reminder: Not configured — notification rules for Other have not been defined.';
+  if(ev.type==='school') return 'School 일정은 알림을 보내지 않습니다.';
+  if(ev.type==='other') return 'Other 일정은 알림을 보내지 않습니다.';
   const repeated=ev.recur&&ev.recur!=='none';
   let timing;
   if(ev.time){
     const instants=torontoInstants(ev.date,ev.time);
     if(instants.length!==1){
-      timing=instants.length?'This Toronto time occurs twice when daylight saving time ends. Choose an unambiguous time to preview the reminder.':'This Toronto time does not exist when daylight saving time starts. Choose another time to preview the reminder.';
+      timing=instants.length?'서머타임 종료로 두 번 존재하는 시각입니다. 알림 시간을 계산할 수 있도록 다른 시각을 선택해 주세요.':'서머타임 시작으로 존재하지 않는 시각입니다. 다른 시각을 선택해 주세요.';
+    }else if(repeated){
+      timing='각 회차의 시작 시각으로부터 정확히 24시간 전에 리마인더를 보냅니다.';
     }else{
-      const display=new Intl.DateTimeFormat('en-CA',{
-        timeZone:'America/Toronto',year:'numeric',month:'short',day:'numeric',
-        hour:'numeric',minute:'2-digit',timeZoneName:'short'
+      const display=new Intl.DateTimeFormat('ko-KR',{
+        timeZone:'America/Toronto',year:'numeric',month:'long',day:'numeric',
+        hour:'numeric',minute:'2-digit'
       }).format(new Date(instants[0]-86400000));
-      timing=`${display} — exactly 24 hours before the configured time.`;
+      timing=`리마인더 예정: ${display} — 시작 시각의 정확히 24시간 전입니다.`;
     }
+  }else if(repeated){
+    timing='시간이 없는 일정은 각 회차 전날 오후 8시에 리마인더를 보냅니다.';
   }else{
     const previous=new Date(ev.date+'T12:00:00Z');
     previous.setUTCDate(previous.getUTCDate()-1);
-    timing=`${previous.toISOString().slice(0,10)} at 8:00 PM (America/Toronto) — the previous day.`;
+    timing=`리마인더 예정: ${previous.toISOString().slice(0,10)} 오후 8시 — 일정 전날입니다.`;
   }
-  const participants=typeSupportsParticipants(ev.type)&&(eventParticipantDepartments(ev).length||eventParticipantIds(ev).length);
-  const assignees=typeSupportsAssignees(ev.type)&&eventAssigneeIds(ev).length;
-  return `Planned reminder${repeated?' (series start)':''}: ${timing}`+
-    (repeated?'\nEach occurrence will use this timing rule.':'')+
-    '\nOnly sent if the item is Final at reminder time.'+
-    (ev.status==='tentative'?' Currently Tentative: no reminder if it remains Tentative.':'')+
-    (!participants&&!assignees?'\nNo recipients selected.':'')+
-    '\n'+(notificationState.known
-      ?(notificationState.enabled?'Automatic reminders are enabled.':'Automatic reminders are paused. This is a timing preview only.')
-      :'Automatic reminder status could not be verified.')+
-    '\n'+(notificationState.change_notifications?'Time/status-change and cancellation notifications are configured. See the check below.':'Time/status-change and cancellation notifications are not enabled.');
+  return timing+'\n토론토 현지 시각을 기준으로 계산하며, 발송 시점에 Final인 일정만 보냅니다.'+
+    (ev.status==='tentative'?' 현재 Tentative 상태가 유지되면 발송하지 않습니다.':'')+
+    (!notificationState.known?'\n자동 리마인더의 작동 상태를 확인하지 못했습니다.':
+      !notificationState.enabled?'\n자동 리마인더가 일시정지되어 있습니다. 위 시간은 예정 시각 안내입니다.':'');
 }
 
 function confirmationRows(ev){
@@ -3697,18 +3735,19 @@ function openItemConfirmation(action,item,original,commit,deleteContext=null){
   for(const [id,chosen] of [['cancelThisOccurrence',single],['deleteEntireSeries',!single]]){
     const control=document.getElementById(id);control.className=chosen?'primary':'';control.setAttribute('aria-pressed',String(chosen));
   }
-  document.getElementById('confirmTitle').textContent=single?'이 회차만 취소':deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
-  document.getElementById('confirmIntro').textContent=single?`${prettyDate(item.date)} 회차만 취소합니다. 나머지 반복 일정은 유지됩니다.`:deleting?'Review the saved item before deleting it.':'Nothing is saved until you confirm below.';
-  document.getElementById('confirmSummaryTitle').textContent=single?'취소할 회차':deleting?'Item to delete':'Final configuration';
+  document.getElementById('confirmTitle').textContent=single?'Cancel occurrence':deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
+  document.getElementById('confirmIntro').textContent=single?`${item.date} 회차만 취소하며, 나머지 반복 일정은 유지됩니다.`:deleting?(item.recur&&item.recur!=='none'?'이 반복 일정의 모든 회차를 삭제합니다.':'선택한 일정을 삭제합니다. 아래 내용을 확인해 주세요.'):'아래 내용을 확인한 뒤 확정해 주세요. 확정 전에는 저장되지 않습니다.';
+  document.getElementById('confirmSummaryTitle').textContent=single?'Occurrence to cancel':deleting?(deleteContext?'Series to delete':'Item to delete'):'Final configuration';
   document.getElementById('confirmSummary').innerHTML=confirmationRows(item).map(([label,value])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
   const changes=action==='edit'?confirmationChanges(original,item):[];
-  document.getElementById('confirmChanges').innerHTML=action==='edit'?'<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">No changes.</p>'):'';
+  document.getElementById('confirmChanges').innerHTML=action==='edit'?'<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">변경된 내용이 없습니다.</p>'):'';
+  document.getElementById('confirmReminder').hidden=deleting;
   document.getElementById('confirmReminder').textContent=confirmationReminder(action,item);
   const series=!!((item.recur&&item.recur!=='none')||(original?.recur&&original.recur!=='none'));
-  document.getElementById('confirmSeries').hidden=!series;
-  document.getElementById('confirmSeries').textContent=single?'선택한 회차만 캘린더에서 제외합니다. 이후 반복 일정은 유지됩니다.':deleting?'This deletes the entire recurring series, not just one occurrence.':action==='edit'?'Changes apply to the entire recurring series.':'This creates a recurring series.';
+  document.getElementById('confirmSeries').hidden=!series||deleting;
+  document.getElementById('confirmSeries').textContent=deleting?'':action==='edit'?'변경 내용은 반복 일정 전체에 적용됩니다.':'반복 일정으로 생성됩니다.';
   document.getElementById('confirmDeleteWarning').hidden=!deleting;
-  document.getElementById('confirmDeleteWarning').textContent=single?'이 화면에서 회차 취소를 되돌릴 수 없습니다.':'Deletion cannot be undone.';
+  document.getElementById('confirmDeleteWarning').textContent=single?'이 화면에서 회차 취소를 되돌릴 수 없습니다.':'삭제한 일정은 되돌릴 수 없습니다.';
   const button=document.getElementById('confirmCommit');
   button.textContent=confirmationButtonLabel(pendingItemConfirmation);
   button.className=deleting?'danger':'primary';
@@ -3736,10 +3775,10 @@ function closeItemConfirmation(force=false){
 }
 
 function confirmationButtonLabel(pending){
-  return pending.action==='cancel_occurrence'?'이 회차 취소 확정':pending.action==='delete'?'Delete item':pending.action==='edit'?'Confirm changes':'Create item';
+  return pending.action==='cancel_occurrence'?'Cancel occurrence':pending.action==='delete'?(pending.deleteContext?'Delete series':'Delete item'):pending.action==='edit'?'Confirm changes':'Create item';
 }
 function confirmationReminder(action,item){
-  return action==='cancel_occurrence'?'이 회차의 정상 리마인더는 더 이상 발송하지 않습니다. 이미 발송된 리마인더가 있다면 아래 취소 알림 여부를 확인하세요.':reminderPreview(item);
+  return ['delete','cancel_occurrence'].includes(action)?'':reminderPreview(item);
 }
 
 function notificationPreviewData(pending){
@@ -3751,33 +3790,35 @@ function notificationPreviewData(pending){
 }
 
 function notificationPreviewText(state,pending){
-  const kinds={schedule:'날짜·시간 변경',tentative:'Final → Tentative',cancelled:'일정 취소',occurrence_cancelled:'이 회차만 취소'};
+  const kinds={schedule:'Schedule change',tentative:'Final → Tentative',cancelled:'Cancellation',occurrence_cancelled:'Occurrence cancellation'};
   const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
-  const audience={assignee:'담당자',participant_department:'부서 참석',participant_individual:'개별 참석'};
+  const audience={assignee:'Assignees',participant_department:'Department participants',participant_individual:'Individual participants'};
   const effects=state.effects||[];
-  let text;
+  const removing=['delete','cancel_occurrence'].includes(pending.action);
+  let text='';
   if(state.will_notify){
-    text='⚠️ 저장하면 Discord 알림이 발송됩니다.\n'+
+    text=`⚠️ 확정하면 다음 자동 실행에서 Discord ${removing?'취소':'변경'} 알림이 발송됩니다.\n`+
       [...new Set(effects.flatMap(x=>x.kinds||[]))].map(x=>kinds[x]||x).join(' · ')+
       ` / 이미 안내된 ${effects.length}개 회차`;
+  }else if(pending.action==='add'){
+    // Reminder timing is already explained in the preceding panel.
   }else if(!state.enabled||!state.change_notifications){
-    text='변경·취소 알림이 꺼져 있어 이번 작업으로 변경 알림은 발송되지 않습니다.';
+    text='변경·취소 알림이 꺼져 있어 이번 작업으로는 알림을 보내지 않습니다.';
   }else if(effects.length){
-    text='변경 알림 조건에 해당하지만 발송 가능한 수신 대상이 없습니다.';
+    text='알림 조건에 해당하지만 발송 가능한 수신 대상이 없습니다.';
   }else{
-    text=pending.action==='add'?'추가 시 바로 발송하지 않습니다. 설정된 리마인더 시간에 발송됩니다.':
-      '현재 기록 기준으로 이번 작업은 변경·취소 알림을 보내지 않습니다. 참석 대상·담당자만 바꾸는 경우에도 알림을 보내지 않습니다.';
+    text=removing?'현재 발송 기록과 시작 시각을 기준으로 이번 취소·삭제는 Discord 알림을 보내지 않습니다.':
+      '이번 수정은 변경 알림 대상이 아닙니다. 참석 대상이나 담당자만 바꾸는 경우에도 알림을 보내지 않습니다.';
   }
-  if(state.pending_normal) text+='\n원래 리마인더가 발송 중이거나 결과 확인이 필요합니다. 발송 성공이 확인되면 이번 수정·삭제에 대한 알림이 나갈 수 있습니다. 저장 직전에 다시 확인합니다.';
-  text+='\n\n'+(['delete','cancel_occurrence'].includes(pending.action)?'취소·삭제 직전 수신 대상:':'현재 설정의 수신 대상:');
+  if(state.pending_normal) text+=(text?'\n':'')+'정상 리마인더의 발송 결과를 확인 중입니다. 발송 시점에 따라 이번 작업의 알림 여부가 달라질 수 있어 확정 직전에 다시 확인합니다.';
+  text+=(text?'\n\n':'')+'Recipients:';
   if(!(state.routes||[]).length) text+='\nNone';
   for(const r of state.routes||[]){
     const missing=new Set(r.missing_member_ids||[]);
     const names=(r.member_ids||[]).filter(id=>!missing.has(id)).map(id=>'@'+(EXEC_BY_ID[id]?.english_name||id));
-    text+='\n'+(routes[r.route]||r.route)+' → '+(r.everyone?'@everyone':names.join(' ')||'발송 가능한 대상 없음')+' ('+(audience[r.audience]||r.audience)+')';
-    if(missing.size) text+='\n  Discord ID 미등록으로 제외: '+[...missing].map(id=>EXEC_BY_ID[id]?.english_name||id).join(', ');
+    text+='\n'+(routes[r.route]||r.route)+' → '+(r.everyone?'@everyone':names.join(' ')||'None')+' ('+(audience[r.audience]||r.audience)+')';
+    if(missing.size) text+='\n  Discord ID가 등록되지 않아 제외됩니다: '+[...missing].map(id=>EXEC_BY_ID[id]?.english_name||id).join(', ');
   }
-  if(state.will_notify) text+='\n\n저장 후 다음 자동 실행에서 발송됩니다. 참석 관련 알림과 담당자 알림은 별도 메시지입니다.';
   return text;
 }
 
@@ -3790,7 +3831,7 @@ async function refreshNotificationPreview(pending){
   try{
     const state=await api('notification_preview',notificationPreviewData(pending));
     if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
-    if(!state||typeof state.ack!=='string') throw new Error('v33 SQL을 먼저 적용해 주세요.');
+    if(!state||typeof state.ack!=='string') throw new Error('필요한 캘린더 업데이트가 적용되지 않았습니다. 관리자에게 문의해 주세요.');
     pending.noticeReady=true;pending.notificationAck=state.ack;
     notificationState={...state,known:true};
     document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
@@ -3840,7 +3881,7 @@ async function commitItemConfirmation(){
   }catch(err){
     if(pendingItemConfirmation===pending){
       const error=document.getElementById('confirmError');
-      error.textContent='Could not complete the action — '+err.message;
+      error.textContent='요청을 완료하지 못했습니다. '+err.message;
       error.hidden=false;
     }
   }finally{
@@ -3893,7 +3934,7 @@ async function reloadDepartments(){
   try{
     setDepartments(await deptLoad());
   }catch(e){
-    showError('Could not reload categories — '+e.message);
+    showError('카테고리를 다시 불러오지 못했습니다. '+e.message);
   }
 
   renderFilters();
@@ -3932,7 +3973,7 @@ function renderCatList(){
       const name=fixed?d.name:nameEl.value.trim();
 
       if(!name){
-        catError('Category name can’t be empty.');
+        catError('카테고리 이름을 입력해 주세요.');
         return;
       }
 
@@ -3959,8 +4000,7 @@ function renderCatList(){
       del.onclick=async()=>{
         if(usedBy>0){
           catError(
-            `“${d.name}” is used by ${usedBy} item${usedBy>1?'s':''}. `+
-            `Reassign those first, then delete.`
+            `“${d.name}” 카테고리를 사용하는 일정이 ${usedBy}개 있습니다. 해당 일정의 카테고리를 먼저 변경해 주세요.`
           );
           return;
         }
@@ -3987,7 +4027,7 @@ async function addCategory(){
   const name=document.getElementById('newCatName').value.trim();
 
   if(!name){
-    catError('Enter a name for the new category.');
+    catError('새 카테고리 이름을 입력해 주세요.');
     return;
   }
 
@@ -4120,9 +4160,9 @@ function openMemberForm(person=null){
   document.getElementById('memberPassword').value='';
   document.getElementById('memberPasswordHelp').textContent=person
     ?(person.has_password
-      ?'Leave blank to keep the current password. Uncheck “Require password” to remove it.'
-      :'No password is set. Enter one before enabling password login.')
-    :'Required when password login is enabled for a new member.';
+      ?'비워 두면 기존 비밀번호를 유지합니다. Require password를 해제하면 비밀번호가 삭제됩니다.'
+      :'등록된 비밀번호가 없습니다. 비밀번호 로그인을 사용하려면 먼저 입력해 주세요.')
+    :'새 임원에게 비밀번호 로그인을 설정하려면 비밀번호를 입력해 주세요.';
   document.getElementById('memberDelete').hidden=!person;
   normalizeMemberRoleDepartment();
   document.getElementById('memberEnglish').focus();
@@ -4182,7 +4222,7 @@ async function saveMember(){
   const password=document.getElementById('memberPassword').value;
 
   if(!english||!korean){
-    memberError('English and Korean names are required.');
+    memberError('영문 이름과 한글 이름을 모두 입력해 주세요.');
     return;
   }
 
@@ -4191,7 +4231,7 @@ async function saveMember(){
     :null;
 
   if(passwordRequired && !password && !existing?.has_password){
-    memberError('Set a password before enabling password login.');
+    memberError('비밀번호 로그인을 설정하려면 먼저 비밀번호를 입력해 주세요.');
     return;
   }
 
@@ -4216,7 +4256,7 @@ async function saveMember(){
 
     if(editingMemberId===selectedViewerId){
       closeMembers();
-      resetLogin('Your account settings changed. Please sign in again.');
+      resetLogin('계정 설정이 변경되었습니다. 다시 로그인해 주세요.');
       return;
     }
 
@@ -4234,7 +4274,7 @@ async function deleteMember(){
   const person=ADMIN_MEMBERS.find(x=>x.id===editingMemberId);
   if(!person) return;
 
-  if(!window.confirm(`Remove ${person.english_name} from KESA Calendar? Their login access will be revoked.`)) return;
+  if(!window.confirm(`${person.english_name} 님을 삭제할까요? 삭제하면 캘린더에 로그인할 수 없습니다.`)) return;
 
   const btn=document.getElementById('memberDelete');
   btn.disabled=true;
@@ -4492,7 +4532,7 @@ function resetLogin(message=''){
  document.body.classList.add('signed-out');document.getElementById('loginScreen').hidden=false;
  document.getElementById('loginPerson').value='';document.getElementById('loginPassword').value='';
  document.getElementById('loginPasswordField').hidden=true;document.getElementById('loginPassword').required=false;
- document.getElementById('loginError').textContent=message;
+ document.getElementById('loginError').textContent=uiErrorText(message);
  document.getElementById('loginPerson').focus();
 }
 document.getElementById('loginPerson').onchange=()=>{
@@ -4509,9 +4549,9 @@ document.getElementById('loginForm').onsubmit=async e=>{
  try{
   const {data,error}=await sb.rpc('kesa_login',{p_id:id,p_password:document.getElementById('loginPassword').value});
   document.getElementById('loginPassword').value='';
-  if(error||data?.error)throw new Error(error?.message||data.error);
+  if(error||data?.error)throw new Error(uiErrorText(error?.message||data.error));
   sessionToken=data.token;sessionExpires=Date.parse(data.expires_at);
-  if(!sessionToken||!Number.isFinite(sessionExpires))throw new Error('Invalid login response');
+  if(!sessionToken||!Number.isFinite(sessionExpires))throw new Error('로그인 응답을 확인할 수 없습니다. 다시 시도해 주세요.');
   EXEC_BY_ID[data.person.id]=data.person;selectedViewerId=data.person.id;
   const loaded=await api('load');
   EXEC_BY_ID[selectedViewerId]=loaded.person;
@@ -4521,7 +4561,7 @@ document.getElementById('loginForm').onsubmit=async e=>{
   buildDeptOptions();populateViewerSelect();refreshAccountUI();renderFilters();setSelectedAssignees([]);setSelectedParticipants([]);
   document.body.classList.remove('signed-out');document.getElementById('loginScreen').hidden=true;
   clearBanner();setView('calendar');
-  expiryTimer=setTimeout(()=>resetLogin('Session expired. Please sign in again.'),Math.max(0,sessionExpires-Date.now()));
+  expiryTimer=setTimeout(()=>resetLogin('로그인이 만료되었습니다. 다시 로그인해 주세요.'),Math.max(0,sessionExpires-Date.now()));
  }catch(err){
   if(sessionToken){try{await api('logout');}catch(_){}}
   resetLogin(err.message);
@@ -4546,19 +4586,19 @@ document.getElementById('scopeAllBtn').onclick=()=>{
 document.getElementById('categorySelectAll').onclick=selectAllAllowedCategories;
 document.getElementById('categoryClearAll').onclick=clearAllCategories;
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden&&sessionToken&&Date.now()>=sessionExpires)resetLogin('Session expired. Please sign in again.');
+ if(!document.hidden&&sessionToken&&Date.now()>=sessionExpires)resetLogin('로그인이 만료되었습니다. 다시 로그인해 주세요.');
 });
 (async function init(){
  let savedW=DEFAULT_BOARD_WIDTH;try{savedW=+localStorage.getItem('kesa_cal_w')||savedW;}catch(_){}
  applyBoardWidth(savedW,false);
  try{
-  if(typeof supabase==='undefined')throw new Error('Database library failed to load. Refresh to retry.');
+  if(typeof supabase==='undefined')throw new Error('연결에 필요한 파일을 불러오지 못했습니다. 새로고침해 주세요.');
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   setExecutives(await executiveLoad());populateViewerSelect();
   const login=document.getElementById('loginPerson');login.innerHTML=document.getElementById('viewerSelect').innerHTML;
-  login.options[0].textContent='본인을 선택하세요';login.value='';login.disabled=false;
+  login.options[0].textContent='Select yourself';login.value='';login.disabled=false;
   document.getElementById('loginSubmit').disabled=false;
- }catch(err){document.getElementById('loginError').textContent='Could not load members. Apply the v20 SQL first, then refresh. '+err.message;}
+ }catch(err){document.getElementById('loginError').textContent='임원 목록을 불러오지 못했습니다. 새로고침 후에도 계속되면 관리자에게 문의해 주세요. '+err.message;}
 })();
 
 
