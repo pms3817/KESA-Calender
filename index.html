@@ -1469,6 +1469,9 @@
   .participant-people .assignee-list{margin-top:10px;max-height:240px;overflow:auto}
   .participant-covered{opacity:.55;background:#F1F5F9;cursor:not-allowed}
   #participantSelected{margin-top:8px}
+/* Cancelled occurrences remain clickable and sort after active items. */
+.chip.cancelled-occurrence,.lrow.cancelled-occurrence{opacity:.42;border-style:dashed}
+.cancelled-occurrence:hover,.cancelled-occurrence:focus-visible{opacity:.75}
 </style>
 </head>
 
@@ -1765,6 +1768,7 @@
     <div class="detail-body">
       <div class="detail-grid" id="detailGrid"></div>
       <div class="detail-actions">
+        <button class="primary" id="detailRestore" hidden>Restore</button>
         <button class="danger detail-delete" id="detailDelete">Delete</button>
         <button id="detailClose">Close</button>
         <button class="primary" id="detailEdit">Edit</button>
@@ -1942,6 +1946,7 @@ function canEdit(){return !!sessionToken&&['President','Vice President','Directo
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
 function isPresidential(){return ['President','Vice President'].includes(currentViewer()?.role)}
 function uiErrorText(message){
+  if(message==='This occurrence is no longer cancelled. Refresh the calendar.')return '이미 복구된 회차입니다. 캘린더를 새로고침해 주세요.';
   const translations={
   "Session expired. Please sign in again.": "로그인이 만료되었습니다. 다시 로그인해 주세요.",
   "Invalid preview action": "알림 확인 요청을 처리할 수 없습니다. 창을 닫고 다시 시도해 주세요.",
@@ -2260,6 +2265,23 @@ function occurrences(ev,startStr,endStr){
   return out;
 }
 
+function isCancelledOccurrence(ev,day){return (ev.cancelledDates||[]).includes(day);}
+function visibleOccurrences(ev,start,end){
+  return [...new Set([...occurrences(ev,start,end),...(ev.cancelledDates||[]).filter(d=>d>=start&&d<=end)])].sort();
+}
+async function restoreFromDetail(){
+  if(!canEdit()) return;
+  const series=events.find(e=>e.id===detailEventId),day=detailOccurrenceDate;
+  if(!series||!isCancelledOccurrence(series,day)) return;
+  const item={...series,date:day,endDate:series.endDate?fmt(addDays(parseYMD(day),spanDays(series))):null};
+  openItemConfirmation('restore_occurrence',item,null,async()=>{
+    const r=await api('event_restore_occurrence',{id:series.id,occurrence_date:day,notification_ack:pendingItemConfirmation?.notificationAck});
+    const saved=fromRow(r);saved.assigneeIds=r.assignee_ids||[];
+    events=events.map(e=>e.id===saved.id?saved:e);
+    closeDetail();renderActive();
+  });
+}
+
 function recurLabel(ev){
   if(!ev.recur||ev.recur==='none') return '';
 
@@ -2566,10 +2588,10 @@ function renderGrid(){
     const span=spanDays(ev);
     const searchStart=fmt(addDays(parseYMD(rangeStart),-span));
 
-    occurrences(ev,searchStart,rangeEnd).forEach(startStr=>{
+    visibleOccurrences(ev,searchStart,rangeEnd).forEach(startStr=>{
       const occurrenceEnd=fmt(addDays(parseYMD(startStr),span));
 
-      if(span>=1){
+      if(span>=1&&!isCancelledOccurrence(ev,startStr)){
         const clippedStart=startStr<rangeStart?rangeStart:startStr;
         const clippedEnd=occurrenceEnd>rangeEnd?rangeEnd:occurrenceEnd;
 
@@ -2604,7 +2626,7 @@ function renderGrid(){
         const ds=fmt(addDays(parseYMD(startStr),i));
 
         if(ds>=rangeStart&&ds<=rangeEnd){
-          (byDay[ds]=byDay[ds]||[]).push(ev);
+          (byDay[ds]=byDay[ds]||[]).push({...ev,_occurrenceDate:startStr});
         }
       }
     });
@@ -2623,6 +2645,7 @@ function renderGrid(){
     cell.onclick=()=>openAdd(ds);
 
     const items=(byDay[ds]||[]).slice().sort((a,b)=>
+      Number(isCancelledOccurrence(a,a._occurrenceDate))-Number(isCancelledOccurrence(b,b._occurrenceDate)) ||
       Number(a.type==='school')-Number(b.type==='school') ||
       (a.time||'99:99').localeCompare(b.time||'99:99') ||
       a.type.localeCompare(b.type) ||
@@ -2636,6 +2659,8 @@ function renderGrid(){
       const c=document.createElement('button');
 
       c.className=`chip type-${ev.type} status-${ev.status||'none'}`+(isAssignedToViewer(ev)?' assigned-to-me':'');
+      const cancelled=isCancelledOccurrence(ev,ev._occurrenceDate);
+      if(cancelled)c.classList.add('cancelled-occurrence');
       c.style.setProperty('--item-color',dp.color);
       c.dataset.eventId=ev.id;
 
@@ -2660,7 +2685,7 @@ function renderGrid(){
           `<span class="type-label">${escapeHtml(TYPE_NAME[ev.type])}</span>`+
           `${ev.time?`<span class="card-time">${escapeHtml(prettyTime(ev.time))}</span>`:''}`+
           `${isAssignedToViewer(ev)?'<span class="mine-badge">You</span>':''}`+
-          `${ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
+          `${cancelled?'<span class="status-pill">Cancelled</span>':''}${!cancelled&&ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
         `</span>`+
         `<span class="card-bottom">`+
           `<span class="card-title">${escapeHtml(ev.title)}</span>`+
@@ -2677,7 +2702,7 @@ function renderGrid(){
 
       c.onclick=e=>{
         e.stopPropagation();
-        openDetail(ev,ds);
+        openDetail(events.find(e=>e.id===ev.id)||ev,ev._occurrenceDate||ds);
       };
 
       chips.appendChild(c);
@@ -2910,9 +2935,11 @@ function openDetail(ev,occurrenceDate=null){
   detailEventId=ev.id;
   detailOccurrenceDate=occurrenceDate||(ev.recur&&ev.recur!=='none'?nextOccurrence(ev,fmt(new Date())):ev.date);
   const shownDate=detailOccurrenceDate||ev.date;
+  const cancelled=isCancelledOccurrence(ev,shownDate);
+  document.getElementById('detailRestore').hidden=!canEdit()||!cancelled;
   const deleteBtn=document.getElementById('detailDelete');
   deleteBtn.disabled=false;
-  deleteBtn.textContent='Delete';
+  deleteBtn.textContent=cancelled?'Delete series':'Delete';
   const dp=deptOf(ev.dept);
   const linked=linkedEventFor(ev);
   const detailModal=document.querySelector('#detailScrim .detail-modal');
@@ -2921,9 +2948,9 @@ function openDetail(ev,occurrenceDate=null){
   document.getElementById('detailIcon').textContent=glyphFor(ev);
   document.getElementById('detailType').textContent=TYPE_NAME[ev.type]||ev.type;
   const statusEl=document.getElementById('detailStatus');
-  if(ev.status){
+  if(cancelled||ev.status){
     statusEl.hidden=false;
-    statusEl.textContent=ev.status==='tentative'?'Tentative':'Final';
+    statusEl.textContent=cancelled?'Cancelled':ev.status==='tentative'?'Tentative':'Final';
     statusEl.className='detail-status '+(ev.status==='tentative'?'status-tentative':'status-final');
   }else{
     statusEl.hidden=true;
@@ -2984,10 +3011,11 @@ function renderList(){
 
   const rows=events
     .filter(eventMatchesView)
-    .map(ev=>({ev,when:nextOccurrence(ev,todayStr)}))
+    .flatMap(ev=>[{ev,when:nextOccurrence(ev,todayStr)},...(ev.cancelledDates||[]).map(when=>({ev,when}))])
     .filter(({when})=>when&&(listShowPast||when>=todayStr))
     .sort((a,b)=>
       a.when.localeCompare(b.when) ||
+      Number(isCancelledOccurrence(a.ev,a.when))-Number(isCancelledOccurrence(b.ev,b.when)) ||
       Number(a.ev.type==='school')-Number(b.ev.type==='school') ||
       (a.ev.time||'99:99').localeCompare(b.ev.time||'99:99') ||
       a.ev.title.localeCompare(b.ev.title)
@@ -3017,6 +3045,8 @@ function renderList(){
     const isPast=when<todayStr;
     const isToday=when===todayStr;
     row.className='lrow'+(isPast?' past':'')+(isToday?' list-today':'')+(isAssignedToViewer(ev)?' assigned-to-me':'');
+    const cancelled=isCancelledOccurrence(ev,when);
+    if(cancelled)row.classList.add('cancelled-occurrence');
     row.dataset.when=when;
 
     const dateLabel=d.toLocaleDateString('en-US',{
@@ -3026,6 +3056,7 @@ function renderList(){
     });
 
     const meta=[];
+    if(cancelled)meta.push('Cancelled');
     meta.push(TYPE_NAME[ev.type]);
     if(ev.time) meta.push(prettyTime(ev.time));
     if(ev.dept!=='school') meta.push(dp.name);
@@ -3730,24 +3761,25 @@ function openItemConfirmation(action,item,original,commit,deleteContext=null){
   pendingItemConfirmation={commit,action,item,deleteContext,notificationAck:null,noticeReady:false};
   confirmationFocus=document.activeElement;
   const single=action==='cancel_occurrence';
+  const restoring=action==='restore_occurrence';
   const deleting=action==='delete'||single;
   document.getElementById('confirmDeleteScope').hidden=!deleteContext;
   for(const [id,chosen] of [['cancelThisOccurrence',single],['deleteEntireSeries',!single]]){
     const control=document.getElementById(id);control.className=chosen?'primary':'';control.setAttribute('aria-pressed',String(chosen));
   }
-  document.getElementById('confirmTitle').textContent=single?'Cancel occurrence':deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
-  document.getElementById('confirmIntro').textContent=single?`${item.date} 회차만 취소하며, 나머지 반복 일정은 유지됩니다.`:deleting?(item.recur&&item.recur!=='none'?'이 반복 일정의 모든 회차를 삭제합니다.':'선택한 일정을 삭제합니다. 아래 내용을 확인해 주세요.'):'아래 내용을 확인한 뒤 확정해 주세요. 확정 전에는 저장되지 않습니다.';
-  document.getElementById('confirmSummaryTitle').textContent=single?'Occurrence to cancel':deleting?(deleteContext?'Series to delete':'Item to delete'):'Final configuration';
+  document.getElementById('confirmTitle').textContent=restoring?'Restore occurrence':single?'Cancel occurrence':deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
+  document.getElementById('confirmIntro').textContent=restoring?`${item.date} 회차의 취소를 해제합니다. 현재 반복 규칙에 해당하는 날짜이면 다시 정상 일정으로 표시됩니다.`:single?`${item.date} 회차만 취소하며, 나머지 반복 일정은 유지됩니다.`:deleting?(item.recur&&item.recur!=='none'?'이 반복 일정의 모든 회차를 삭제합니다.':'선택한 일정을 삭제합니다. 아래 내용을 확인해 주세요.'):'아래 내용을 확인한 뒤 확정해 주세요. 확정 전에는 저장되지 않습니다.';
+  document.getElementById('confirmSummaryTitle').textContent=restoring?'Occurrence to restore':single?'Occurrence to cancel':deleting?(deleteContext?'Series to delete':'Item to delete'):'Final configuration';
   document.getElementById('confirmSummary').innerHTML=confirmationRows(item).map(([label,value])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
   const changes=action==='edit'?confirmationChanges(original,item):[];
   document.getElementById('confirmChanges').innerHTML=action==='edit'?'<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">변경된 내용이 없습니다.</p>'):'';
-  document.getElementById('confirmReminder').hidden=deleting;
+  document.getElementById('confirmReminder').hidden=deleting||restoring;
   document.getElementById('confirmReminder').textContent=confirmationReminder(action,item);
   const series=!!((item.recur&&item.recur!=='none')||(original?.recur&&original.recur!=='none'));
-  document.getElementById('confirmSeries').hidden=!series||deleting;
+  document.getElementById('confirmSeries').hidden=!series||deleting||restoring;
   document.getElementById('confirmSeries').textContent=deleting?'':action==='edit'?'변경 내용은 반복 일정 전체에 적용됩니다.':'반복 일정으로 생성됩니다.';
   document.getElementById('confirmDeleteWarning').hidden=!deleting;
-  document.getElementById('confirmDeleteWarning').textContent=single?'이 화면에서 회차 취소를 되돌릴 수 없습니다.':'삭제한 일정은 되돌릴 수 없습니다.';
+  document.getElementById('confirmDeleteWarning').textContent=single?'취소된 회차는 흐리게 표시되며, 상세 화면에서 Restore로 복구할 수 있습니다.':'삭제한 일정은 되돌릴 수 없습니다.';
   const button=document.getElementById('confirmCommit');
   button.textContent=confirmationButtonLabel(pendingItemConfirmation);
   button.className=deleting?'danger':'primary';
@@ -3775,14 +3807,15 @@ function closeItemConfirmation(force=false){
 }
 
 function confirmationButtonLabel(pending){
-  return pending.action==='cancel_occurrence'?'Cancel occurrence':pending.action==='delete'?(pending.deleteContext?'Delete series':'Delete item'):pending.action==='edit'?'Confirm changes':'Create item';
+  return pending.action==='restore_occurrence'?'Restore occurrence':pending.action==='cancel_occurrence'?'Cancel occurrence':pending.action==='delete'?(pending.deleteContext?'Delete series':'Delete item'):pending.action==='edit'?'Confirm changes':'Create item';
 }
 function confirmationReminder(action,item){
-  return ['delete','cancel_occurrence'].includes(action)?'':reminderPreview(item);
+  return ['delete','cancel_occurrence','restore_occurrence'].includes(action)?'':reminderPreview(item);
 }
 
 function notificationPreviewData(pending){
   const {action,item}=pending;
+  if(action==='restore_occurrence')return {action,id:item.id,occurrence_date:item.date};
   if(action==='cancel_occurrence') return {action,id:item.id,occurrence_date:pending.deleteContext.occurrenceDate};
   return {action,id:item.id,event:action==='delete'?null:toRow(item),
     assignees:typeSupportsAssignees(item.type)?eventAssigneeIds(item):[],
@@ -3790,6 +3823,7 @@ function notificationPreviewData(pending){
 }
 
 function notificationPreviewText(state,pending){
+  if(pending.action==='restore_occurrence')return '복구 자체에 대한 Discord 알림은 보내지 않습니다. 리마인더 예정 시각 전에 복구하면 기존 발송 규칙을 따릅니다. 예정 시각이 지났거나 이미 발송된 리마인더는 다시 보내지 않습니다.';
   const kinds={schedule:'Schedule change',tentative:'Final → Tentative',cancelled:'Cancellation',occurrence_cancelled:'Occurrence cancellation'};
   const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
   const audience={assignee:'Assignees',participant_department:'Department participants',participant_individual:'Individual participants'};
@@ -4474,6 +4508,7 @@ document.getElementById('memberRole').addEventListener('change',normalizeMemberR
 document.getElementById('catClose').onclick=closeCat;
 document.getElementById('newCatAdd').onclick=addCategory;
 document.getElementById('detailClose').onclick=closeDetail;
+document.getElementById('detailRestore').onclick=restoreFromDetail;
 document.getElementById('detailDelete').onclick=deleteFromDetail;
 document.getElementById('detailEdit').onclick=editFromDetail;
 
