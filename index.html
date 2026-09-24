@@ -1542,13 +1542,16 @@
 #reminderDefault{font-size:11px;padding:6px 8px}
 .discussion-count{font-size:11px;color:var(--muted);text-align:right;margin-top:5px}
 
+.reminder-send-time{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;background:#EFF4FA;border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:12px;color:var(--ink);line-height:1.6}
+.reminder-send-time strong{font-size:11px;color:var(--muted)}
+.reminder-send-state{font-size:10px;font-weight:600;color:var(--muted)}
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v37</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v38</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1559,7 +1562,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v37</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v38</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -3863,6 +3866,21 @@ function renderReminderMessages(pending){
     preview.past_due?'리마인더 예정 시각이 지난 일정의 문구 예시입니다. 소급 발송하지 않습니다.':
     `Preview date: ${preview.occurrence_date||pending.item.date}`+(preview.tentative?' · 예정 시각에 Final인 경우에만 발송합니다.':'');
   box.appendChild(note);
+  const scheduled=preview.scheduled_for?new Date(preview.scheduled_for):null;
+  if(scheduled&&Number.isFinite(scheduled.getTime())){
+    const timing=document.createElement('div');timing.className='reminder-send-time';
+    const label=document.createElement('strong');label.textContent='Send at';
+    const time=document.createElement('time');time.dateTime=scheduled.toISOString();
+    time.textContent=new Intl.DateTimeFormat('ko-KR',{
+      timeZone:'America/Toronto',year:'numeric',month:'long',day:'numeric',weekday:'short',hour:'numeric',minute:'2-digit',hour12:true
+    }).formatToParts(scheduled).map(part=>part.type==='weekday'?'('+part.value+')':part.value).join('');
+    timing.append(label,time);
+    if(preview.past_due||pending.remindersEnabled===false){
+      const state=document.createElement('span');state.className='reminder-send-state';
+      state.textContent=preview.past_due?'Past':'Paused';timing.appendChild(state);
+    }
+    box.appendChild(timing);
+  }
   const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
   const audiences={assignee:'Assignees',participant_department:'Department participants',participant_individual:'Individual participants'};
   for(const message of preview.messages||[]){
@@ -4012,7 +4030,7 @@ async function refreshNotificationPreview(pending){
     if(!state||typeof state.ack!=='string') throw new Error('필요한 캘린더 업데이트가 적용되지 않았습니다. 관리자에게 문의해 주세요.');
     if(!document.getElementById('reminderEditor').hidden){
       if(!state.reminder_preview)throw new Error('SQL 24 업데이트를 먼저 적용해 주세요.');
-      pending.messagePreview=state.reminder_preview;renderReminderMessages(pending);
+      pending.messagePreview=state.reminder_preview;pending.remindersEnabled=state.enabled;renderReminderMessages(pending);
     }
     pending.noticeReady=true;pending.notificationAck=state.ack;
     notificationState={...state,known:true};
