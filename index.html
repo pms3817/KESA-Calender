@@ -1475,7 +1475,7 @@
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v32</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v33</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1486,7 +1486,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v32</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v33</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1731,6 +1731,10 @@
   <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmIntro">
     <h2 id="confirmTitle">Review item</h2>
     <p class="sub" id="confirmIntro"></p>
+    <div class="modal-actions" id="confirmDeleteScope" hidden>
+      <button type="button" id="cancelThisOccurrence">이 회차만 취소</button>
+      <button type="button" id="deleteEntireSeries">전체 반복 일정 삭제</button>
+    </div>
     <div id="confirmChanges"></div>
     <h3 id="confirmSummaryTitle">Final configuration</h3>
     <dl class="confirm-summary" id="confirmSummary"></dl>
@@ -1918,6 +1922,7 @@ function fromRow(r){
     assigneeIds:[],
     participantDepartments:r.participant_departments||[],
     participantIds:r.participant_ids||[],
+    cancelledDates:r.cancelled_dates||[],
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
@@ -1963,6 +1968,10 @@ async function saveEvent(ev,action){
 }
 async function dbInsert(ev){return saveEvent(ev,'event_insert');}
 async function dbUpdate(ev){return saveEvent(ev,'event_update');}
+async function dbCancelOccurrence(id,occurrenceDate){
+  const r=await api('event_cancel_occurrence',{id,occurrence_date:occurrenceDate,notification_ack:pendingItemConfirmation?.notificationAck});
+  const saved=fromRow(r);saved.assigneeIds=r.assignee_ids||[];return saved;
+}
 async function dbDelete(id){await api('event_delete',{id,...(pendingItemConfirmation?.notificationAck?{notification_ack:pendingItemConfirmation.notificationAck}:{})});}
 // Server deletion unlinks related items in the same transaction.
 async function dbUnlink(id){}
@@ -2204,7 +2213,7 @@ function occurrences(ev,startStr,endStr){
       match=nd&&fmt(nd)===fmt(d);
     }
 
-    if(match) out.push(fmt(d));
+    if(match&&!(ev.cancelledDates||[]).includes(fmt(d))) out.push(fmt(d));
   }
 
   return out;
@@ -2231,7 +2240,7 @@ function nextOccurrence(ev,fromStr){
 
   const end=fmt(addDays(parseYMD(fromStr),400));
   const occ=occurrences(ev,fromStr,end);
-  return occ.length?occ[0]:ev.date;
+  return occ.length?occ[0]:null;
 }
 
 /* ===== STATE ===== */
@@ -2242,6 +2251,7 @@ view.setDate(1);
 let viewMode='calendar';
 let listShowPast=false;
 let editingId=null;
+let editingOccurrenceDate=null;
 let formType='event';
 let formStatus='final';
 let schoolStatusEnabled=false;
@@ -2533,6 +2543,7 @@ function renderGrid(){
 
               longSegments.push({
                 ev,
+                occurrenceDate:startStr,
                 row,
                 startIndex:a,
                 endIndex:rowEnd,
@@ -2625,7 +2636,7 @@ function renderGrid(){
 
       c.onclick=e=>{
         e.stopPropagation();
-        openDetail(ev);
+        openDetail(ev,ds);
       };
 
       chips.appendChild(c);
@@ -2742,7 +2753,7 @@ function renderLongEventBars(segments){
 
     bar.onclick=e=>{
       e.stopPropagation();
-      openDetail(seg.ev);
+      openDetail(seg.ev,seg.occurrenceDate);
     };
 
     layer.appendChild(bar);
@@ -2771,7 +2782,7 @@ function jumpToEventById(id){
   if(viewerScopeAllows(target)) selectedCategories.add(target.dept);
   renderFilters();
 
-  const d=parseYMD(target.date);
+  const d=parseYMD(nextOccurrence(target,target.date)||target.date);
   view=new Date(d.getFullYear(),d.getMonth(),1,12);
   setView('calendar');
 
@@ -2826,12 +2837,13 @@ function renderUpcoming(){
       `<span class="up-title">${escapeHtml(next.ev.title)}</span>`+
       `<span class="up-date">${dateLabel}</span>`+
     `</button>`;
-  box.querySelector('.upcoming-item').onclick=()=>openDetail(next.ev);
+  box.querySelector('.upcoming-item').onclick=()=>openDetail(next.ev,next.when);
 }
 
 /* ===== ITEM DETAIL MODAL ===== */
 const detailScrim=document.getElementById('detailScrim');
 let detailEventId=null;
+let detailOccurrenceDate=null;
 
 function prettyDate(s){
   return parseYMD(s).toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
@@ -2850,11 +2862,13 @@ function detailRow(label,value,full=false,extraClass=''){
     `<div class="detail-value ${extraClass}">${value}</div></div>`;
 }
 
-function openDetail(ev){
+function openDetail(ev,occurrenceDate=null){
   if(!viewerScopeAllows(ev))return;
   document.getElementById("detailEdit").hidden=!canEdit();
   document.getElementById("detailDelete").hidden=!canEdit();
   detailEventId=ev.id;
+  detailOccurrenceDate=occurrenceDate||(ev.recur&&ev.recur!=='none'?nextOccurrence(ev,fmt(new Date())):ev.date);
+  const shownDate=detailOccurrenceDate||ev.date;
   const deleteBtn=document.getElementById('detailDelete');
   deleteBtn.disabled=false;
   deleteBtn.textContent='Delete';
@@ -2879,9 +2893,9 @@ function openDetail(ev){
   document.getElementById('detailCategory').textContent=ev.type==='school'?'School':dp.name;
 
   let html='';
-  html+=detailRow('Date',escapeHtml(prettyDate(ev.date)));
+  html+=detailRow('Date',escapeHtml(prettyDate(shownDate)));
   if(ev.time) html+=detailRow('Time',escapeHtml(prettyTime(ev.time)));
-  if(ev.endDate) html+=detailRow('End date',escapeHtml(prettyDate(ev.endDate)));
+  if(ev.endDate) html+=detailRow('End date',escapeHtml(prettyDate(fmt(addDays(parseYMD(shownDate),spanDays(ev))))));
   if(participantDisplay(ev)) html+=detailRow('Participants',`◎ ${escapeHtml(participantDisplay(ev))}`);
   if(assigneeDetail(ev)) html+=detailRow('Assignees',`👤 ${assigneeDetailHtml(ev)}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
@@ -2903,7 +2917,7 @@ function closeDetail(){detailScrim.classList.remove('open')}
 function deleteFromDetail(){
   if(!canEdit()) return;
   const ev=events.find(e=>e.id===detailEventId);
-  if(ev) requestItemDelete(ev,'detail');
+  if(ev) requestItemDelete(ev,'detail',detailOccurrenceDate);
 }
 
 function editFromDetail(){
@@ -2911,7 +2925,7 @@ function editFromDetail(){
   const ev=events.find(e=>e.id===detailEventId);
   if(!ev) return;
   closeDetail();
-  openEdit(ev);
+  openEdit(ev,detailOccurrenceDate);
 }
 
 /* ===== LIST ===== */
@@ -2930,7 +2944,7 @@ function renderList(){
   const rows=events
     .filter(eventMatchesView)
     .map(ev=>({ev,when:nextOccurrence(ev,todayStr)}))
-    .filter(({when})=>listShowPast||when>=todayStr)
+    .filter(({when})=>when&&(listShowPast||when>=todayStr))
     .sort((a,b)=>
       a.when.localeCompare(b.when) ||
       Number(a.ev.type==='school')-Number(b.ev.type==='school') ||
@@ -2975,7 +2989,7 @@ function renderList(){
     if(ev.time) meta.push(prettyTime(ev.time));
     if(ev.dept!=='school') meta.push(dp.name);
     if(ev.endDate){
-      const e=parseYMD(ev.endDate);
+      const e=addDays(parseYMD(when),spanDays(ev));
       meta.push('through '+e.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
     }
     if(participantDisplay(ev)) meta.push('Participants: '+participantDisplay(ev));
@@ -2998,7 +3012,7 @@ function renderList(){
         `<span class="lmeta">${meta.map(escapeHtml).join(' &nbsp;·&nbsp; ')}</span>`+
       `</span>`;
 
-    row.onclick=()=>openDetail(ev);
+    row.onclick=()=>openDetail(ev,when);
     box.appendChild(row);
   });
 }
@@ -3352,6 +3366,7 @@ function refreshLinkOptions(currentId){
 function openAdd(dateStr){
   if(!canEdit()) return;
   editingId=null;
+  editingOccurrenceDate=null;
   endDateAutoSeeded=true;
   schoolStatusEnabled=false;
   formStatus='final';
@@ -3384,9 +3399,10 @@ function openAdd(dateStr){
   openModal();
 }
 
-function openEdit(ev){
+function openEdit(ev,occurrenceDate=null){
   if(!canEdit()) return;
   editingId=ev.id;
+  editingOccurrenceDate=occurrenceDate||(ev.recur&&ev.recur!=='none'?nextOccurrence(ev,fmt(new Date())):ev.date);
   endDateAutoSeeded=!ev.endDate;
   schoolStatusEnabled=ev.type==='school'&&!!ev.status;
   formStatus=ev.status||'final';
@@ -3507,7 +3523,7 @@ async function saveItem(){
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
     assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
-    recur:rec,details,emoji,source:original?.source||'user'
+    recur:rec,details,emoji,cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
   };
   const action=original?'edit':'add';
   openItemConfirmation(action,payload,original,async()=>{
@@ -3524,22 +3540,53 @@ async function saveItem(){
 function deleteItem(){
   if(!canEdit()) return;
   const ev=events.find(e=>e.id===editingId);
-  if(ev) requestItemDelete(ev,'form');
+  if(ev) requestItemDelete(ev,'form',editingOccurrenceDate);
 }
 
-function requestItemDelete(ev,origin){
-  openItemConfirmation('delete',ev,null,async()=>{
-    await dbDelete(ev.id);
-    for(const d of events.filter(e=>e.linkedEventId===ev.id)){
-      await dbUnlink(d.id);
-      d.linkedEventId=null;
-    }
-    events=events.filter(e=>e.id!==ev.id);
-    if(origin==='detail'){detailEventId=null;closeDetail();}
+function requestItemDelete(ev,origin,occurrenceDate=null){
+  const repeated=ev.recur&&ev.recur!=='none';
+  const selected=occurrenceDate||nextOccurrence(ev,fmt(new Date()));
+  const canCancelOne=repeated&&selected&&occurrences(ev,selected,selected).length===1;
+  const context=canCancelOne?{series:ev,origin,occurrenceDate:selected}:null;
+  if(context){openRecurringDeleteConfirmation(context);return;}
+  openItemConfirmation('delete',ev,null,()=>commitSeriesDelete(ev,origin));
+}
+
+async function commitSeriesDelete(ev,origin){
+  await dbDelete(ev.id);
+  for(const d of events.filter(e=>e.linkedEventId===ev.id)){
+    await dbUnlink(d.id);d.linkedEventId=null;
+  }
+  events=events.filter(e=>e.id!==ev.id);
+  if(origin==='detail'){detailEventId=null;detailOccurrenceDate=null;closeDetail();}
+  else closeModal();
+  renderActive();
+}
+
+function openRecurringDeleteConfirmation(context,action='cancel_occurrence'){
+  const {series,origin,occurrenceDate}=context;
+  const single=action==='cancel_occurrence';
+  const item=single?{...series,date:occurrenceDate,
+    endDate:series.endDate?fmt(addDays(parseYMD(occurrenceDate),spanDays(series))):null}:series;
+  openItemConfirmation(action,item,null,async()=>{
+    if(!single){await commitSeriesDelete(series,origin);return;}
+    const saved=await dbCancelOccurrence(series.id,occurrenceDate);
+    const index=events.findIndex(e=>e.id===series.id);
+    if(index>=0) events[index]=saved;
+    if(origin==='detail'){detailEventId=null;detailOccurrenceDate=null;closeDetail();}
     else closeModal();
     renderActive();
-  });
+  },context);
 }
+
+function changeDeleteScope(action){
+  const pending=pendingItemConfirmation;
+  if(confirmationBusy||!pending?.deleteContext||pending.action===action) return;
+  const context=pending.deleteContext;
+  closeItemConfirmation();
+  openRecurringDeleteConfirmation(context,action);
+}
+
 
 /* ===== ITEM CONFIRMATION AND SERVER-VERIFIED NOTIFICATION PREVIEW ===== */
 const confirmScrim=document.getElementById('confirmScrim');
@@ -3640,24 +3687,30 @@ function confirmationChanges(before,after){
   });
 }
 
-function openItemConfirmation(action,item,original,commit){
+function openItemConfirmation(action,item,original,commit,deleteContext=null){
   if(pendingItemConfirmation||!canEdit()) return;
-  pendingItemConfirmation={commit,action,item,notificationAck:null,noticeReady:false};
+  pendingItemConfirmation={commit,action,item,deleteContext,notificationAck:null,noticeReady:false};
   confirmationFocus=document.activeElement;
-  const deleting=action==='delete';
-  document.getElementById('confirmTitle').textContent=deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
-  document.getElementById('confirmIntro').textContent=deleting?'Review the saved item before deleting it.':'Nothing is saved until you confirm below.';
-  document.getElementById('confirmSummaryTitle').textContent=deleting?'Item to delete':'Final configuration';
+  const single=action==='cancel_occurrence';
+  const deleting=action==='delete'||single;
+  document.getElementById('confirmDeleteScope').hidden=!deleteContext;
+  for(const [id,chosen] of [['cancelThisOccurrence',single],['deleteEntireSeries',!single]]){
+    const control=document.getElementById(id);control.className=chosen?'primary':'';control.setAttribute('aria-pressed',String(chosen));
+  }
+  document.getElementById('confirmTitle').textContent=single?'이 회차만 취소':deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
+  document.getElementById('confirmIntro').textContent=single?`${prettyDate(item.date)} 회차만 취소합니다. 나머지 반복 일정은 유지됩니다.`:deleting?'Review the saved item before deleting it.':'Nothing is saved until you confirm below.';
+  document.getElementById('confirmSummaryTitle').textContent=single?'취소할 회차':deleting?'Item to delete':'Final configuration';
   document.getElementById('confirmSummary').innerHTML=confirmationRows(item).map(([label,value])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
   const changes=action==='edit'?confirmationChanges(original,item):[];
   document.getElementById('confirmChanges').innerHTML=action==='edit'?'<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">No changes.</p>'):'';
-  document.getElementById('confirmReminder').textContent=reminderPreview(item);
+  document.getElementById('confirmReminder').textContent=confirmationReminder(action,item);
   const series=!!((item.recur&&item.recur!=='none')||(original?.recur&&original.recur!=='none'));
   document.getElementById('confirmSeries').hidden=!series;
-  document.getElementById('confirmSeries').textContent=deleting?'This deletes the entire recurring series, not just one occurrence.':action==='edit'?'Changes apply to the entire recurring series.':'This creates a recurring series.';
+  document.getElementById('confirmSeries').textContent=single?'선택한 회차만 캘린더에서 제외합니다. 이후 반복 일정은 유지됩니다.':deleting?'This deletes the entire recurring series, not just one occurrence.':action==='edit'?'Changes apply to the entire recurring series.':'This creates a recurring series.';
   document.getElementById('confirmDeleteWarning').hidden=!deleting;
+  document.getElementById('confirmDeleteWarning').textContent=single?'이 화면에서 회차 취소를 되돌릴 수 없습니다.':'Deletion cannot be undone.';
   const button=document.getElementById('confirmCommit');
-  button.textContent=deleting?'Delete item':action==='edit'?'Confirm changes':'Create item';
+  button.textContent=confirmationButtonLabel(pendingItemConfirmation);
   button.className=deleting?'danger':'primary';
   button.disabled=false;
   document.getElementById('confirmBack').disabled=false;
@@ -3682,15 +3735,23 @@ function closeItemConfirmation(force=false){
   confirmationFocus=null;
 }
 
+function confirmationButtonLabel(pending){
+  return pending.action==='cancel_occurrence'?'이 회차 취소 확정':pending.action==='delete'?'Delete item':pending.action==='edit'?'Confirm changes':'Create item';
+}
+function confirmationReminder(action,item){
+  return action==='cancel_occurrence'?'이 회차의 정상 리마인더는 더 이상 발송하지 않습니다. 이미 발송된 리마인더가 있다면 아래 취소 알림 여부를 확인하세요.':reminderPreview(item);
+}
+
 function notificationPreviewData(pending){
   const {action,item}=pending;
+  if(action==='cancel_occurrence') return {action,id:item.id,occurrence_date:pending.deleteContext.occurrenceDate};
   return {action,id:item.id,event:action==='delete'?null:toRow(item),
     assignees:typeSupportsAssignees(item.type)?eventAssigneeIds(item):[],
     participants:typeSupportsParticipants(item.type)?eventParticipantIds(item):[]};
 }
 
 function notificationPreviewText(state,pending){
-  const kinds={schedule:'날짜·시간 변경',tentative:'Final → Tentative',cancelled:'일정 취소'};
+  const kinds={schedule:'날짜·시간 변경',tentative:'Final → Tentative',cancelled:'일정 취소',occurrence_cancelled:'이 회차만 취소'};
   const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
   const audience={assignee:'담당자',participant_department:'부서 참석',participant_individual:'개별 참석'};
   const effects=state.effects||[];
@@ -3708,7 +3769,7 @@ function notificationPreviewText(state,pending){
       '현재 기록 기준으로 이번 작업은 변경·취소 알림을 보내지 않습니다. 참석 대상·담당자만 바꾸는 경우에도 알림을 보내지 않습니다.';
   }
   if(state.pending_normal) text+='\n원래 리마인더가 발송 중이거나 결과 확인이 필요합니다. 발송 성공이 확인되면 이번 수정·삭제에 대한 알림이 나갈 수 있습니다. 저장 직전에 다시 확인합니다.';
-  text+='\n\n'+(pending.action==='delete'?'삭제 직전 수신 대상:':'현재 설정의 수신 대상:');
+  text+='\n\n'+(['delete','cancel_occurrence'].includes(pending.action)?'취소·삭제 직전 수신 대상:':'현재 설정의 수신 대상:');
   if(!(state.routes||[]).length) text+='\nNone';
   for(const r of state.routes||[]){
     const missing=new Set(r.missing_member_ids||[]);
@@ -3729,10 +3790,10 @@ async function refreshNotificationPreview(pending){
   try{
     const state=await api('notification_preview',notificationPreviewData(pending));
     if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
-    if(!state||typeof state.ack!=='string') throw new Error('v32 SQL을 먼저 적용해 주세요.');
+    if(!state||typeof state.ack!=='string') throw new Error('v33 SQL을 먼저 적용해 주세요.');
     pending.noticeReady=true;pending.notificationAck=state.ack;
     notificationState={...state,known:true};
-    document.getElementById('confirmReminder').textContent=reminderPreview(pending.item);
+    document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
     document.getElementById('confirmNotifications').textContent=notificationPreviewText(state,pending);
     document.getElementById('confirmError').hidden=true;
     return state;
@@ -3740,14 +3801,14 @@ async function refreshNotificationPreview(pending){
     if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
     pending.noticeReady=false;pending.notificationAck=null;
     notificationState={known:false,enabled:false,change_notifications:false};
-    document.getElementById('confirmReminder').textContent=reminderPreview(pending.item);
+    document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
     document.getElementById('confirmNotifications').textContent='알림 여부를 확인하지 못했습니다. 아직 저장되지 않았습니다.';
     const error=document.getElementById('confirmError');error.textContent=err.message;error.hidden=false;
     return null;
   }finally{
     if(pendingItemConfirmation===pending){
       button.disabled=confirmationBusy;
-      button.textContent=pending.noticeReady?(pending.action==='delete'?'Delete item':pending.action==='edit'?'Confirm changes':'Create item'):'Retry notification check';
+      button.textContent=pending.noticeReady?(confirmationButtonLabel(pending)):'Retry notification check';
     }
   }
 }
@@ -3791,10 +3852,12 @@ async function commitItemConfirmation(){
 
 document.getElementById('confirmBack').onclick=()=>closeItemConfirmation();
 document.getElementById('confirmCommit').onclick=commitItemConfirmation;
+document.getElementById('cancelThisOccurrence').onclick=()=>changeDeleteScope('cancel_occurrence');
+document.getElementById('deleteEntireSeries').onclick=()=>changeDeleteScope('delete');
 confirmScrim.onclick=e=>{if(e.target===confirmScrim)closeItemConfirmation();};
 confirmScrim.addEventListener('keydown',e=>{
   if(e.key==='Tab'){
-    const buttons=[...confirmScrim.querySelectorAll('button:not(:disabled)')];
+    const buttons=[...confirmScrim.querySelectorAll('button:not(:disabled)')].filter(el=>!el.closest('[hidden]'));
     if(!buttons.length){e.preventDefault();return;}
     const first=buttons[0],last=buttons[buttons.length-1];
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
