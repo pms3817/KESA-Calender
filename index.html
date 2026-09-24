@@ -1475,7 +1475,7 @@
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v31</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v32</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1486,7 +1486,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v31</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v32</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1735,6 +1735,7 @@
     <h3 id="confirmSummaryTitle">Final configuration</h3>
     <dl class="confirm-summary" id="confirmSummary"></dl>
     <p class="confirm-note" id="confirmReminder"></p>
+    <p class="confirm-note" id="confirmNotifications" aria-live="polite" style="white-space:pre-line"></p>
     <p class="confirm-note" id="confirmSeries" hidden></p>
     <p class="confirm-note confirm-warning" id="confirmDeleteWarning" hidden>Deletion cannot be undone.</p>
     <p id="confirmError" role="alert" hidden></p>
@@ -1957,12 +1958,12 @@ async function dbLoad(){return unpackEvents(await api('load'));}
 async function saveEvent(ev,action){
  const assignees=ev.type==='meeting'?[]:(ev.assigneeIds||[]);
  const participants=typeSupportsParticipants(ev.type)?eventParticipantIds(ev):[];
- const r=await api(action,{event:toRow(ev),assignees,participants});
+ const r=await api(action,{event:toRow(ev),assignees,participants,...(pendingItemConfirmation?.notificationAck?{notification_ack:pendingItemConfirmation.notificationAck}:{})});
  const saved=fromRow(r);saved.assigneeIds=assignees.slice();return saved;
 }
 async function dbInsert(ev){return saveEvent(ev,'event_insert');}
 async function dbUpdate(ev){return saveEvent(ev,'event_update');}
-async function dbDelete(id){await api('event_delete',{id});}
+async function dbDelete(id){await api('event_delete',{id,...(pendingItemConfirmation?.notificationAck?{notification_ack:pendingItemConfirmation.notificationAck}:{})});}
 // Server deletion unlinks related items in the same transaction.
 async function dbUnlink(id){}
 async function deptLoad(){return (await api('load')).departments;}
@@ -3540,7 +3541,7 @@ function requestItemDelete(ev,origin){
   });
 }
 
-/* ===== ITEM CONFIRMATION (preview only; notifications are not enabled) ===== */
+/* ===== ITEM CONFIRMATION AND SERVER-VERIFIED NOTIFICATION PREVIEW ===== */
 const confirmScrim=document.getElementById('confirmScrim');
 let pendingItemConfirmation=null;
 let confirmationBusy=false;
@@ -3603,7 +3604,7 @@ function reminderPreview(ev){
     '\n'+(notificationState.known
       ?(notificationState.enabled?'Automatic reminders are enabled.':'Automatic reminders are paused. This is a timing preview only.')
       :'Automatic reminder status could not be verified.')+
-    '\nTime/status-change and cancellation notifications are not enabled in this version.';
+    '\n'+(notificationState.change_notifications?'Time/status-change and cancellation notifications are configured. See the check below.':'Time/status-change and cancellation notifications are not enabled.');
 }
 
 function confirmationRows(ev){
@@ -3641,7 +3642,7 @@ function confirmationChanges(before,after){
 
 function openItemConfirmation(action,item,original,commit){
   if(pendingItemConfirmation||!canEdit()) return;
-  pendingItemConfirmation={commit};
+  pendingItemConfirmation={commit,action,item,notificationAck:null,noticeReady:false};
   confirmationFocus=document.activeElement;
   const deleting=action==='delete';
   document.getElementById('confirmTitle').textContent=deleting?'Confirm deletion':action==='edit'?'Review changes':'Review new item';
@@ -3666,17 +3667,8 @@ function openItemConfirmation(action,item,original,commit){
   confirmScrim.classList.add('open');
   confirmScrim.scrollTop=0;
   document.getElementById('confirmBack').focus();
-  const pending=pendingItemConfirmation;
-  const token=sessionToken;
-  api('notification_status').then(state=>{
-    if(token!==sessionToken) return;
-    notificationState={...state,known:true};
-    if(pendingItemConfirmation===pending) document.getElementById('confirmReminder').textContent=reminderPreview(item);
-  }).catch(()=>{
-    if(token!==sessionToken) return;
-    notificationState={known:false,enabled:false,change_notifications:false};
-    if(pendingItemConfirmation===pending) document.getElementById('confirmReminder').textContent=reminderPreview(item);
-  });
+  refreshNotificationPreview(pendingItemConfirmation);
+
 }
 
 function closeItemConfirmation(force=false){
@@ -3690,18 +3682,98 @@ function closeItemConfirmation(force=false){
   confirmationFocus=null;
 }
 
+function notificationPreviewData(pending){
+  const {action,item}=pending;
+  return {action,id:item.id,event:action==='delete'?null:toRow(item),
+    assignees:typeSupportsAssignees(item.type)?eventAssigneeIds(item):[],
+    participants:typeSupportsParticipants(item.type)?eventParticipantIds(item):[]};
+}
+
+function notificationPreviewText(state,pending){
+  const kinds={schedule:'날짜·시간 변경',tentative:'Final → Tentative',cancelled:'일정 취소'};
+  const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
+  const audience={assignee:'담당자',participant_department:'부서 참석',participant_individual:'개별 참석'};
+  const effects=state.effects||[];
+  let text;
+  if(state.will_notify){
+    text='⚠️ 저장하면 Discord 알림이 발송됩니다.\n'+
+      [...new Set(effects.flatMap(x=>x.kinds||[]))].map(x=>kinds[x]||x).join(' · ')+
+      ` / 이미 안내된 ${effects.length}개 회차`;
+  }else if(!state.enabled||!state.change_notifications){
+    text='변경·취소 알림이 꺼져 있어 이번 작업으로 변경 알림은 발송되지 않습니다.';
+  }else if(effects.length){
+    text='변경 알림 조건에 해당하지만 발송 가능한 수신 대상이 없습니다.';
+  }else{
+    text=pending.action==='add'?'추가 시 바로 발송하지 않습니다. 설정된 리마인더 시간에 발송됩니다.':
+      '현재 기록 기준으로 이번 작업은 변경·취소 알림을 보내지 않습니다. 참석 대상·담당자만 바꾸는 경우에도 알림을 보내지 않습니다.';
+  }
+  if(state.pending_normal) text+='\n원래 리마인더가 발송 중이거나 결과 확인이 필요합니다. 발송 성공이 확인되면 이번 수정·삭제에 대한 알림이 나갈 수 있습니다. 저장 직전에 다시 확인합니다.';
+  text+='\n\n'+(pending.action==='delete'?'삭제 직전 수신 대상:':'현재 설정의 수신 대상:');
+  if(!(state.routes||[]).length) text+='\nNone';
+  for(const r of state.routes||[]){
+    const missing=new Set(r.missing_member_ids||[]);
+    const names=(r.member_ids||[]).filter(id=>!missing.has(id)).map(id=>'@'+(EXEC_BY_ID[id]?.english_name||id));
+    text+='\n'+(routes[r.route]||r.route)+' → '+(r.everyone?'@everyone':names.join(' ')||'발송 가능한 대상 없음')+' ('+(audience[r.audience]||r.audience)+')';
+    if(missing.size) text+='\n  Discord ID 미등록으로 제외: '+[...missing].map(id=>EXEC_BY_ID[id]?.english_name||id).join(', ');
+  }
+  if(state.will_notify) text+='\n\n저장 후 다음 자동 실행에서 발송됩니다. 참석 관련 알림과 담당자 알림은 별도 메시지입니다.';
+  return text;
+}
+
+async function refreshNotificationPreview(pending){
+  const token=sessionToken;
+  const button=document.getElementById('confirmCommit');
+  pending.noticeReady=false;
+  button.disabled=true;
+  document.getElementById('confirmNotifications').textContent='Discord 알림 여부를 확인하고 있습니다…';
+  try{
+    const state=await api('notification_preview',notificationPreviewData(pending));
+    if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
+    if(!state||typeof state.ack!=='string') throw new Error('v32 SQL을 먼저 적용해 주세요.');
+    pending.noticeReady=true;pending.notificationAck=state.ack;
+    notificationState={...state,known:true};
+    document.getElementById('confirmReminder').textContent=reminderPreview(pending.item);
+    document.getElementById('confirmNotifications').textContent=notificationPreviewText(state,pending);
+    document.getElementById('confirmError').hidden=true;
+    return state;
+  }catch(err){
+    if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
+    pending.noticeReady=false;pending.notificationAck=null;
+    notificationState={known:false,enabled:false,change_notifications:false};
+    document.getElementById('confirmReminder').textContent=reminderPreview(pending.item);
+    document.getElementById('confirmNotifications').textContent='알림 여부를 확인하지 못했습니다. 아직 저장되지 않았습니다.';
+    const error=document.getElementById('confirmError');error.textContent=err.message;error.hidden=false;
+    return null;
+  }finally{
+    if(pendingItemConfirmation===pending){
+      button.disabled=confirmationBusy;
+      button.textContent=pending.noticeReady?(pending.action==='delete'?'Delete item':pending.action==='edit'?'Confirm changes':'Create item'):'Retry notification check';
+    }
+  }
+}
+
 async function commitItemConfirmation(){
   if(!pendingItemConfirmation||confirmationBusy) return;
   if(!canEdit()){closeItemConfirmation(true);return;}
   const pending=pendingItemConfirmation;
+  if(!pending.noticeReady){await refreshNotificationPreview(pending);return;}
   confirmationBusy=true;
   const button=document.getElementById('confirmCommit');
   const label=button.textContent;
-  button.disabled=true;button.textContent='Working…';
+  button.disabled=true;button.textContent='Checking…';
   document.getElementById('confirmBack').disabled=true;
   document.getElementById('confirmError').hidden=true;
   clearBanner();
   try{
+    const previousAck=pending.notificationAck;
+    const state=await refreshNotificationPreview(pending);
+    if(!state||pendingItemConfirmation!==pending) return;
+    if(state.ack!==previousAck){
+      const error=document.getElementById('confirmError');
+      error.textContent='일정 또는 알림 상태가 달라졌습니다. 위 내용을 다시 확인한 뒤 진행해 주세요.';error.hidden=false;
+      return;
+    }
+    button.textContent='Working…';
     await pending.commit();
     closeItemConfirmation(true);
   }catch(err){
@@ -3712,7 +3784,7 @@ async function commitItemConfirmation(){
     }
   }finally{
     confirmationBusy=false;
-    button.disabled=false;button.textContent=label;
+    button.disabled=false;button.textContent=pending.noticeReady?label:'Retry notification check';
     document.getElementById('confirmBack').disabled=false;
   }
 }
