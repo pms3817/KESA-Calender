@@ -1611,13 +1611,28 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
  header.app .nav button{font-size:12px;padding-left:10px;padding-right:10px}
 }
 
+
+/* v41 compact department filters inside the existing people disclosures. */
+#scrim .people-dept-filter{position:relative;display:inline-block;max-width:100%;margin:0;z-index:4}
+#scrim .people-dept-filter>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#F8FAFC;font-size:11px;font-weight:500;min-width:140px}
+#scrim .people-dept-filter>summary::-webkit-details-marker{display:none}
+#scrim .people-dept-filter[open]>summary{border-color:#9BB4E0;background:#EFF4FD}
+.people-dept-options{position:absolute;left:0;top:calc(100% + 4px);width:170px;padding:5px;display:grid;gap:2px;border:1px solid var(--line);border-radius:9px;background:#fff;box-shadow:0 8px 24px #0F172A20}
+.people-dept-options button{display:flex;align-items:center;justify-content:space-between;border:0;border-radius:6px;background:#fff;padding:7px 8px;font-size:11px;text-align:left}
+.people-dept-options button:hover{background:#F1F5F9}
+.people-dept-options button[aria-pressed="true"]{background:#EAF0FD;color:#244B94}
+.people-dept-options button span{visibility:hidden}
+.people-dept-options button[aria-pressed="true"] span{visibility:visible}
+#scrim #participantDeptFilter{margin-top:4px}
+#scrim .assignee-toolbar{flex-wrap:wrap;gap:7px}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v40</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v41</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1628,7 +1643,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v40</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v41</span></h1>
     </div>
 
     <div class="account-bar">
@@ -1828,6 +1843,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
       <details class="participant-people" id="participantPeople">
         <summary>Individual participants <span id="participantPeopleCount">(0 selected)</span></summary>
         <div class="assignee-help">선택한 부서에 포함되지 않은 임원을 개별로 추가할 수 있습니다. 부서를 선택하면 그 부서 임원의 개별 선택은 해제되며, All departments를 선택하면 전원이 포함됩니다.</div>
+        <details class="people-dept-filter" id="participantDeptFilter"><summary aria-label="participant department filter"><span id="participantDeptLabel">All departments</span><span aria-hidden="true">⌄</span></summary><div class="people-dept-options" role="group" aria-label="Department"><button type="button" data-people-picker="participant" data-department="all" aria-pressed="true">All departments<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="participant" data-department="Event" aria-pressed="false">Event<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="participant" data-department="Marketing" aria-pressed="false">Marketing<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="participant" data-department="Finance" aria-pressed="false">Finance<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="participant" data-department="Internal" aria-pressed="false">Internal<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="participant" data-department="Presidential" aria-pressed="false">Presidential<span aria-hidden="true">✓</span></button></div></details>
         <div class="assignee-list" id="participantPeopleList"></div>
       </details>
     </div><div class="field hide" id="assigneeField">
@@ -1838,11 +1854,10 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
         <summary>Choose assignees <span id="assigneePeopleCount">0 selected</span></summary>
         <div class="disclosure-content">
       <div class="assignee-toolbar">
-        <span class="assignee-scope" id="assigneeScope">All executives</span>
+        <details class="people-dept-filter" id="assigneeDeptFilter"><summary aria-label="assignee department filter"><span id="assigneeDeptLabel">All departments</span><span aria-hidden="true">⌄</span></summary><div class="people-dept-options" role="group" aria-label="Department"><button type="button" data-people-picker="assignee" data-department="all" aria-pressed="true">All departments<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="assignee" data-department="Event" aria-pressed="false">Event<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="assignee" data-department="Marketing" aria-pressed="false">Marketing<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="assignee" data-department="Finance" aria-pressed="false">Finance<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="assignee" data-department="Internal" aria-pressed="false">Internal<span aria-hidden="true">✓</span></button><button type="button" data-people-picker="assignee" data-department="Presidential" aria-pressed="false">Presidential<span aria-hidden="true">✓</span></button></div></details>
         <div class="assignee-actions">
           <button type="button" class="assignee-toggle" id="assigneeSelectAll">Select all</button>
           <button type="button" class="assignee-toggle" id="assigneeClearAll">Clear</button>
-          <button type="button" class="assignee-toggle" id="assigneeScopeToggle" style="display:none">View all executives</button>
         </div>
       </div>
       <div class="assignee-list" id="assigneeList"></div>
@@ -3306,7 +3321,8 @@ const EXEC_DEPT_BY_CATEGORY={
   internal:'Internal'
 };
 
-let assigneeShowAll=false;
+let assigneeDepartmentFilter='all';
+let participantDepartmentFilter='all';
 let selectedAssigneeIds=new Set();
 let selectedParticipantDepartments=new Set();
 let selectedParticipantIds=new Set();
@@ -3318,6 +3334,21 @@ function setSelectedParticipants(ids=[],people=[]){
   renderParticipantPicker();
 }
 
+function updatePeopleDepartmentFilter(kind,value){
+  document.getElementById(kind+'DeptLabel').textContent=value==='all'?'All departments':value;
+  document.querySelectorAll('[data-people-picker="'+kind+'"]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.department===value)));
+}
+document.querySelectorAll('[data-people-picker]').forEach(button=>button.onclick=()=>{
+  const kind=button.dataset.peoplePicker;
+  if(kind==='assignee'){assigneeDepartmentFilter=button.dataset.department;renderAssigneePicker();}
+  else{participantDepartmentFilter=button.dataset.department;renderParticipantPeople();}
+  const menu=document.getElementById(kind+'DeptFilter');menu.open=false;menu.querySelector('summary').focus();
+});
+document.querySelectorAll('.people-dept-filter').forEach(menu=>{
+  menu.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();menu.open=false;menu.querySelector('summary').focus();}});
+});
+document.addEventListener('click',event=>document.querySelectorAll('.people-dept-filter').forEach(menu=>{if(!menu.contains(event.target))menu.open=false;}));
+
 function renderParticipantPicker(){
   document.querySelectorAll('#participantOptions input[type="checkbox"]').forEach(cb=>{
     cb.checked=selectedParticipantDepartments.has(cb.value);
@@ -3326,6 +3357,7 @@ function renderParticipantPicker(){
 }
 
 function renderParticipantPeople(){
+  updatePeopleDepartmentFilter('participant',participantDepartmentFilter);
   const departments=[...selectedParticipantDepartments];
   selectedParticipantIds=new Set([...selectedParticipantIds].filter(id=>EXEC_BY_ID[id]&&!participantCovered(EXEC_BY_ID[id],departments)));
   document.getElementById('participantPeopleCount').textContent=`(${selectedParticipantIds.size} selected)`;
@@ -3340,7 +3372,7 @@ function renderParticipantPeople(){
   });
   const list=document.getElementById('participantPeopleList');
   list.innerHTML='';
-  sortedExecutives(EXECUTIVES).forEach(person=>{
+  sortedExecutives(EXECUTIVES.filter(person=>participantDepartmentFilter==='all'||person.department===participantDepartmentFilter)).forEach(person=>{
     const covered=participantCovered(person,departments);
     const label=document.createElement('label');
     label.className='assignee-option'+(covered?' participant-covered':'');
@@ -3414,18 +3446,12 @@ function renderSelectedAssignees(){
 }
 
 function visibleAssigneePeople(){
-  const dept=currentExecutiveDepartment();
-  if(!dept) assigneeShowAll=true;
-
-  let people=EXECUTIVES.slice();
-  if(dept&&!assigneeShowAll) people=people.filter(x=>x.department===dept);
-  return sortedExecutives(people);
+  return sortedExecutives(EXECUTIVES.filter(person=>assigneeDepartmentFilter==='all'||person.department===assigneeDepartmentFilter));
 }
 
 function renderAssigneePicker(){
   const list=document.getElementById('assigneeList');
-  const scope=document.getElementById('assigneeScope');
-  const toggle=document.getElementById('assigneeScopeToggle');
+  updatePeopleDepartmentFilter('assignee',assigneeDepartmentFilter);
   const help=document.getElementById('assigneeHelp');
   const dept=currentExecutiveDepartment();
 
@@ -3439,7 +3465,7 @@ function renderAssigneePicker(){
       <input type="checkbox" value="${escapeHtml(person.id)}" ${selectedAssigneeIds.has(person.id)?'checked':''}>
       <span class="assignee-option-main">
         <span class="assignee-option-name">${escapeHtml(person.english_name)} · ${escapeHtml(person.korean_name)}</span>
-        <span class="assignee-option-meta">${escapeHtml(assigneeShowAll?`${person.department} · ${person.role}`:person.role)}</span>
+        <span class="assignee-option-meta">${escapeHtml(assigneeDepartmentFilter==='all'?`${person.department} · ${person.role}`:person.role)}</span>
       </span>`;
     const cb=label.querySelector('input');
     cb.onchange=()=>{
@@ -3452,18 +3478,9 @@ function renderAssigneePicker(){
 
   renderSelectedAssignees();
 
-  if(dept){
-    scope.textContent=assigneeShowAll?'All executives':`${dept} team`;
-    toggle.style.display='inline-flex';
-    toggle.textContent=assigneeShowAll?`Back to ${dept}`:'View all executives';
-    help.textContent=assigneeShowAll
-      ?'전체 임원 목록입니다. 표시 범위를 바꿔도 선택한 담당자는 유지됩니다.'
-      :`${dept} 부서의 임원만 표시하고 있습니다.`;
-  }else{
-    scope.textContent='All executives';
-    toggle.style.display='none';
-    help.textContent='부서 카테고리가 아니므로 전체 임원 목록을 표시합니다.';
-  }
+  help.textContent=(assigneeDepartmentFilter==='all'?'전체 임원 목록입니다.':assigneeDepartmentFilter+' 부서의 임원만 표시합니다.')+' 필터를 바꿔도 선택한 담당자는 유지됩니다.';
+  if(!people.length)list.innerHTML='<p class="assignee-help">이 부서에 등록된 임원이 없습니다.</p>';
+
 }
 
 function setSelectedAssignees(ids=[]){
@@ -3482,7 +3499,7 @@ function clearAllAssignees(){
 }
 
 function refreshAssigneeScope(){
-  assigneeShowAll=false;
+  assigneeDepartmentFilter=currentExecutiveDepartment()||'all';
   renderAssigneePicker();
 }
 
@@ -3631,6 +3648,7 @@ function openAdd(dateStr){
   selectedAssigneeIds=new Set();
   selectedParticipantDepartments=new Set();
   selectedParticipantIds=new Set();
+  participantDepartmentFilter='all';
   document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
@@ -3639,7 +3657,7 @@ function openAdd(dateStr){
   refreshLinkOptions(null);
   setType('event');
   if(DEPT.all) document.getElementById('fDept').value='all';
-  assigneeShowAll=false;
+  assigneeDepartmentFilter=currentExecutiveDepartment()||'all';
   setSelectedAssignees([]);
   setSelectedParticipants([]);
   syncEndDateConstraints();
@@ -3673,6 +3691,7 @@ function openEdit(ev,occurrenceDate=null){
   selectedAssigneeIds=new Set();
   selectedParticipantDepartments=new Set();
   selectedParticipantIds=new Set();
+  participantDepartmentFilter='all';
   document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
@@ -3689,7 +3708,7 @@ function openEdit(ev,occurrenceDate=null){
   }
 
   if(ev.type!=='school') document.getElementById('fDept').value=ev.dept;
-  assigneeShowAll=false;
+  assigneeDepartmentFilter=currentExecutiveDepartment()||'all';
   setSelectedAssignees((ev.assigneeIds&&ev.assigneeIds.length)?ev.assigneeIds:(ev.assigneeId?[ev.assigneeId]:[]));
   setSelectedParticipants(ev.participantDepartments||[],ev.participantIds||[]);
   document.getElementById('fLink').value=ev.linkedEventId||'';
@@ -3699,6 +3718,7 @@ function openEdit(ev,occurrenceDate=null){
 }
 
 function openModal(){
+  document.querySelectorAll('.people-dept-filter').forEach(menu=>menu.open=false);
   document.getElementById('assigneePeople').open=false;
   document.getElementById('itemExtras').open=!!(document.getElementById('fDetails').value.trim()||document.getElementById('fLink').value);
   document.getElementById('itemFormBody').scrollTop=0;
@@ -4768,11 +4788,6 @@ document.querySelectorAll('#statusSeg button')
 
 document.getElementById('fDept').addEventListener('change',()=>{
   refreshAssigneeScope();
-});
-
-document.getElementById('assigneeScopeToggle').addEventListener('click',()=>{
-  assigneeShowAll=!assigneeShowAll;
-  renderAssigneePicker();
 });
 
 document.querySelectorAll('#participantOptions input[type="checkbox"]')
