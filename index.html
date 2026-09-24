@@ -1472,13 +1472,66 @@
 /* Cancelled occurrences remain clickable and sort after active items. */
 .chip.cancelled-occurrence,.lrow.cancelled-occurrence{opacity:.42;border-style:dashed}
 .cancelled-occurrence:hover,.cancelled-occurrence:focus-visible{opacity:.75}
+
+/* v36: scoped item editor layout; calendar and other dialogs retain their styles. */
+#scrim{padding:24px 16px}
+#scrim .item-editor{max-width:620px;margin-top:0;padding:0;max-height:calc(100dvh - 48px);display:flex;flex-direction:column;overflow:hidden}
+.item-editor-header{padding:22px 24px 18px;border-bottom:1px solid var(--line);flex:none}
+#scrim .item-editor-header h2{font-size:22px;margin-bottom:6px}
+#scrim .item-editor-header .sub{margin:0;line-height:1.6}
+.item-editor-body{padding:0 24px;overflow-y:auto;min-height:0;overscroll-behavior:contain;scrollbar-gutter:stable}
+#scrim .form-section{padding:22px 0;border:0;border-bottom:1px solid var(--line);margin:0}
+#scrim .form-section[hidden]{display:none}
+.form-section-heading{margin-bottom:16px}
+.form-section-heading h3{font-size:14px;color:var(--ink);margin:0 0 5px;font-weight:750}
+.form-section-heading p,.field-hint{font-size:12px;color:var(--muted);line-height:1.65;margin:4px 0 10px}
+#scrim .field{margin-bottom:16px;min-width:0}
+#scrim .field:last-child{margin-bottom:0}
+#scrim .row2{gap:14px}
+#scrim .row2>.field{margin-bottom:16px}
+#scrim label.lb{text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink-soft);margin-bottom:7px}
+.field-required{font-size:10px;font-weight:500;color:var(--muted);margin-left:6px}
+#scrim #fTitle{font-size:15px;padding:11px 12px}
+#scrim #typeSeg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+#scrim #typeSeg button{min-width:0;padding:10px 4px;font-size:12px}
+#scrim #statusSeg{max-width:300px}
+#scrim #participantField,#scrim #assigneeField{padding:15px;border:1px solid var(--line);border-radius:12px;background:#FAFBFD;margin-bottom:12px}
+#scrim #peopleSection>.field:last-child{margin-bottom:0}
+#scrim .participant-option{background:#fff}
+#scrim .participant-option:has(input:checked){background:#EFF6FF}
+#scrim .form-disclosure,#scrim .participant-people{background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px;margin-top:10px}
+#scrim summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);line-height:1.6}
+#scrim summary:focus-visible{outline:2px solid #2563EB;outline-offset:4px;border-radius:3px}
+#scrim summary span[id$="Count"]{font-weight:400;color:var(--muted);margin-left:6px}
+#scrim .disclosure-content{padding-top:12px}
+#scrim .assignee-list{max-height:220px;overflow-y:auto;overscroll-behavior:contain}
+#scrim .assignee-selected:empty{display:none}
+#scrim .form-extra{border-bottom:0;padding-bottom:24px}
+#scrim .form-extra>summary{font-size:14px}
+#scrim .optional-label{color:var(--muted);font-size:11px;font-weight:400;margin-left:8px}
+#scrim .form-extra[open]>summary{margin-bottom:12px}
+.item-editor-footer{padding:12px 24px 18px;background:var(--panel);border-top:1px solid var(--line);flex:none}
+.item-editor-footer>p{font-size:11px;line-height:1.5;color:var(--muted);margin:0 0 10px}
+#scrim .item-editor-footer .modal-actions{margin:0}
+#scrim #saveBtn{min-width:100px}
+@media(max-width:520px){
+ #scrim{padding:10px}
+ #scrim .item-editor{max-height:calc(100dvh - 20px)}
+ .item-editor-header{padding:18px 16px 14px}
+ .item-editor-body{padding:0 16px;scrollbar-gutter:auto}
+ .item-editor-footer{padding:12px 16px 14px}
+ #scrim .row2{grid-template-columns:1fr}
+ #scrim #typeSeg{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #scrim .assignee-toolbar{align-items:flex-start;flex-direction:column}
+}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v35</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v36</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1489,7 +1542,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v35</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v36</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1572,11 +1625,13 @@
 
 <!-- Item modal -->
 <div class="scrim" id="scrim">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-    <h2 id="mTitle">Add item</h2>
-    <p class="sub" id="mSub">일정 정보를 입력한 뒤 Save를 눌러 확인해 주세요.</p>
-
-    <div class="field">
+  <div class="modal item-editor" role="dialog" aria-modal="true" aria-labelledby="mTitle" aria-describedby="mSub">
+    <div class="item-editor-header">
+      <h2 id="mTitle">Add item</h2>
+      <p class="sub" id="mSub">일정 정보를 입력한 뒤 Save를 눌러 확인해 주세요.</p>
+    </div>
+    <div class="item-editor-body" id="itemFormBody">
+<section class="form-section"><div class="form-section-heading"><h3>Basics</h3><p>어떤 일정인지 알려 주세요.</p></div><div class="field">
       <label class="lb">Type</label>
       <div class="seg" id="typeSeg">
         <button type="button" data-type="event" aria-pressed="true">Event</button>
@@ -1585,15 +1640,14 @@
         <button type="button" data-type="school" aria-pressed="false">School</button>
         <button type="button" data-type="other" aria-pressed="false">Other</button>
       </div>
-    </div>
-
-    <div class="field">
-      <label class="lb" for="fTitle">Title</label>
+    </div><div class="field">
+      <label class="lb" for="fTitle">Title <span class="field-required">Required</span></label>
       <input type="text" id="fTitle" placeholder="e.g. Fall Mixer" autocomplete="off" />
-      <div class="err" id="titleErr">Add a title so people know what this is.</div>
-    </div>
-
-    <div class="field hide" id="emojiField">
+      <div class="err" id="titleErr">일정 제목을 입력해 주세요.</div>
+    </div><div class="form-basics-grid"><div class="field" id="deptField">
+      <label class="lb" for="fDept">Category</label>
+      <select id="fDept"></select><p class="field-hint">캘린더에 표시할 분류입니다. 참석 대상은 아래에서 별도로 선택해 주세요.</p>
+    </div><div class="field hide" id="emojiField">
       <label class="lb" for="fEmoji">Emoji</label>
       <div class="emoji-row">
         <select id="fEmoji">
@@ -1629,11 +1683,9 @@
           <option value="🚌">🚌 Travel</option>
         </select>
       </div>
-    </div>
-
-    <div class="row2">
+    </div></div></section><section class="form-section"><div class="form-section-heading"><h3>Schedule</h3><p>언제 진행되는지, 확정된 일정인지 설정해 주세요.</p></div><div class="row2">
       <div class="field">
-        <label class="lb" for="fDate">Date</label>
+        <label class="lb" for="fDate">Date <span class="field-required">Required</span></label>
         <input type="date" id="fDate" />
       </div>
 
@@ -1641,20 +1693,19 @@
         <label class="lb" for="fTime">Time <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
         <input type="time" id="fTime" />
       </div>
-    </div>
-
-    <div class="field" id="deptField">
-      <label class="lb" for="fDept">Department / category</label>
-      <select id="fDept"></select>
-    </div>
-
-    <div class="field hide" id="endField">
-      <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(하루 일정이면 비워 두세요)</span></label>
+    </div><div class="row2"><div class="field hide" id="endField">
+      <label class="lb" for="fEnd">End date <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <input type="date" id="fEnd" />
       <div class="err" id="endErr">종료일은 시작일보다 빠를 수 없습니다.</div>
-    </div>
-
-    <div class="field" id="statusField">
+    </div><div class="field" id="recurField">
+      <label class="lb" for="fRecur">Repeats</label>
+      <select id="fRecur">
+        <option value="none">Does not repeat</option>
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </div></div><div class="field" id="statusField">
       <label class="lb">Status</label>
       <label class="school-status-option" id="schoolStatusOption">
         <input type="checkbox" id="schoolStatusToggle">
@@ -1664,10 +1715,9 @@
         <button type="button" data-status="final" aria-pressed="true">Final</button>
         <button type="button" data-status="tentative" aria-pressed="false">Tentative</button>
       </div>
-    </div>
-
-    <div class="field hide" id="participantField">
-      <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(Event / Meeting)</span></label>
+    </div></section><section class="form-section" id="peopleSection"><div class="form-section-heading"><h3>People</h3><p>참석할 대상과 업무 담당자를 구분해 주세요.</p></div><div class="field hide" id="participantField">
+      <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <p class="field-hint">일정에 참석할 부서 또는 임원을 선택해 주세요.</p>
       <div class="participant-options" id="participantOptions">
         <label class="participant-option participant-all"><input type="checkbox" value="all">All departments</label>
         <label class="participant-option"><input type="checkbox" value="event">Event</label>
@@ -1675,17 +1725,19 @@
         <label class="participant-option"><input type="checkbox" value="finance">Finance</label>
         <label class="participant-option"><input type="checkbox" value="internal">Internal</label>
       </div>
-      <div class="assignee-help">참석 부서와 개별 참석 대상은 Assigned to me에 포함됩니다. YOU 배지는 개인 담당자에게만 표시됩니다.</div>
       <div class="assignee-selected" id="participantSelected"></div>
       <details class="participant-people" id="participantPeople">
         <summary>Individual participants <span id="participantPeopleCount">(0 selected)</span></summary>
         <div class="assignee-help">선택한 부서에 포함되지 않은 임원을 개별로 추가할 수 있습니다. 부서를 선택하면 그 부서 임원의 개별 선택은 해제되며, All departments를 선택하면 전원이 포함됩니다.</div>
         <div class="assignee-list" id="participantPeopleList"></div>
       </details>
-    </div>
-
-    <div class="field hide" id="assigneeField">
+    </div><div class="field hide" id="assigneeField">
       <label class="lb">Assignees <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <p class="field-hint">이 일정의 업무를 담당할 임원을 선택해 주세요.</p>
+      <div class="assignee-selected" id="assigneeSelected"></div>
+      <details class="form-disclosure" id="assigneePeople">
+        <summary>Choose assignees <span id="assigneePeopleCount">0 selected</span></summary>
+        <div class="disclosure-content">
       <div class="assignee-toolbar">
         <span class="assignee-scope" id="assigneeScope">All executives</span>
         <div class="assignee-actions">
@@ -1694,40 +1746,22 @@
           <button type="button" class="assignee-toggle" id="assigneeScopeToggle" style="display:none">View all executives</button>
         </div>
       </div>
-      <div class="assignee-selected" id="assigneeSelected"></div>
       <div class="assignee-list" id="assigneeList"></div>
       <div class="assignee-help" id="assigneeHelp">담당할 임원을 한 명 이상 선택할 수 있습니다.</div>
-    </div>
-
-    <div class="field hide" id="linkField">
+        </div>
+      </details>
+    </div></section><details class="form-section form-extra" id="itemExtras"><summary><span>Additional details</span><span class="optional-label">Optional</span></summary><p class="field-hint">메모, 장소, 링크 등 추가 정보가 있을 때 입력해 주세요.</p><div class="field hide" id="linkField">
       <label class="lb" for="fLink">Linked event <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <select id="fLink"><option value="">— None —</option></select>
-    </div>
-
-    <div class="field" id="recurField">
-      <label class="lb" for="fRecur">Repeats</label>
-      <select id="fRecur">
-        <option value="none">Does not repeat</option>
-        <option value="weekly">Weekly</option>
-        <option value="biweekly">Every 2 weeks</option>
-        <option value="monthly">Monthly</option>
-      </select>
-    </div>
-
-    <div class="field">
+    </div><div class="field">
       <label class="lb" for="fDetails">Details <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
-      <textarea id="fDetails" placeholder="Notes, location, links…"></textarea>
-    </div>
-
-    <div class="modal-actions">
+      <textarea rows="3" id="fDetails" placeholder="Notes, location, links…"></textarea>
+    </div></details></div><div class="item-editor-footer"><p>Save를 누르면 저장 전 확인 화면으로 이동합니다.</p><div class="modal-actions">
       <button class="danger" id="deleteBtn" style="display:none">Delete</button>
       <span class="spacer"></span>
       <button id="cancelBtn">Cancel</button>
       <button class="primary" id="saveBtn">Save</button>
-    </div>
-  </div>
-</div>
-
+    </div></div></div></div>
 
 <!-- Calendar item confirmation: no database writes until confirmed. -->
 <div class="scrim" id="confirmScrim">
@@ -3224,6 +3258,7 @@ function renderSelectedAssignees(){
   const box=document.getElementById('assigneeSelected');
   box.innerHTML='';
   const selected=sortedExecutives([...selectedAssigneeIds].map(id=>EXEC_BY_ID[id]).filter(Boolean));
+  document.getElementById('assigneePeopleCount').textContent=selected.length+' selected';
 
   if(!selected.length){
     box.innerHTML='<span class="assignee-empty">No assignees selected</span>';
@@ -3369,6 +3404,7 @@ function setType(t){
     refreshAssigneeScope({keepCurrent:true,preserveOutside:true});
   }
   if(typeSupportsParticipants(t)) renderParticipantPicker();
+  document.getElementById('peopleSection').hidden=!typeSupportsParticipants(t)&&!typeSupportsAssignees(t);
 }
 
 function syncEndDateConstraints(){
@@ -3520,6 +3556,9 @@ function openEdit(ev,occurrenceDate=null){
 }
 
 function openModal(){
+  document.getElementById('assigneePeople').open=false;
+  document.getElementById('itemExtras').open=!!(document.getElementById('fDetails').value.trim()||document.getElementById('fLink').value);
+  document.getElementById('itemFormBody').scrollTop=0;
   scrim.classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),30);
 }
