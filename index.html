@@ -1525,13 +1525,30 @@
  #scrim .assignee-toolbar{align-items:flex-start;flex-direction:column}
 }
 
+
+/* v37 normal-reminder discussion editor */
+.reminder-editor{margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:#FAFBFD}
+.reminder-editor[hidden]{display:none}
+.reminder-editor>summary{cursor:pointer;font-size:13px;font-weight:700}
+#reminderTextMode{font-size:11px;font-weight:500;color:var(--muted);margin-left:8px}
+.reminder-editor-help{font-size:12px;line-height:1.7;color:var(--muted);margin:10px 0}
+.reminder-message-card{border:1px solid var(--line);border-radius:9px;background:#fff;padding:12px;margin:10px 0}
+.reminder-message-route{font-size:11px;color:var(--muted);margin-bottom:10px}
+.reminder-message-mentions{font-size:12px;color:#3557A5;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:12px}
+.reminder-message-heading{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.reminder-message-schedule,.reminder-message-discussion{font-family:var(--body);font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 0}
+.discussion-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 8px}
+.discussion-heading label.lb{margin:0;text-transform:none;letter-spacing:0}
+#reminderDefault{font-size:11px;padding:6px 8px}
+.discussion-count{font-size:11px;color:var(--muted);text-align:right;margin-top:5px}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v36</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v37</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1542,7 +1559,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v36</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v37</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1777,6 +1794,15 @@
     <dl class="confirm-summary" id="confirmSummary"></dl>
     <p class="confirm-note" id="confirmReminder"></p>
     <p class="confirm-note" id="confirmNotifications" aria-live="polite" style="white-space:pre-line"></p>
+    <details class="reminder-editor" id="reminderEditor" hidden>
+      <summary>Reminder message <span id="reminderTextMode">Default</span></summary>
+      <p class="reminder-editor-help">현재 설정으로 정상 리마인더가 발송될 때의 예시입니다. 멘션·제목·유형·날짜·시간은 자동으로 정해집니다.</p>
+      <div id="reminderMessageCards" aria-live="polite"></div>
+      <div class="discussion-heading"><label class="lb" for="reminderDiscussion">Discussion text</label><button type="button" id="reminderDefault">Set to default</button></div>
+      <textarea id="reminderDiscussion" rows="4" maxlength="1000" placeholder="비워 두면 수신 대상에 맞는 기본 문구를 사용합니다." aria-describedby="reminderDiscussionHelp"></textarea>
+      <div class="discussion-count" id="reminderDiscussionCount">0 / 1000</div>
+      <p class="reminder-editor-help" id="reminderDiscussionHelp">입력한 본문은 이 일정의 모든 정상 리마인더에 공통으로 적용됩니다. 반복 일정이면 이후 회차에도 적용됩니다. 본문의 @는 멘션을 발생시키지 않습니다. 변경·취소 알림은 기존 문구를 사용합니다.</p>
+    </details>
     <p class="confirm-note" id="confirmSeries" hidden></p>
     <p class="confirm-note confirm-warning" id="confirmDeleteWarning" hidden>삭제한 일정은 되돌릴 수 없습니다.</p>
     <p id="confirmError" role="alert" hidden></p>
@@ -1939,6 +1965,7 @@ function toRow(ev){
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
     details:ev.details||'',
+    reminder_discussion:ev.reminderDiscussion||null,
     emoji:ev.emoji||'',
     source:ev.source||'user'
   };
@@ -1963,6 +1990,7 @@ function fromRow(r){
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
     details:r.details||'',
+    reminderDiscussion:r.reminder_discussion||null,
     emoji:r.emoji||'',
     source:r.source||'user'
   };
@@ -1980,6 +2008,9 @@ function canEdit(){return !!sessionToken&&['President','Vice President','Directo
 function canAdmin(){return !!sessionToken&&!!currentViewer()?.is_admin}
 function isPresidential(){return ['President','Vice President'].includes(currentViewer()?.role)}
 function uiErrorText(message){
+  if(message==='Reminder discussion must be 1000 characters or fewer')return '리마인더 본문은 1,000자 이내로 입력해 주세요.';
+  if(message==='Reminder message is too long for Discord. Shorten the discussion or title')return '멘션과 제목을 포함한 메시지가 너무 깁니다. 본문이나 제목을 줄여 주세요.';
+
   if(message==='This occurrence is no longer cancelled. Refresh the calendar.')return '이미 복구된 회차입니다. 캘린더를 새로고침해 주세요.';
   const translations={
   "Session expired. Please sign in again.": "로그인이 만료되었습니다. 다시 로그인해 주세요.",
@@ -3350,6 +3381,8 @@ function refreshAssigneeScope(){
   renderAssigneePicker();
 }
 
+let formReminderDiscussion=null;
+let reminderPreviewTimer=null;
 let endDateAutoSeeded=true;
 
 function setType(t){
@@ -3474,6 +3507,7 @@ function refreshLinkOptions(currentId){
 function openAdd(dateStr){
   if(!canEdit()) return;
   editingId=null;
+  formReminderDiscussion=null;
   editingOccurrenceDate=null;
   endDateAutoSeeded=true;
   schoolStatusEnabled=false;
@@ -3510,6 +3544,7 @@ function openAdd(dateStr){
 function openEdit(ev,occurrenceDate=null){
   if(!canEdit()) return;
   editingId=ev.id;
+  formReminderDiscussion=ev.reminderDiscussion||null;
   editingOccurrenceDate=occurrenceDate||(ev.recur&&ev.recur!=='none'?nextOccurrence(ev,fmt(new Date())):ev.date);
   endDateAutoSeeded=!ev.endDate;
   schoolStatusEnabled=ev.type==='school'&&!!ev.status;
@@ -3634,7 +3669,7 @@ async function saveItem(){
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
     assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
-    recur:rec,details,emoji,cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
+    recur:rec,details,emoji,reminderDiscussion:formReminderDiscussion,cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
   };
   const action=original?'edit':'add';
   openItemConfirmation(action,payload,original,async()=>{
@@ -3781,7 +3816,8 @@ function confirmationRows(ev){
     ['Repeats',recurLabel(ev)||'Does not repeat'],
     ['Linked event',linked?`${linked.title} (${linked.date})`:ev.linkedEventId||'None',ev.linkedEventId||''],
     ['Emoji',ev.emoji||'None'],
-    ['Details',ev.details||'None']
+    ['Details',ev.details||'None'],
+    ['Reminder text',['event','meeting','due'].includes(ev.type)?ev.reminderDiscussion||'Default':'Not applicable']
   ];
 }
 
@@ -3795,9 +3831,76 @@ function confirmationChanges(before,after){
   });
 }
 
+
+function setupReminderEditor(pending){
+  clearTimeout(reminderPreviewTimer);
+  const editor=document.getElementById('reminderEditor');
+  editor.hidden=!['add','edit'].includes(pending.action)||!['event','meeting','due'].includes(pending.item.type);
+  editor.open=false;
+  document.getElementById('reminderDiscussion').value=pending.item.reminderDiscussion||'';
+  document.getElementById('reminderDiscussion').disabled=false;
+  document.getElementById('reminderDefault').disabled=false;
+  document.getElementById('reminderMessageCards').textContent='미리보기를 불러오고 있습니다…';
+  updateDiscussionLabel(pending);
+}
+function updateDiscussionLabel(pending){
+  document.getElementById('reminderTextMode').textContent=pending.item.reminderDiscussion?'Custom':'Default';
+  document.getElementById('reminderDiscussionCount').textContent=document.getElementById('reminderDiscussion').value.length+' / 1000';
+}
+function refreshReviewSummary(pending){
+  document.getElementById('confirmSummary').innerHTML=confirmationRows(pending.item).map(([label,value])=>`<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
+  if(pending.action!=='edit')return;
+  const changes=confirmationChanges(pending.original,pending.item);
+  document.getElementById('confirmChanges').innerHTML='<h3>What changed</h3>'+(changes.length?changes.map(([label,old,value])=>`<div class="confirm-change"><strong>${escapeHtml(label)}</strong><div class="confirm-before">Before: ${escapeHtml(String(old))}</div><div class="confirm-after">After: ${escapeHtml(String(value))}</div></div>`).join(''):'<p class="confirm-note">변경된 내용이 없습니다.</p>');
+}
+function renderReminderMessages(pending){
+  const box=document.getElementById('reminderMessageCards');
+  box.replaceChildren();
+  const preview=pending.messagePreview;
+  if(!preview){box.textContent='미리보기를 불러오고 있습니다…';return;}
+  const note=document.createElement('p');note.className='reminder-editor-help';
+  note.textContent=preview.invalid_time?'이 날짜의 시간 설정을 확인해 주세요.':preview.no_occurrence?'미리보기 범위에 발송 가능한 회차가 없습니다.':
+    preview.past_due?'리마인더 예정 시각이 지난 일정의 문구 예시입니다. 소급 발송하지 않습니다.':
+    `Preview date: ${preview.occurrence_date||pending.item.date}`+(preview.tentative?' · 예정 시각에 Final인 경우에만 발송합니다.':'');
+  box.appendChild(note);
+  const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
+  const audiences={assignee:'Assignees',participant_department:'Department participants',participant_individual:'Individual participants'};
+  for(const message of preview.messages||[]){
+    const card=document.createElement('div');card.className='reminder-message-card';
+    const add=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;el.textContent=text;card.appendChild(el);};
+    add('div','reminder-message-route',(routes[message.route]||message.route)+' · '+(audiences[message.audience]||message.audience));
+    add('div','reminder-message-mentions',message.everyone?'@everyone':(message.mention_names||[]).map(n=>'@'+n).join(' ')||'No available recipients');
+    add('strong','reminder-message-heading',message.heading);
+    add('div','reminder-message-schedule',message.schedule);
+    add('div','reminder-message-discussion',pending.item.reminderDiscussion||message.default_discussion);
+    if((message.missing_member_ids||[]).length)add('p','reminder-editor-help','Discord ID가 없는 임원은 멘션에서 제외됩니다.');
+    box.appendChild(card);
+  }
+  if(!(preview.messages||[]).length&&!preview.invalid_time&&!preview.no_occurrence){
+    const no=document.createElement('p');no.className='reminder-editor-help';no.textContent='수신 대상이 없어 발송할 메시지가 없습니다. 본문은 미리 저장할 수 있습니다.';box.appendChild(no);
+  }
+}
+function editReminderDiscussion(reset=false){
+  const pending=pendingItemConfirmation;
+  if(!pending||confirmationBusy||!['add','edit'].includes(pending.action))return;
+  const input=document.getElementById('reminderDiscussion');
+  if(reset)input.value='';
+  pending.item.reminderDiscussion=input.value.replace(/\r\n?/g,'\n').trim()||null;
+  formReminderDiscussion=pending.item.reminderDiscussion;
+  pending.previewVersion++;pending.noticeReady=false;pending.notificationAck=null;
+  updateDiscussionLabel(pending);refreshReviewSummary(pending);renderReminderMessages(pending);
+  document.getElementById('confirmError').hidden=true;
+  document.getElementById('confirmCommit').textContent='Review message';
+  clearTimeout(reminderPreviewTimer);
+  reminderPreviewTimer=setTimeout(()=>{if(pendingItemConfirmation===pending&&!confirmationBusy)refreshNotificationPreview(pending);},450);
+}
+document.getElementById('reminderDiscussion').addEventListener('input',()=>editReminderDiscussion());
+document.getElementById('reminderDefault').onclick=()=>editReminderDiscussion(true);
+
 function openItemConfirmation(action,item,original,commit,deleteContext=null){
   if(pendingItemConfirmation||!canEdit()) return;
-  pendingItemConfirmation={commit,action,item,deleteContext,notificationAck:null,noticeReady:false};
+  pendingItemConfirmation={commit,action,item,original,deleteContext,notificationAck:null,noticeReady:false,previewVersion:0,previewRequest:0};
+  setupReminderEditor(pendingItemConfirmation);
   confirmationFocus=document.activeElement;
   const single=action==='cancel_occurrence';
   const restoring=action==='restore_occurrence';
@@ -3836,6 +3939,7 @@ function openItemConfirmation(action,item,original,commit,deleteContext=null){
 
 function closeItemConfirmation(force=false){
   if(confirmationBusy&&!force) return;
+  clearTimeout(reminderPreviewTimer);
   pendingItemConfirmation=null;
   confirmationBusy=false;
   confirmScrim.classList.remove('open');
@@ -3897,14 +4001,19 @@ function notificationPreviewText(state,pending){
 
 async function refreshNotificationPreview(pending){
   const token=sessionToken;
+  const version=pending.previewVersion,request=++pending.previewRequest;
   const button=document.getElementById('confirmCommit');
   pending.noticeReady=false;
   button.disabled=true;
   document.getElementById('confirmNotifications').textContent='Discord 알림 여부를 확인하고 있습니다…';
   try{
     const state=await api('notification_preview',notificationPreviewData(pending));
-    if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
+    if(pendingItemConfirmation!==pending||token!==sessionToken||version!==pending.previewVersion||request!==pending.previewRequest) return null;
     if(!state||typeof state.ack!=='string') throw new Error('필요한 캘린더 업데이트가 적용되지 않았습니다. 관리자에게 문의해 주세요.');
+    if(!document.getElementById('reminderEditor').hidden){
+      if(!state.reminder_preview)throw new Error('SQL 24 업데이트를 먼저 적용해 주세요.');
+      pending.messagePreview=state.reminder_preview;renderReminderMessages(pending);
+    }
     pending.noticeReady=true;pending.notificationAck=state.ack;
     notificationState={...state,known:true};
     document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
@@ -3912,7 +4021,7 @@ async function refreshNotificationPreview(pending){
     document.getElementById('confirmError').hidden=true;
     return state;
   }catch(err){
-    if(pendingItemConfirmation!==pending||token!==sessionToken) return null;
+    if(pendingItemConfirmation!==pending||token!==sessionToken||version!==pending.previewVersion||request!==pending.previewRequest) return null;
     pending.noticeReady=false;pending.notificationAck=null;
     notificationState={known:false,enabled:false,change_notifications:false};
     document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
@@ -3920,7 +4029,7 @@ async function refreshNotificationPreview(pending){
     const error=document.getElementById('confirmError');error.textContent=err.message;error.hidden=false;
     return null;
   }finally{
-    if(pendingItemConfirmation===pending){
+    if(pendingItemConfirmation===pending&&version===pending.previewVersion&&request===pending.previewRequest){
       button.disabled=confirmationBusy;
       button.textContent=pending.noticeReady?(confirmationButtonLabel(pending)):'Retry notification check';
     }
@@ -3932,7 +4041,10 @@ async function commitItemConfirmation(){
   if(!canEdit()){closeItemConfirmation(true);return;}
   const pending=pendingItemConfirmation;
   if(!pending.noticeReady){await refreshNotificationPreview(pending);return;}
+  clearTimeout(reminderPreviewTimer);
   confirmationBusy=true;
+  document.getElementById('reminderDiscussion').disabled=true;
+  document.getElementById('reminderDefault').disabled=true;
   const button=document.getElementById('confirmCommit');
   const label=button.textContent;
   button.disabled=true;button.textContent='Checking…';
@@ -3959,6 +4071,8 @@ async function commitItemConfirmation(){
     }
   }finally{
     confirmationBusy=false;
+    document.getElementById('reminderDiscussion').disabled=false;
+    document.getElementById('reminderDefault').disabled=false;
     button.disabled=false;button.textContent=pending.noticeReady?label:'Retry notification check';
     document.getElementById('confirmBack').disabled=false;
   }
@@ -3971,7 +4085,7 @@ document.getElementById('deleteEntireSeries').onclick=()=>changeDeleteScope('del
 confirmScrim.onclick=e=>{if(e.target===confirmScrim)closeItemConfirmation();};
 confirmScrim.addEventListener('keydown',e=>{
   if(e.key==='Tab'){
-    const buttons=[...confirmScrim.querySelectorAll('button:not(:disabled)')].filter(el=>!el.closest('[hidden]'));
+    const buttons=[...confirmScrim.querySelectorAll('button:not(:disabled),textarea:not(:disabled),summary')].filter(el=>!el.closest('[hidden]')&&el.getClientRects().length);
     if(!buttons.length){e.preventDefault();return;}
     const first=buttons[0],last=buttons[buttons.length-1];
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
