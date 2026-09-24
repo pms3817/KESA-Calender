@@ -1475,7 +1475,7 @@
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v30</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v31</span><h1>KESA Calendar</h1>
   <label for="loginPerson">본인 선택</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">비밀번호</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1486,7 +1486,7 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v30</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v31</span></h1>
     </div>
 
     <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
@@ -1926,6 +1926,7 @@ function fromRow(r){
 }
 
 
+let notificationState={known:false,enabled:false,change_notifications:false};
 let sessionToken='';
 let sessionExpires=0;
 let expiryTimer=null;
@@ -1942,6 +1943,7 @@ async function api(action,data={}){
  return result;
 }
 function unpackEvents(data){
+ if(data.notifications) notificationState={...data.notifications,known:true};
  const map={};(data.assignees||[]).forEach(a=>(map[a.event_id]??=[]).push(a.executive_id));
  const participants={};(data.participants||[]).forEach(p=>(participants[p.event_id]??=[]).push(p.executive_id));
  return (data.events||[]).map(r=>{
@@ -3598,7 +3600,10 @@ function reminderPreview(ev){
     '\nOnly sent if the item is Final at reminder time.'+
     (ev.status==='tentative'?' Currently Tentative: no reminder if it remains Tentative.':'')+
     (!participants&&!assignees?'\nNo recipients selected.':'')+
-    '\nPreview only — Discord notifications are not enabled yet.';
+    '\n'+(notificationState.known
+      ?(notificationState.enabled?'Automatic reminders are enabled.':'Automatic reminders are paused. This is a timing preview only.')
+      :'Automatic reminder status could not be verified.')+
+    '\nTime/status-change and cancellation notifications are not enabled in this version.';
 }
 
 function confirmationRows(ev){
@@ -3661,6 +3666,17 @@ function openItemConfirmation(action,item,original,commit){
   confirmScrim.classList.add('open');
   confirmScrim.scrollTop=0;
   document.getElementById('confirmBack').focus();
+  const pending=pendingItemConfirmation;
+  const token=sessionToken;
+  api('notification_status').then(state=>{
+    if(token!==sessionToken) return;
+    notificationState={...state,known:true};
+    if(pendingItemConfirmation===pending) document.getElementById('confirmReminder').textContent=reminderPreview(item);
+  }).catch(()=>{
+    if(token!==sessionToken) return;
+    notificationState={known:false,enabled:false,change_notifications:false};
+    if(pendingItemConfirmation===pending) document.getElementById('confirmReminder').textContent=reminderPreview(item);
+  });
 }
 
 function closeItemConfirmation(force=false){
@@ -4332,6 +4348,7 @@ function refreshAccountUI(){
  document.getElementById('newCatAudience').innerHTML=audienceMarkup([]);
 }
 function resetLogin(message=''){
+ notificationState={known:false,enabled:false,change_notifications:false};
  closeItemConfirmation(true);
  clearTimeout(expiryTimer);sessionToken='';sessionExpires=0;selectedViewerId='';allDepartments=false;assignedOnly=false;
  events=[];DEPTS=[];DEPT={};selectedCategories=new Set();
