@@ -1571,13 +1571,53 @@
 .compact-filter-line .category-actions{flex-wrap:wrap;max-width:100%}
 @media(max-width:520px){.compact-filter-line{gap:8px}.type-filter-options{left:0;right:auto}.compact-filter-line .scope-choice{max-width:100%;flex-wrap:wrap}}
 
+
+/* v40: a composed header with a dedicated identity row. */
+header.app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand navigation" "account account";gap:14px 20px;padding:16px 18px 0;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 8px #0F172A04;margin-bottom:12px;align-items:center}
+header.app .brand{grid-area:brand;min-width:0;min-height:38px}
+header.app .brand h1{font-size:23px;gap:7px;flex-wrap:wrap}
+header.app .nav{grid-area:navigation;width:auto;overflow:visible;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;flex-wrap:wrap;justify-content:flex-end}
+header.app .nav button{min-height:36px}
+header.app .account-bar{grid-area:account;order:initial;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;width:100%;min-width:0;gap:10px 18px;padding:12px 0;margin:0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+.account-identity{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;min-width:0;max-width:100%}
+header.app #accountName{display:block;min-height:0;margin:0;padding:0;border:0;font-size:14px;font-weight:750;color:var(--ink);white-space:normal;overflow-wrap:anywhere}
+.account-badges{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.account-role,.account-department{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:4px 9px;border-radius:6px;font-size:10.5px;font-weight:650;line-height:1.45}
+.account-role[hidden],.account-department[hidden]{display:none}
+.account-role{border:1px solid #CBD5E1;color:#475569;background:#fff}
+.account-role[data-role="president"]{border-color:#E5C477;color:#805C13;background:#FFFCF3}
+.account-role[data-role="vice-president"]{border-color:#C8B7ED;color:#69459A;background:#FDFBFF}
+.account-role[data-role="director"]{border-color:#A9C3E8;color:#315E98;background:#FAFCFF}
+.account-role[data-role="executive"]{border-color:#CBD5E1;color:#566477;background:#FAFBFC}
+.account-department{--dept-ink:#475569;--dept-bg:#F1F5F9;color:var(--dept-ink);background:var(--dept-bg);border:1px solid transparent;border-radius:999px}
+.account-department:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.account-department[data-department="event"]{--dept-ink:#245DC3;--dept-bg:#EAF1FF}
+.account-department[data-department="marketing"]{--dept-ink:#B12A70;--dept-bg:#FDEBF4}
+.account-department[data-department="finance"]{--dept-ink:#087E63;--dept-bg:#E5F6EF}
+.account-department[data-department="internal"]{--dept-ink:#A65E0A;--dept-bg:#FFF1DF}
+.account-department[data-department="presidential"]{--dept-ink:#6B43AD;--dept-bg:#F0EAFC}
+.account-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-left:auto}
+header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10px}
+@media(max-width:700px){
+ header.app{padding:14px 14px 0;gap:12px;grid-template-columns:1fr;grid-template-areas:"brand" "navigation" "account"}
+ header.app .brand h1{font-size:21px}
+ header.app .nav{justify-content:flex-start;gap:7px}
+ header.app .account-bar{align-items:flex-start}
+ .account-identity{gap:7px 10px}
+}
+@media(max-width:420px){
+ .account-identity{width:100%;align-items:flex-start;flex-direction:column}
+ .account-actions{margin-left:0;justify-content:flex-start}
+ header.app .nav button{font-size:12px;padding-left:10px;padding-right:10px}
+}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v39</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v40</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1588,10 +1628,13 @@
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v39</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v40</span></h1>
     </div>
 
-    <div class="account-bar"><span id="accountName"></span><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
+    <div class="account-bar">
+      <div class="account-identity"><span id="accountName"></span><div class="account-badges"><span id="accountRole" class="account-role"></span><span id="accountDepartment" class="account-department"></span></div></div>
+      <div class="account-actions"><button id="switchUser">Switch user / Sign out</button><button id="membersBtn" hidden>Manage members</button></div>
+    </div>
     <div class="nav">
       <div class="viewtoggle" id="viewToggle">
         <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
@@ -4807,7 +4850,12 @@ function audienceMarkup(ids){
 function readAudience(root){return [...root.querySelectorAll('.audience input:checked, input[type="checkbox"]:checked')].map(x=>x.value);}
 function refreshAccountUI(){
  const v=currentViewer();
- document.getElementById('accountName').textContent=v?`${v.english_name} · ${v.role} · ${v.department}`:'';
+ document.getElementById('accountName').textContent=v?.english_name||'';
+ const role=document.getElementById('accountRole'),department=document.getElementById('accountDepartment');
+ role.textContent=v?.role||'';department.textContent=v?.department||'';
+ role.dataset.role=({'President':'president','Vice President':'vice-president','Director':'director','Executive':'executive'})[v?.role]||'executive';
+ department.dataset.department=({'Event':'event','Marketing':'marketing','Finance':'finance','Internal':'internal','Presidential':'presidential'})[v?.department]||'other';
+ role.hidden=!v;department.hidden=!v;
  document.body.classList.toggle('read-only',!canEdit());
  for(const id of ['addBtn','manageBtn','detailEdit','detailDelete'])document.getElementById(id).hidden=!canEdit();
  document.getElementById('membersBtn').hidden=!canAdmin();
