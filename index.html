@@ -1626,13 +1626,81 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 #scrim #participantDeptFilter{margin-top:4px}
 #scrim .assignee-toolbar{flex-wrap:wrap;gap:7px}
 
+
+/* v42 member directory and integrated editor; scoped to member management. */
+#memberScrim{padding:24px 16px}
+#memberScrim .member-manager{width:100%;max-width:1240px;height:min(820px,calc(100dvh - 48px));max-height:calc(100dvh - 48px);margin:0;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.member-manager-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:22px 24px 18px;border-bottom:1px solid var(--line);flex:none}
+#memberScrim .member-manager-header h2{font-size:22px;margin-bottom:6px}
+#memberScrim .member-manager-header .sub{margin:0;line-height:1.6}
+.member-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+.member-directory-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:16px 24px 12px;background:#FAFBFD;flex:none}
+.member-directory-filters>div{flex:1 1 140px;min-width:0}
+.member-directory-filters>.member-search-field{flex:2 1 220px}
+#memberScrim .member-directory-filters label.lb{font-size:10px;letter-spacing:0;text-transform:none;margin-bottom:5px}
+.member-directory-filters input[type=search],.member-directory-filters select{width:100%;min-height:36px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;font-family:var(--body);font-size:12px;padding:8px 10px;color:var(--ink)}
+#memberResetFilters{min-height:36px;font-size:12px}
+.member-directory-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:10px 24px;border-bottom:1px solid var(--line);font-size:11px;color:var(--muted);flex:none}
+#memberStats{font-weight:650;color:var(--ink-soft)}
+.member-load-error{color:#B91C1C;padding:8px 24px;font-size:12px;margin:0}
+.member-workspace{display:grid;grid-template-columns:minmax(0,1fr);flex:1;min-height:0;overflow:hidden}
+.member-workspace.editing{grid-template-columns:minmax(0,1fr) 350px}
+#memberScrim .member-list{max-height:none;min-height:0;overflow:auto;margin:0;border:0;border-radius:0;background:#fff}
+.member-directory-table{border-collapse:separate;border-spacing:0;width:100%;min-width:660px;text-align:left;font-size:12px}
+.member-directory-table th{position:sticky;top:0;z-index:1;background:#F8FAFC;color:var(--muted);font-weight:600;font-size:10px;padding:12px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+.member-directory-table td{padding:13px 16px;border-bottom:1px solid #EEF1F5;vertical-align:middle}
+.member-directory-table td:first-child{min-width:170px}
+.member-directory-table tbody tr:hover{background:#FAFCFF}
+.member-directory-table tbody tr.member-selected{background:#EFF5FF}
+.member-directory-table .member-name{font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.member-korean{font-size:11px;color:var(--muted);margin-top:3px}
+.member-self{font-size:9px;color:#2563EB;margin-left:5px}
+.member-directory-table .account-role,.member-directory-table .account-department{white-space:nowrap;font-size:10px}
+.member-access{font-size:11px;color:#64748B}
+.member-access.is-admin{color:#6244A6;font-weight:650}
+.member-login{font-size:10.5px;white-space:nowrap;color:#64748B}
+.member-login.configured{color:#087E63}
+.member-login.missing{color:#B45309;font-weight:650}
+.member-directory-table .member-edit{font-size:11px;padding:6px 10px}
+.member-directory-table .member-edit[aria-pressed="true"]{border-color:#A9C3E8;background:#fff;color:#245DC3}
+#memberScrim .member-form{border:0;border-left:1px solid var(--line);border-radius:0;margin:0;padding:20px;overflow-y:auto;background:#FAFBFD;min-width:0}
+#memberScrim .member-form[hidden]{display:none}
+.member-editor-heading{margin-bottom:20px}
+.member-editor-eyebrow{font-size:9px;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+#memberScrim .member-editor-heading h3{font-size:18px;margin:5px 0}
+#memberFormContext{font-size:11px;color:var(--muted);line-height:1.6;overflow-wrap:anywhere;margin:0}
+.member-section-label{font-size:11px;margin:0 0 12px;color:var(--ink-soft)}
+.member-section-divider{padding-top:18px;margin-top:18px;border-top:1px solid var(--line)}
+#memberScrim .member-form .row2{grid-template-columns:1fr;gap:0}
+#memberScrim .member-form label.lb{text-transform:none;letter-spacing:0;font-size:11px}
+#memberScrim .member-checks{display:grid;gap:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:16px}
+#memberScrim .member-help{line-height:1.7;font-size:11px}
+#memberScrim .member-form .modal-actions{display:flex;flex-wrap:wrap;gap:7px;position:sticky;bottom:-20px;background:#FAFBFD;padding:14px 0;margin:12px 0 -20px;border-top:1px solid var(--line)}
+#memberScrim .member-form .modal-actions button{font-size:11px;padding:7px 9px}
+#memberScrim .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1000px){.member-workspace.editing{grid-template-columns:minmax(0,1fr) 310px}.member-directory-table td,.member-directory-table th{padding-left:12px;padding-right:12px}}
+@media(max-width:760px){
+ #memberScrim{padding:10px}
+ #memberScrim .member-manager{height:calc(100dvh - 20px);max-height:calc(100dvh - 20px)}
+ .member-manager-header{padding:16px}
+ .member-directory-filters{padding:12px 16px;gap:8px;max-height:240px;overflow-y:auto}
+ .member-directory-filters>div{flex:1 1 125px}.member-directory-filters>.member-search-field{flex-basis:100%}
+ .member-directory-meta{padding:9px 16px}
+ .member-workspace.editing{display:flex;flex-direction:column;overflow-y:auto}
+ #memberScrim .member-workspace.editing .member-form{order:-1;overflow:visible;flex:none;border-left:0;border-bottom:1px solid var(--line);padding:16px}
+ #memberScrim .member-workspace.editing .member-list{flex:none;max-height:360px}
+ #memberScrim .member-form .row2{grid-template-columns:1fr 1fr;gap:10px}
+ #memberScrim .member-form .modal-actions{position:static;margin-bottom:0;padding-bottom:0}
+}
+@media(max-width:420px){#memberScrim .member-form .row2{grid-template-columns:1fr;gap:0}.member-directory-meta>span:last-child{display:none}}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v41</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v42</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1643,7 +1711,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v41</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v42</span></h1>
     </div>
 
     <div class="account-bar">
@@ -1960,19 +2028,25 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 
 <!-- Manage members modal -->
 <div class="scrim" id="memberScrim">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="memberTitle">
-    <div class="member-toolbar">
-      <div>
-        <h2 id="memberTitle">Manage members</h2>
-        <p class="sub">임원 정보를 추가·수정·삭제하고 로그인 비밀번호를 관리할 수 있습니다.</p>
-      </div>
-      <button type="button" class="primary" id="memberAdd">+ Add member</button>
+  <div class="modal member-manager" role="dialog" aria-modal="true" aria-labelledby="memberTitle">
+    <div class="member-manager-header">
+      <div><h2 id="memberTitle">Manage members</h2><p class="sub">명단을 검색하고 부서·직급·계정 설정을 관리하세요.</p></div>
+      <div class="member-header-actions"><button type="button" class="primary" id="memberAdd">+ Add member</button><button type="button" id="memberClose">Done</button></div>
     </div>
-
-    <div class="member-list" id="memberList"></div>
-
+    <div class="member-directory-filters">
+      <div class="member-search-field"><label class="lb" for="memberSearch">Search</label><input id="memberSearch" type="search" placeholder="이름 또는 ID 검색" autocomplete="off"></div>
+      <div><label class="lb" for="memberFilterDepartment">Department</label><select id="memberFilterDepartment"><option value="all">All departments</option><option>Presidential</option><option>Event</option><option>Marketing</option><option>Finance</option><option>Internal</option></select></div>
+      <div><label class="lb" for="memberFilterRole">Role</label><select id="memberFilterRole"><option value="all">All roles</option><option>President</option><option>Vice President</option><option>Director</option><option>Executive</option></select></div>
+      <div><label class="lb" for="memberFilterAccess">Account</label><select id="memberFilterAccess"><option value="all">All accounts</option><option value="admin">Administrators</option><option value="standard">Standard access</option><option value="password">Password enabled</option><option value="missing">Password not set</option><option value="no-password">No password</option></select></div>
+      <div><label class="lb" for="memberSort">Sort by</label><select id="memberSort"><option value="department">Department</option><option value="name">Name A–Z</option><option value="role">Role</option></select></div>
+      <button type="button" id="memberResetFilters">Reset</button>
+    </div>
+    <div class="member-directory-meta"><span id="memberStats" aria-live="polite">Members</span><span>행의 Edit를 눌러 수정하세요.</span></div>
+    <p id="memberLoadError" class="member-load-error" role="alert" hidden></p>
+    <div class="member-workspace" id="memberWorkspace">
+      <div class="member-list" id="memberList"></div>
     <div class="member-form" id="memberForm" hidden>
-      <h3 id="memberFormTitle">Add member</h3>
+      <div class="member-editor-heading"><span class="member-editor-eyebrow">MEMBER PROFILE</span><h3 id="memberFormTitle">Add member</h3><p id="memberFormContext"></p></div><h4 class="member-section-label">Profile</h4>
       <input type="hidden" id="memberId">
 
       <div class="row2">
@@ -2008,6 +2082,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
         </div>
       </div>
 
+      <h4 class="member-section-label member-section-divider">Permissions &amp; login</h4>
       <div class="member-checks">
         <label><input type="checkbox" id="memberAdmin"> Administrator</label>
         <label><input type="checkbox" id="memberPasswordRequired"> Require password</label>
@@ -2029,9 +2104,6 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
       </div>
     </div>
 
-    <div class="modal-actions">
-      <span class="spacer"></span>
-      <button type="button" id="memberClose" class="primary">Done</button>
     </div>
   </div>
 </div>
@@ -4453,46 +4525,70 @@ function normalizeMemberRoleDepartment(){
   }
 }
 
-function renderMemberList(){
-  const box=document.getElementById('memberList');
-  box.innerHTML='';
-
-  if(!ADMIN_MEMBERS.length){
-    box.innerHTML='<div class="member-empty">No members found.</div>';
-    return;
-  }
-
+function filteredAdminMembers(){
+  const query=document.getElementById('memberSearch').value.trim().toLocaleLowerCase();
+  const department=document.getElementById('memberFilterDepartment').value;
+  const role=document.getElementById('memberFilterRole').value;
+  const access=document.getElementById('memberFilterAccess').value;
+  const sort=document.getElementById('memberSort').value;
   const order=['Presidential','Event','Marketing','Finance','Internal'];
-  const roleOrder={'President':0,'Vice President':1,'Director':2,'Executive':3};
-
-  ADMIN_MEMBERS.slice().sort((a,b)=>
-    (order.indexOf(a.department)-order.indexOf(b.department)) ||
-    ((roleOrder[a.role]??9)-(roleOrder[b.role]??9)) ||
-    a.english_name.localeCompare(b.english_name)
-  ).forEach(person=>{
-    const row=document.createElement('div');
-    row.className='member-row';
-
-    const badges=[];
-    if(person.is_admin) badges.push('<span class="member-badge admin">ADMIN</span>');
-    badges.push(
-      person.password_required
-        ?`<span class="member-badge password">${person.has_password?'PASSWORD ON':'PASSWORD NOT SET'}</span>`
-        :'<span class="member-badge no-password">NO PASSWORD</span>'
-    );
-
-    row.innerHTML=
-      `<div class="member-main">`+
-        `<div class="member-name">${escapeHtml(person.english_name)} · ${escapeHtml(person.korean_name)}</div>`+
-        `<div class="member-meta">${escapeHtml(person.role)} · ${escapeHtml(person.department)} · ${escapeHtml(person.id)}</div>`+
-        `<div class="member-badges">${badges.join('')}</div>`+
-      `</div>`+
-      `<button type="button" class="member-edit">Edit</button>`;
-
-    row.querySelector('.member-edit').onclick=()=>openMemberForm(person);
-    box.appendChild(row);
+  const ranks={'President':0,'Vice President':1,'Director':2,'Executive':3};
+  const compareName=(a,b)=>(a.english_name||'').localeCompare(b.english_name||'');
+  const compareRole=(a,b)=>(ranks[a.role]??9)-(ranks[b.role]??9);
+  return ADMIN_MEMBERS.filter(person=>{
+    if(query&&!`${person.english_name||''} ${person.korean_name||''} ${person.id||''}`.toLocaleLowerCase().includes(query))return false;
+    if(department!=='all'&&person.department!==department)return false;
+    if(role!=='all'&&person.role!==role)return false;
+    if(access==='admin'&&!person.is_admin)return false;
+    if(access==='standard'&&person.is_admin)return false;
+    if(access==='password'&&!(person.password_required&&person.has_password))return false;
+    if(access==='missing'&&!(person.password_required&&!person.has_password))return false;
+    if(access==='no-password'&&person.password_required)return false;
+    return true;
+  }).sort((a,b)=>sort==='name'?compareName(a,b):sort==='role'?compareRole(a,b)||compareName(a,b):
+    order.indexOf(a.department)-order.indexOf(b.department)||compareRole(a,b)||compareName(a,b));
+}
+function highlightEditingMember(){
+  document.querySelectorAll('#memberList tr[data-member-id]').forEach(row=>{
+    const selected=row.dataset.memberId===editingMemberId;
+    row.classList.toggle('member-selected',selected);
+    row.querySelector('.member-edit').setAttribute('aria-pressed',String(selected));
   });
 }
+function resetMemberDirectoryFilters(){
+  document.getElementById('memberSearch').value='';
+  for(const id of ['memberFilterDepartment','memberFilterRole','memberFilterAccess'])document.getElementById(id).value='all';
+  document.getElementById('memberSort').value='department';
+  renderMemberList();
+}
+function renderMemberList(){
+  const box=document.getElementById('memberList');box.innerHTML='';
+  const people=filteredAdminMembers();
+  document.getElementById('memberStats').textContent=people.length+' / '+ADMIN_MEMBERS.length+' members';
+  if(!people.length){box.innerHTML='<div class="member-empty">조건에 맞는 임원이 없습니다. 검색어나 필터를 확인해 주세요.</div>';return;}
+  const table=document.createElement('table');table.className='member-directory-table';
+  table.innerHTML='<caption class="sr-only">KESA member directory</caption><thead><tr><th scope="col">Name</th><th scope="col">Department</th><th scope="col">Role</th><th scope="col">Access</th><th scope="col">Login</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>';
+  const body=document.createElement('tbody');
+  for(const person of people){
+    const row=document.createElement('tr');row.dataset.memberId=person.id;
+    const role=({'President':'president','Vice President':'vice-president','Director':'director','Executive':'executive'})[person.role]||'executive';
+    const dept=({'Event':'event','Marketing':'marketing','Finance':'finance','Internal':'internal','Presidential':'presidential'})[person.department]||'other';
+    const login=person.password_required?(person.has_password?'Password enabled':'Password not set'):'No password';
+    const loginClass=person.password_required?(person.has_password?'configured':'missing'):'optional';
+    row.innerHTML=`<td><div class="member-name">${escapeHtml(person.english_name||'')}</div><div class="member-korean">${escapeHtml(person.korean_name||'')}${person.id===selectedViewerId?' <span class="member-self">You</span>':''}</div></td>`+
+      `<td><span class="account-department" data-department="${dept}">${escapeHtml(person.department||'')}</span></td>`+
+      `<td><span class="account-role" data-role="${role}">${escapeHtml(person.role||'')}</span></td>`+
+      `<td><span class="member-access ${person.is_admin?'is-admin':''}">${person.is_admin?'Admin':'Standard'}</span></td>`+
+      `<td><span class="member-login ${loginClass}">${login}</span></td>`+
+      `<td><button type="button" class="member-edit" aria-label="Edit ${escapeHtml(person.english_name||'member')}">Edit</button></td>`;
+    row.querySelector('.member-edit').onclick=()=>openMemberForm(person);body.appendChild(row);
+  }
+  table.appendChild(body);box.appendChild(table);highlightEditingMember();
+}
+for(const id of ['memberSearch','memberFilterDepartment','memberFilterRole','memberFilterAccess','memberSort']){
+  document.getElementById(id).addEventListener(id==='memberSearch'?'input':'change',renderMemberList);
+}
+document.getElementById('memberResetFilters').onclick=resetMemberDirectoryFilters;
 
 async function loadAdminMembers(){
   ADMIN_MEMBERS=await api('member_list');
@@ -4503,6 +4599,10 @@ function openMemberForm(person=null){
   editingMemberId=person?.id||null;
   memberError('');
   document.getElementById('memberForm').hidden=false;
+  document.getElementById('memberWorkspace').classList.add('editing');
+  document.getElementById('memberFormContext').textContent=person?person.english_name+' · '+person.id:'새 임원의 프로필과 로그인 설정을 입력하세요.';
+  document.getElementById('memberForm').scrollTop=0;
+  highlightEditingMember();
   document.getElementById('memberFormTitle').textContent=person?'Edit member':'Add member';
   document.getElementById('memberId').value=person?.id||'';
   document.getElementById('memberEnglish').value=person?.english_name||'';
@@ -4525,6 +4625,9 @@ function openMemberForm(person=null){
 function closeMemberForm(){
   editingMemberId=null;
   document.getElementById('memberForm').hidden=true;
+  document.getElementById('memberWorkspace').classList.remove('editing');
+  document.getElementById('memberPassword').value='';
+  highlightEditingMember();
   memberError('');
 }
 
@@ -4532,12 +4635,17 @@ async function openMembers(){
   if(!canAdmin()) return;
   memberScrim.classList.add('open');
   closeMemberForm();
+  resetMemberDirectoryFilters();
+  document.getElementById('memberLoadError').hidden=true;
+  document.getElementById('memberStats').textContent='Loading…';
   document.getElementById('memberList').innerHTML='<div class="member-empty">Loading members…</div>';
   try{
     await loadAdminMembers();
   }catch(e){
     memberError(e.message);
-    document.getElementById('memberList').innerHTML='<div class="member-empty">Could not load members.</div>';
+    document.getElementById('memberList').innerHTML='<div class="member-empty">명단을 불러오지 못했습니다. 닫은 뒤 다시 열어 주세요.</div>';
+    const error=document.getElementById('memberLoadError');error.textContent=e.message;error.hidden=false;
+    document.getElementById('memberStats').textContent='Unavailable';
   }
 }
 
