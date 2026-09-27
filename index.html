@@ -1694,13 +1694,18 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 }
 @media(max-width:420px){#memberScrim .member-form .row2{grid-template-columns:1fr;gap:0}.member-directory-meta>span:last-child{display:none}}
 
+/* v44 Discord registration state: text accompanies each colored dot. */
+.member-discord{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;white-space:nowrap;color:#64748B}
+.discord-status-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#DC2626}
+.member-discord.configured .discord-status-dot{background:#16A34A}
+.member-directory-table{min-width:800px}
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v42</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v44</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1711,7 +1716,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v42</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v44</span></h1>
     </div>
 
     <div class="account-bar">
@@ -2038,6 +2043,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
       <div><label class="lb" for="memberFilterDepartment">Department</label><select id="memberFilterDepartment"><option value="all">All departments</option><option>Presidential</option><option>Event</option><option>Marketing</option><option>Finance</option><option>Internal</option></select></div>
       <div><label class="lb" for="memberFilterRole">Role</label><select id="memberFilterRole"><option value="all">All roles</option><option>President</option><option>Vice President</option><option>Director</option><option>Executive</option></select></div>
       <div><label class="lb" for="memberFilterAccess">Account</label><select id="memberFilterAccess"><option value="all">All accounts</option><option value="admin">Administrators</option><option value="standard">Standard access</option><option value="password">Password enabled</option><option value="missing">Password not set</option><option value="no-password">No password</option></select></div>
+      <div><label class="lb" for="memberFilterDiscord">Discord</label><select id="memberFilterDiscord"><option value="all">All statuses</option><option value="configured">Configured</option><option value="missing">Not configured</option></select></div>
       <div><label class="lb" for="memberSort">Sort by</label><select id="memberSort"><option value="department">Department</option><option value="name">Name A–Z</option><option value="role">Role</option></select></div>
       <button type="button" id="memberResetFilters">Reset</button>
     </div>
@@ -2094,6 +2100,12 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
         <div class="member-help" id="memberPasswordHelp">새 임원에게 비밀번호 로그인을 설정하려면 비밀번호를 입력해 주세요.</div>
       </div>
 
+      <h4 class="member-section-label member-section-divider">Discord</h4>
+      <div class="field">
+        <label class="lb" for="memberDiscordId">Discord user ID</label>
+        <input type="text" id="memberDiscordId" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Discord user ID" aria-describedby="memberDiscordHelp">
+        <div class="member-help" id="memberDiscordHelp">숫자로 된 User ID를 입력하세요. 사용자명이나 @멘션은 사용할 수 없습니다. 비워서 저장하면 ID 등록이 해제됩니다. 등록 여부는 서버 가입이나 실제 멘션 성공을 보장하지 않습니다.</div>
+      </div>
       <div class="err" id="memberErr"></div>
 
       <div class="modal-actions">
@@ -4530,6 +4542,7 @@ function filteredAdminMembers(){
   const department=document.getElementById('memberFilterDepartment').value;
   const role=document.getElementById('memberFilterRole').value;
   const access=document.getElementById('memberFilterAccess').value;
+  const discord=document.getElementById('memberFilterDiscord').value;
   const sort=document.getElementById('memberSort').value;
   const order=['Presidential','Event','Marketing','Finance','Internal'];
   const ranks={'President':0,'Vice President':1,'Director':2,'Executive':3};
@@ -4539,6 +4552,8 @@ function filteredAdminMembers(){
     if(query&&!`${person.english_name||''} ${person.korean_name||''} ${person.id||''}`.toLocaleLowerCase().includes(query))return false;
     if(department!=='all'&&person.department!==department)return false;
     if(role!=='all'&&person.role!==role)return false;
+    if(discord==='configured'&&!person.discord_user_id)return false;
+    if(discord==='missing'&&person.discord_user_id)return false;
     if(access==='admin'&&!person.is_admin)return false;
     if(access==='standard'&&person.is_admin)return false;
     if(access==='password'&&!(person.password_required&&person.has_password))return false;
@@ -4557,7 +4572,7 @@ function highlightEditingMember(){
 }
 function resetMemberDirectoryFilters(){
   document.getElementById('memberSearch').value='';
-  for(const id of ['memberFilterDepartment','memberFilterRole','memberFilterAccess'])document.getElementById(id).value='all';
+  for(const id of ['memberFilterDepartment','memberFilterRole','memberFilterAccess','memberFilterDiscord'])document.getElementById(id).value='all';
   document.getElementById('memberSort').value='department';
   renderMemberList();
 }
@@ -4567,7 +4582,7 @@ function renderMemberList(){
   document.getElementById('memberStats').textContent=people.length+' / '+ADMIN_MEMBERS.length+' members';
   if(!people.length){box.innerHTML='<div class="member-empty">조건에 맞는 임원이 없습니다. 검색어나 필터를 확인해 주세요.</div>';return;}
   const table=document.createElement('table');table.className='member-directory-table';
-  table.innerHTML='<caption class="sr-only">KESA member directory</caption><thead><tr><th scope="col">Name</th><th scope="col">Department</th><th scope="col">Role</th><th scope="col">Access</th><th scope="col">Login</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>';
+  table.innerHTML='<caption class="sr-only">KESA member directory</caption><thead><tr><th scope="col">Name</th><th scope="col">Department</th><th scope="col">Role</th><th scope="col">Access</th><th scope="col">Login</th><th scope="col">Discord</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>';
   const body=document.createElement('tbody');
   for(const person of people){
     const row=document.createElement('tr');row.dataset.memberId=person.id;
@@ -4580,18 +4595,20 @@ function renderMemberList(){
       `<td><span class="account-role" data-role="${role}">${escapeHtml(person.role||'')}</span></td>`+
       `<td><span class="member-access ${person.is_admin?'is-admin':''}">${person.is_admin?'Admin':'Standard'}</span></td>`+
       `<td><span class="member-login ${loginClass}">${login}</span></td>`+
+      `<td><span class="member-discord ${person.discord_user_id?'configured':'missing'}"><span class="discord-status-dot" aria-hidden="true"></span>${person.discord_user_id?'Configured':'Not configured'}</span></td>`+
       `<td><button type="button" class="member-edit" aria-label="Edit ${escapeHtml(person.english_name||'member')}">Edit</button></td>`;
     row.querySelector('.member-edit').onclick=()=>openMemberForm(person);body.appendChild(row);
   }
   table.appendChild(body);box.appendChild(table);highlightEditingMember();
 }
-for(const id of ['memberSearch','memberFilterDepartment','memberFilterRole','memberFilterAccess','memberSort']){
+for(const id of ['memberSearch','memberFilterDepartment','memberFilterRole','memberFilterAccess','memberFilterDiscord','memberSort']){
   document.getElementById(id).addEventListener(id==='memberSearch'?'input':'change',renderMemberList);
 }
 document.getElementById('memberResetFilters').onclick=resetMemberDirectoryFilters;
 
 async function loadAdminMembers(){
   ADMIN_MEMBERS=await api('member_list');
+  if(ADMIN_MEMBERS.some(person=>!Object.prototype.hasOwnProperty.call(person,'discord_user_id')))throw new Error('먼저 v44 SQL을 적용한 뒤 새로고침해 주세요.');
   renderMemberList();
 }
 
@@ -4605,6 +4622,7 @@ function openMemberForm(person=null){
   highlightEditingMember();
   document.getElementById('memberFormTitle').textContent=person?'Edit member':'Add member';
   document.getElementById('memberId').value=person?.id||'';
+  document.getElementById('memberDiscordId').value=person?.discord_user_id||'';
   document.getElementById('memberEnglish').value=person?.english_name||'';
   document.getElementById('memberKorean').value=person?.korean_name||'';
   document.getElementById('memberDepartment').value=person?.department||'Event';
@@ -4626,6 +4644,7 @@ function closeMemberForm(){
   editingMemberId=null;
   document.getElementById('memberForm').hidden=true;
   document.getElementById('memberWorkspace').classList.remove('editing');
+  document.getElementById('memberDiscordId').value='';
   document.getElementById('memberPassword').value='';
   highlightEditingMember();
   memberError('');
@@ -4682,6 +4701,10 @@ async function saveMember(){
   const isAdmin=document.getElementById('memberAdmin').checked;
   const passwordRequired=document.getElementById('memberPasswordRequired').checked;
   const password=document.getElementById('memberPassword').value;
+  const discordId=document.getElementById('memberDiscordId').value.trim();
+  if(ADMIN_MEMBERS.some(person=>!Object.prototype.hasOwnProperty.call(person,'discord_user_id'))){memberError('먼저 v44 SQL을 적용한 뒤 새로고침해 주세요.');return;}
+  if(discordId&&!/^[0-9]{1,20}$/.test(discordId)){memberError('Discord ID는 최대 20자리 숫자로 입력해 주세요.');return;}
+  if(discordId&&ADMIN_MEMBERS.some(person=>person.id!==editingMemberId&&person.discord_user_id===discordId)){memberError('다른 멤버에게 이미 등록된 Discord ID입니다.');return;}
 
   if(!english||!korean){
     memberError('영문 이름과 한글 이름을 모두 입력해 주세요.');
@@ -4706,6 +4729,7 @@ async function saveMember(){
     role,
     is_admin:isAdmin,
     password_required:passwordRequired,
+    discord_user_id:discordId||null,
     password:passwordRequired?password:''
   };
 
