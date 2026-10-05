@@ -1699,13 +1699,70 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 .discord-status-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#DC2626}
 .member-discord.configured .discord-status-dot{background:#16A34A}
 .member-directory-table{min-width:800px}
+
+
+/* ===== v45 per-item reminder controls ===== */
+.reminder-dot{
+  width:7px;height:7px;border-radius:50%;flex:none;display:inline-block;
+  margin-left:2px;position:relative;
+}
+.reminder-dot.on{
+  background:#22C55E;
+  box-shadow:0 0 4px rgba(34,197,94,.8),0 0 9px rgba(34,197,94,.42);
+}
+.reminder-dot.off{
+  background:#EF4444;
+  box-shadow:0 0 4px rgba(239,68,68,.76),0 0 9px rgba(239,68,68,.36);
+}
+.reminder-dot.detail-reminder-dot{width:9px;height:9px;margin-left:0}
+.detail-status-group{display:flex;align-items:center;gap:8px;flex:none}
+.reminder-form-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:#FAFBFD}
+.reminder-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.reminder-toggle-copy{min-width:0}
+.reminder-toggle-title{font-size:13px;font-weight:700;color:var(--ink)}
+.reminder-toggle-help{font-size:11px;line-height:1.55;color:var(--muted);margin-top:3px}
+.reminder-switch{position:relative;display:inline-flex;width:42px;height:24px;flex:none}
+.reminder-switch input{position:absolute;opacity:0;pointer-events:none}
+.reminder-switch-track{width:42px;height:24px;border-radius:999px;background:#CBD5E1;box-shadow:inset 0 0 0 1px rgba(15,23,42,.08);transition:.15s}
+.reminder-switch-track:after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.28);transition:.15s}
+.reminder-switch input:checked + .reminder-switch-track{background:#22C55E;box-shadow:0 0 8px rgba(34,197,94,.25)}
+.reminder-switch input:checked + .reminder-switch-track:after{transform:translateX(18px)}
+.reminder-switch input:focus-visible + .reminder-switch-track{outline:2px solid #2563EB;outline-offset:2px}
+.reminder-time-config{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
+.reminder-time-copy{min-width:0}
+.reminder-time-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.reminder-time-value{font-size:12px;font-weight:650;color:var(--ink);margin-top:3px;line-height:1.5}
+.reminder-time-actions{display:flex;gap:7px;flex:none}
+.reminder-time-actions button{font-size:11px;padding:6px 9px}
+.reminder-custom-panel{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.reminder-custom-panel .row2{margin-bottom:0}
+.reminder-custom-panel .field{margin-bottom:8px!important}
+.reminder-custom-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:3px}
+.reminder-custom-actions button{font-size:11px;padding:6px 9px}
+.reminder-custom-error{font-size:11px;color:#B91C1C;margin:5px 0 0}
+.reminder-form-disabled{opacity:.52}
+.reminder-review-off{border-color:#F1C4C4!important;background:#FFF7F7!important}
+.reminder-send-time .reminder-send-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
+.reminder-send-time .reminder-send-actions button{font-size:10.5px;padding:5px 8px}
+.reminder-time-editor{width:100%;margin-top:2px;padding:10px;border-top:1px solid #D9E2EF;display:grid;gap:8px}
+.reminder-time-editor .row2{width:100%;gap:8px}
+.reminder-time-editor label{font-size:10px;font-weight:650;color:var(--muted);display:block;margin-bottom:4px}
+.reminder-time-editor input{padding:7px 8px;font-size:12px}
+.reminder-time-editor-actions{display:flex;justify-content:flex-end;gap:6px}
+.reminder-time-editor-actions button{font-size:10.5px;padding:5px 8px}
+.reminder-time-editor-error{color:#B91C1C;font-size:10.5px}
+@media(max-width:520px){
+  .reminder-time-config{align-items:flex-start;flex-direction:column}
+  .reminder-time-actions{width:100%}
+  .reminder-time-actions button{flex:1}
+}
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v44</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v45</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1716,7 +1773,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v44</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v45</span></h1>
     </div>
 
     <div class="account-bar">
@@ -1902,6 +1959,21 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
         <button type="button" data-status="final" aria-pressed="true">Final</button>
         <button type="button" data-status="tentative" aria-pressed="false">Tentative</button>
       </div>
+    </div></section><section class="form-section" id="reminderFormSection"><div class="form-section-heading"><h3>Reminder</h3><p>Discord 리마인더 발송 여부와 시간을 설정해 주세요.</p></div><div class="reminder-form-card">
+      <div class="reminder-toggle-row">
+        <div class="reminder-toggle-copy"><div class="reminder-toggle-title">Send reminder</div><div class="reminder-toggle-help" id="reminderToggleHelp">이 일정의 정상 리마인더를 발송합니다.</div></div>
+        <label class="reminder-switch" for="fReminderEnabled"><input type="checkbox" id="fReminderEnabled" checked><span class="reminder-switch-track" aria-hidden="true"></span></label>
+      </div>
+      <div id="reminderTimeConfig" class="reminder-time-config">
+        <div class="reminder-time-copy"><div class="reminder-time-label">Send time</div><div class="reminder-time-value" id="reminderFormTiming">Default</div></div>
+        <div class="reminder-time-actions"><button type="button" id="reminderCustomButton">Set custom time</button></div>
+      </div>
+      <div class="reminder-custom-panel" id="reminderCustomPanel" hidden>
+        <div class="row2"><div class="field"><label class="lb" for="fReminderDate">Reminder date</label><input type="date" id="fReminderDate"></div><div class="field"><label class="lb" for="fReminderTime">Reminder time</label><input type="time" id="fReminderTime"></div></div>
+        <p class="field-hint">반복 일정에서는 선택한 발송 간격을 모든 회차에 동일하게 적용합니다.</p>
+        <p class="reminder-custom-error" id="reminderCustomError" hidden></p>
+        <div class="reminder-custom-actions"><button type="button" id="reminderUseDefault">Use default</button><button type="button" class="primary" id="reminderApplyCustom">Apply</button></div>
+      </div>
     </div></section><section class="form-section" id="peopleSection"><div class="form-section-heading"><h3>People</h3><p>참석할 대상과 업무 담당자를 구분해 주세요.</p></div><div class="field hide" id="participantField">
       <label class="lb">Participants <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
       <p class="field-hint">일정에 참석할 부서 또는 임원을 선택해 주세요.</p>
@@ -1987,7 +2059,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
     <div class="detail-hero" id="detailHero">
       <div class="detail-topline">
         <div class="detail-type"><span class="detail-icon" id="detailIcon">●</span><span id="detailType">Event</span></div>
-        <span class="detail-status" id="detailStatus">Final</span>
+        <div class="detail-status-group"><span class="detail-status" id="detailStatus">Final</span><span class="reminder-dot detail-reminder-dot" id="detailReminderDot" hidden aria-label="Reminder status"></span></div>
       </div>
       <h2 class="detail-title" id="detailTitle">—</h2>
       <div class="detail-category" id="detailCategory">—</div>
@@ -2145,6 +2217,8 @@ function toRow(ev){
     details:ev.details||'',
     reminder_discussion:ev.reminderDiscussion||null,
     reminder_discussions:ev.reminderDiscussions||{},
+    reminder_enabled:ev.reminderEnabled!==false,
+    reminder_offset_minutes:Number.isInteger(ev.reminderOffsetMinutes)?ev.reminderOffsetMinutes:null,
     emoji:ev.emoji||'',
     source:ev.source||'user'
   };
@@ -2171,6 +2245,8 @@ function fromRow(r){
     details:r.details||'',
     reminderDiscussion:r.reminder_discussion||null,
     reminderDiscussions:r.reminder_discussions||{},
+    reminderEnabled:r.reminder_enabled!==false,
+    reminderOffsetMinutes:Number.isInteger(r.reminder_offset_minutes)?r.reminder_offset_minutes:null,
     emoji:r.emoji||'',
     source:r.source||'user'
   };
@@ -2441,6 +2517,14 @@ function setDepartments(list){
 
 const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'};
 const TYPE_NAME={event:'Event',due:'Due date',meeting:'Meeting',school:'School',other:'Other'};
+function supportsReminder(type){return ['event','meeting','due'].includes(type);}
+function reminderEnabledFor(ev){return supportsReminder(ev?.type)&&ev?.reminderEnabled!==false;}
+function reminderDotHtml(ev){
+  if(!supportsReminder(ev?.type)) return '';
+  const on=reminderEnabledFor(ev);
+  const title=on?'Reminder on':'Reminder off';
+  return `<span class="reminder-dot ${on?'on':'off'}" title="${title}" aria-label="${title}"></span>`;
+}
 function glyphFor(ev){return ev.type==='other'?(ev.emoji||'📌'):(TYPE_GLYPH[ev.type]||'•');}
 function linkedEventFor(ev){return ev.linkedEventId?events.find(e=>e.id===ev.linkedEventId&&e.type==='event'):null;}
 
@@ -2565,6 +2649,8 @@ let editingOccurrenceDate=null;
 let formType='event';
 let formStatus='final';
 let schoolStatusEnabled=false;
+let formReminderEnabled=true;
+let formReminderOffsetMinutes=null;
 
 const uid=()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
@@ -2602,6 +2688,7 @@ function seed(){
       linkedEventId:null,
       recur:'weekly',
       details:'Weekly all-hands standup. (sample — delete me)',
+      reminderEnabled:true,reminderOffsetMinutes:null,
       source:'seed'
     },
     {
@@ -2618,6 +2705,7 @@ function seed(){
       linkedEventId:null,
       recur:'none',
       details:'Kickoff social. (sample — delete me)',
+      reminderEnabled:true,reminderOffsetMinutes:null,
       source:'seed'
     },
     {
@@ -2634,6 +2722,7 @@ function seed(){
       linkedEventId:mixer,
       recur:'none',
       details:'First draft for review. (sample — delete me)',
+      reminderEnabled:true,reminderOffsetMinutes:null,
       source:'seed'
     }
   ];
@@ -2955,6 +3044,7 @@ function renderGrid(){
           `${ev.time?`<span class="card-time">${escapeHtml(prettyTime(ev.time))}</span>`:''}`+
           `${isAssignedToViewer(ev)?'<span class="mine-badge">You</span>':''}`+
           `${cancelled?'<span class="status-pill">Cancelled</span>':''}${!cancelled&&ev.status?`<span class="status-pill">${ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
+          `${!cancelled?reminderDotHtml(ev):''}`+
         `</span>`+
         `<span class="card-bottom">`+
           `<span class="card-title">${escapeHtml(ev.title)}</span>`+
@@ -3072,6 +3162,7 @@ function renderLongEventBars(segments){
         `${seg.ev.time?`<span class="card-time">${escapeHtml(prettyTime(seg.ev.time))}</span>`:''}`+
         `${isAssignedToViewer(seg.ev)?'<span class="mine-badge">You</span>':''}`+
         `${seg.ev.status?`<span class="status-pill">${seg.ev.status==='tentative'?'Tentative':'Final'}</span>`:''}`+
+        `${reminderDotHtml(seg.ev)}`+
       `</span>`+
       `<span class="card-bottom">`+
         `<span class="card-title">${escapeHtml(seg.ev.title)}</span>`+
@@ -3226,6 +3317,17 @@ function openDetail(ev,occurrenceDate=null){
     statusEl.textContent='';
     statusEl.className='detail-status';
   }
+  const detailReminderDot=document.getElementById('detailReminderDot');
+  if(supportsReminder(ev.type)){
+    const on=reminderEnabledFor(ev);
+    detailReminderDot.hidden=false;
+    detailReminderDot.className='reminder-dot detail-reminder-dot '+(on?'on':'off');
+    detailReminderDot.title=on?'Reminder on':'Reminder off';
+    detailReminderDot.setAttribute('aria-label',detailReminderDot.title);
+  }else{
+    detailReminderDot.hidden=true;
+    detailReminderDot.className='reminder-dot detail-reminder-dot';
+  }
   document.getElementById('detailTitle').textContent=ev.title;
   document.getElementById('detailCategory').textContent=ev.type==='school'?'School':dp.name;
 
@@ -3236,6 +3338,10 @@ function openDetail(ev,occurrenceDate=null){
   if(participantDisplay(ev)) html+=detailRow('Participants',`◎ ${escapeHtml(participantDisplay(ev))}`);
   if(assigneeDetail(ev)) html+=detailRow('Assignees',`👤 ${assigneeDetailHtml(ev)}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
+  if(supportsReminder(ev.type)){
+    html+=detailRow('Reminder',reminderEnabledFor(ev)?'🟢 On':'🔴 Off');
+    html+=detailRow('Reminder timing',escapeHtml(reminderTimingSummary(ev,shownDate)));
+  }
   if(linked) html+=detailRow('Linked event',`🔗 ${escapeHtml(linked.title)}`,false,'detail-link');
   if(ev.type==='other'&&ev.emoji) html+=detailRow('Emoji',escapeHtml(ev.emoji));
   if(ev.details) html+=detailRow('Details',escapeHtml(ev.details),true);
@@ -3644,6 +3750,8 @@ function setType(t){
     refreshAssigneeScope({keepCurrent:true,preserveOutside:true});
   }
   if(typeSupportsParticipants(t)) renderParticipantPicker();
+  document.getElementById('reminderFormSection').hidden=!supportsReminder(t);
+  updateReminderFormUI();
   document.getElementById('peopleSection').hidden=!typeSupportsParticipants(t)&&!typeSupportsAssignees(t);
 }
 
@@ -3711,11 +3819,120 @@ function refreshLinkOptions(currentId){
     });
 }
 
+function defaultReminderMsForForm(){
+  const date=document.getElementById('fDate').value||fmt(new Date());
+  const time=document.getElementById('fTime').value||'';
+  const temp={type:formType,date,time,reminderOffsetMinutes:null};
+  return reminderScheduledMs(temp,date);
+}
+
+function currentReminderStartMs(){
+  const date=document.getElementById('fDate').value||fmt(new Date());
+  const time=document.getElementById('fTime').value||'';
+  const instants=torontoInstants(date,time||'12:00');
+  return instants.length===1?instants[0]:null;
+}
+
+function setReminderDateTimeInputs(ms,dateId='fReminderDate',timeId='fReminderTime'){
+  if(!Number.isFinite(ms))return;
+  const p=torontoParts(ms);
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById(dateId).value=`${p.year}-${pad(p.month)}-${pad(p.day)}`;
+  document.getElementById(timeId).value=`${pad(p.hour)}:${pad(p.minute)}`;
+}
+
+function reminderOffsetFromInputs(dateValue,timeValue,startMs=currentReminderStartMs()){
+  if(!dateValue||!timeValue||!Number.isFinite(startMs))return {error:'일정 또는 리마인더 시간을 계산할 수 없습니다.'};
+  const instants=torontoInstants(dateValue,timeValue);
+  if(instants.length!==1)return {error:instants.length?'서머타임 종료로 두 번 존재하는 시각입니다. 다른 시간을 선택해 주세요.':'서머타임 시작으로 존재하지 않는 시각입니다. 다른 시간을 선택해 주세요.'};
+  const diff=Math.round((startMs-instants[0])/60000);
+  if(diff<=0)return {error:'리마인더 시간은 일정 시작보다 이전이어야 합니다.'};
+  return {offset:diff,scheduledMs:instants[0]};
+}
+
+function updateReminderFormUI(){
+  const supported=supportsReminder(formType);
+  const section=document.getElementById('reminderFormSection');
+  if(!section)return;
+  section.hidden=!supported;
+  const toggle=document.getElementById('fReminderEnabled');
+  toggle.checked=formReminderEnabled;
+  const cfg=document.getElementById('reminderTimeConfig');
+  cfg.classList.toggle('reminder-form-disabled',!formReminderEnabled);
+  document.getElementById('reminderToggleHelp').textContent=formReminderEnabled?'이 일정의 정상 리마인더를 발송합니다.':'리마인더를 보내지 않습니다. 캘린더에는 빨간 점으로 표시됩니다.';
+  const temp={type:formType,date:document.getElementById('fDate').value||fmt(new Date()),time:document.getElementById('fTime').value||'',reminderOffsetMinutes:formReminderOffsetMinutes};
+  const summary=Number.isInteger(formReminderOffsetMinutes)?reminderTimingSummary(temp,temp.date):reminderTimingSummary(temp,temp.date);
+  document.getElementById('reminderFormTiming').textContent=summary;
+  document.getElementById('reminderCustomButton').textContent=Number.isInteger(formReminderOffsetMinutes)?'Edit custom time':'Set custom time';
+}
+
+function openFormReminderCustom(){
+  const temp={type:formType,date:document.getElementById('fDate').value||fmt(new Date()),time:document.getElementById('fTime').value||'',reminderOffsetMinutes:formReminderOffsetMinutes};
+  const ms=Number.isInteger(formReminderOffsetMinutes)?reminderScheduledMs(temp,temp.date):defaultReminderMsForForm();
+  setReminderDateTimeInputs(ms);
+  document.getElementById('reminderCustomError').hidden=true;
+  document.getElementById('reminderCustomPanel').hidden=false;
+}
+
+function applyFormReminderCustom(){
+  const result=reminderOffsetFromInputs(document.getElementById('fReminderDate').value,document.getElementById('fReminderTime').value);
+  const err=document.getElementById('reminderCustomError');
+  if(result.error){err.textContent=result.error;err.hidden=false;return;}
+  formReminderOffsetMinutes=result.offset;
+  err.hidden=true;document.getElementById('reminderCustomPanel').hidden=true;updateReminderFormUI();
+}
+
+function useDefaultFormReminder(){
+  formReminderOffsetMinutes=null;
+  document.getElementById('reminderCustomPanel').hidden=true;
+  document.getElementById('reminderCustomError').hidden=true;
+  updateReminderFormUI();
+}
+
+function reviewTimingChanged(pending){
+  pending.previewVersion++;pending.noticeReady=false;pending.notificationAck=null;
+  formReminderEnabled=pending.item.reminderEnabled!==false;
+  formReminderOffsetMinutes=Number.isInteger(pending.item.reminderOffsetMinutes)?pending.item.reminderOffsetMinutes:null;
+  refreshReviewSummary(pending);
+  document.getElementById('confirmReminder').textContent=confirmationReminder(pending.action,pending.item);
+  document.getElementById('confirmCommit').textContent='Review reminder';
+  refreshNotificationPreview(pending);
+}
+
+function buildReviewTimingEditor(pending,preview,scheduled){
+  const wrap=document.createElement('div');wrap.className='reminder-time-editor';
+  const row=document.createElement('div');row.className='row2';
+  const makeField=(label,type,id)=>{const f=document.createElement('div');const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.type=type;input.id=id;f.append(l,input);return [f,input];};
+  const [dateField,dateInput]=makeField('Reminder date','date','reviewReminderDate');
+  const [timeField,timeInput]=makeField('Reminder time','time','reviewReminderTime');
+  row.append(dateField,timeField);wrap.appendChild(row);
+  const initial=scheduled?.getTime();
+  if(Number.isFinite(initial)){
+    const p=torontoParts(initial),pad=n=>String(n).padStart(2,'0');
+    dateInput.value=`${p.year}-${pad(p.month)}-${pad(p.day)}`;timeInput.value=`${pad(p.hour)}:${pad(p.minute)}`;
+  }
+  const error=document.createElement('div');error.className='reminder-time-editor-error';error.hidden=true;wrap.appendChild(error);
+  const actions=document.createElement('div');actions.className='reminder-time-editor-actions';
+  const useDefault=document.createElement('button');useDefault.type='button';useDefault.textContent='Use default';
+  const apply=document.createElement('button');apply.type='button';apply.className='primary';apply.textContent='Apply';
+  useDefault.onclick=()=>{pending.item.reminderOffsetMinutes=null;pending.timingEditorOpen=false;reviewTimingChanged(pending);};
+  apply.onclick=()=>{
+    const day=preview.occurrence_date||pending.item.date;
+    const start=reminderOccurrenceStartMs(pending.item,day);
+    const result=reminderOffsetFromInputs(dateInput.value,timeInput.value,start);
+    if(result.error){error.textContent=result.error;error.hidden=false;return;}
+    pending.item.reminderOffsetMinutes=result.offset;pending.timingEditorOpen=false;reviewTimingChanged(pending);
+  };
+  actions.append(useDefault,apply);wrap.appendChild(actions);return wrap;
+}
+
 function openAdd(dateStr){
   if(!canEdit()) return;
   editingId=null;
   formReminderDiscussion=null;
   formReminderDiscussions={};
+  formReminderEnabled=true;
+  formReminderOffsetMinutes=null;
   editingOccurrenceDate=null;
   endDateAutoSeeded=true;
   schoolStatusEnabled=false;
@@ -3746,6 +3963,7 @@ function openAdd(dateStr){
   setSelectedParticipants([]);
   syncEndDateConstraints();
   setStatus('final');
+  updateReminderFormUI();
   clearErr();
   openModal();
 }
@@ -3755,6 +3973,8 @@ function openEdit(ev,occurrenceDate=null){
   editingId=ev.id;
   formReminderDiscussion=ev.reminderDiscussion||null;
   formReminderDiscussions={...(ev.reminderDiscussions||{})};
+  formReminderEnabled=ev.reminderEnabled!==false;
+  formReminderOffsetMinutes=Number.isInteger(ev.reminderOffsetMinutes)?ev.reminderOffsetMinutes:null;
   editingOccurrenceDate=occurrenceDate||(ev.recur&&ev.recur!=='none'?nextOccurrence(ev,fmt(new Date())):ev.date);
   endDateAutoSeeded=!ev.endDate;
   schoolStatusEnabled=ev.type==='school'&&!!ev.status;
@@ -3796,6 +4016,7 @@ function openEdit(ev,occurrenceDate=null){
   setSelectedAssignees((ev.assigneeIds&&ev.assigneeIds.length)?ev.assigneeIds:(ev.assigneeId?[ev.assigneeId]:[]));
   setSelectedParticipants(ev.participantDepartments||[],ev.participantIds||[]);
   document.getElementById('fLink').value=ev.linkedEventId||'';
+  updateReminderFormUI();
 
   clearErr();
   openModal();
@@ -3881,7 +4102,10 @@ async function saveItem(){
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
     assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
-    recur:rec,details,emoji,reminderDiscussion:formReminderDiscussion,reminderDiscussions:{...formReminderDiscussions},cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
+    recur:rec,details,emoji,reminderDiscussion:formReminderDiscussion,reminderDiscussions:{...formReminderDiscussions},
+    reminderEnabled:supportsReminder(formType)?formReminderEnabled:false,
+    reminderOffsetMinutes:supportsReminder(formType)?formReminderOffsetMinutes:null,
+    cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
   };
   const action=original?'edit':'add';
   openItemConfirmation(action,payload,original,async()=>{
@@ -3978,30 +4202,70 @@ function torontoInstants(date,time){
   }).sort((a,b)=>a-b);
 }
 
+function reminderOccurrenceStartMs(ev,day=ev.date){
+  const startTime=ev.time||'12:00';
+  const instants=torontoInstants(day,startTime);
+  return instants.length===1?instants[0]:null;
+}
+
+function reminderScheduledMs(ev,day=ev.date){
+  const start=reminderOccurrenceStartMs(ev,day);
+  if(start===null) return null;
+  if(Number.isInteger(ev.reminderOffsetMinutes)&&ev.reminderOffsetMinutes>0){
+    return start-ev.reminderOffsetMinutes*60000;
+  }
+  if(ev.time) return start-86400000;
+  const [y,m,d]=day.split('-').map(Number);
+  const prev=new Date(Date.UTC(y,m-1,d,12));
+  prev.setUTCDate(prev.getUTCDate()-1);
+  const prevDate=prev.toISOString().slice(0,10);
+  const instants=torontoInstants(prevDate,'20:00');
+  return instants.length===1?instants[0]:null;
+}
+
+function formatTorontoDateTime(ms){
+  if(!Number.isFinite(ms)) return '시간 계산 불가';
+  return new Intl.DateTimeFormat('ko-KR',{
+    timeZone:'America/Toronto',year:'numeric',month:'long',day:'numeric',weekday:'short',
+    hour:'numeric',minute:'2-digit',hour12:true
+  }).formatToParts(new Date(ms)).map(part=>part.type==='weekday'?'('+part.value+')':part.value).join('');
+}
+
+function reminderTimingSummary(ev,day=ev.date){
+  if(!supportsReminder(ev.type)) return 'Not applicable';
+  if(Number.isInteger(ev.reminderOffsetMinutes)&&ev.reminderOffsetMinutes>0){
+    const ms=reminderScheduledMs(ev,day);
+    const hours=Math.floor(ev.reminderOffsetMinutes/60),mins=ev.reminderOffsetMinutes%60;
+    const offset=[hours?hours+'h':'',mins?mins+'m':''].filter(Boolean).join(' ');
+    return `${formatTorontoDateTime(ms)} · Custom (${offset} before)`;
+  }
+  const ms=reminderScheduledMs(ev,day);
+  return `${formatTorontoDateTime(ms)} · Default (${ev.time?'24 hours before':'previous day 8:00 PM'})`;
+}
+
 function reminderPreview(ev){
   if(ev.type==='school') return 'School 일정은 알림을 보내지 않습니다.';
   if(ev.type==='other') return 'Other 일정은 알림을 보내지 않습니다.';
+  if(ev.reminderEnabled===false) return '리마인더가 꺼져 있습니다. 이 일정의 정상 리마인더와 이후 리마인더 변경 알림을 보내지 않습니다.';
   const repeated=ev.recur&&ev.recur!=='none';
   let timing;
-  if(ev.time){
+  if(Number.isInteger(ev.reminderOffsetMinutes)&&ev.reminderOffsetMinutes>0){
+    if(repeated){
+      const hours=Math.floor(ev.reminderOffsetMinutes/60),mins=ev.reminderOffsetMinutes%60;
+      const offset=[hours?hours+'시간':'',mins?mins+'분':''].filter(Boolean).join(' ');
+      timing=`각 회차 시작 ${offset} 전에 리마인더를 보냅니다.`;
+    }else timing=`리마인더 예정: ${formatTorontoDateTime(reminderScheduledMs(ev,ev.date))} — Custom 설정입니다.`;
+  }else if(ev.time){
     const instants=torontoInstants(ev.date,ev.time);
     if(instants.length!==1){
       timing=instants.length?'서머타임 종료로 두 번 존재하는 시각입니다. 알림 시간을 계산할 수 있도록 다른 시각을 선택해 주세요.':'서머타임 시작으로 존재하지 않는 시각입니다. 다른 시각을 선택해 주세요.';
     }else if(repeated){
       timing='각 회차의 시작 시각으로부터 정확히 24시간 전에 리마인더를 보냅니다.';
-    }else{
-      const display=new Intl.DateTimeFormat('ko-KR',{
-        timeZone:'America/Toronto',year:'numeric',month:'long',day:'numeric',
-        hour:'numeric',minute:'2-digit'
-      }).format(new Date(instants[0]-86400000));
-      timing=`리마인더 예정: ${display} — 시작 시각의 정확히 24시간 전입니다.`;
-    }
+    }else timing=`리마인더 예정: ${formatTorontoDateTime(instants[0]-86400000)} — 시작 시각의 정확히 24시간 전입니다.`;
   }else if(repeated){
     timing='시간이 없는 일정은 각 회차 전날 오후 8시에 리마인더를 보냅니다.';
   }else{
-    const previous=new Date(ev.date+'T12:00:00Z');
-    previous.setUTCDate(previous.getUTCDate()-1);
-    timing=`리마인더 예정: ${previous.toISOString().slice(0,10)} 오후 8시 — 일정 전날입니다.`;
+    timing=`리마인더 예정: ${formatTorontoDateTime(reminderScheduledMs(ev,ev.date))} — 일정 전날 오후 8시입니다.`;
   }
   return timing+'\n토론토 현지 시각을 기준으로 계산하며, 발송 시점에 Final인 일정만 보냅니다.'+
     (ev.status==='tentative'?' 현재 Tentative 상태가 유지되면 발송하지 않습니다.':'')+
@@ -4029,7 +4293,9 @@ function confirmationRows(ev){
     ['Linked event',linked?`${linked.title} (${linked.date})`:ev.linkedEventId||'None',ev.linkedEventId||''],
     ['Emoji',ev.emoji||'None'],
     ['Details',ev.details||'None'],
-    ['Reminder text',['event','meeting','due'].includes(ev.type)?reminderTextSummary(ev):'Not applicable']
+    ['Reminder',supportsReminder(ev.type)?(ev.reminderEnabled===false?'Off':'On'):'Not applicable',supportsReminder(ev.type)?ev.reminderEnabled!==false:null],
+    ['Reminder time',supportsReminder(ev.type)?(Number.isInteger(ev.reminderOffsetMinutes)?`Custom · ${ev.reminderOffsetMinutes} minutes before`:'Default'):'Not applicable',supportsReminder(ev.type)?ev.reminderOffsetMinutes:null],
+    ['Reminder text',supportsReminder(ev.type)?reminderTextSummary(ev):'Not applicable']
   ];
 }
 
@@ -4081,7 +4347,7 @@ function renderReminderMessages(pending){
   const preview=pending.messagePreview;
   if(!preview){box.textContent='미리보기를 불러오고 있습니다…';return;}
   const note=document.createElement('p');note.className='reminder-editor-help';
-  note.textContent=preview.invalid_time?'이 날짜의 시간 설정을 확인해 주세요.':preview.no_occurrence?'미리보기 범위에 발송 가능한 회차가 없습니다.':
+  note.textContent=pending.item.reminderEnabled===false?'이 일정의 리마인더가 꺼져 있습니다. 아래 시간 설정은 다시 켤 때 사용할 설정입니다.':preview.invalid_time?'이 날짜의 시간 설정을 확인해 주세요.':preview.no_occurrence?'미리보기 범위에 발송 가능한 회차가 없습니다.':
     preview.past_due?'리마인더 예정 시각이 지난 일정의 문구 예시입니다. 소급 발송하지 않습니다.':
     `Preview date: ${preview.occurrence_date||pending.item.date}`+(preview.tentative?' · 예정 시각에 Final인 경우에만 발송합니다.':'');
   box.appendChild(note);
@@ -4094,11 +4360,17 @@ function renderReminderMessages(pending){
       timeZone:'America/Toronto',year:'numeric',month:'long',day:'numeric',weekday:'short',hour:'numeric',minute:'2-digit',hour12:true
     }).formatToParts(scheduled).map(part=>part.type==='weekday'?'('+part.value+')':part.value).join('');
     timing.append(label,time);
-    if(preview.past_due||pending.remindersEnabled===false){
+    if(preview.past_due||pending.remindersEnabled===false||pending.item.reminderEnabled===false){
       const state=document.createElement('span');state.className='reminder-send-state';
-      state.textContent=preview.past_due?'Past':'Paused';timing.appendChild(state);
+      state.textContent=preview.past_due?'Past':pending.item.reminderEnabled===false?'Off':'Paused';timing.appendChild(state);
     }
+    const actions=document.createElement('span');actions.className='reminder-send-actions';
+    const editTime=document.createElement('button');editTime.type='button';editTime.textContent='Edit time';editTime.disabled=confirmationBusy;
+    editTime.onclick=()=>{pending.timingEditorOpen=!pending.timingEditorOpen;renderReminderMessages(pending);};
+    actions.appendChild(editTime);timing.appendChild(actions);
+    if(pending.item.reminderEnabled===false)timing.classList.add('reminder-review-off');
     box.appendChild(timing);
+    if(pending.timingEditorOpen)box.appendChild(buildReviewTimingEditor(pending,preview,scheduled));
   }
   const routes={event:'Event Chat',marketing:'Marketing Chat',finance:'Finance Chat',internal:'Internal Chat',exec:'Exec Chat',director:'Director Chat'};
   const audiences={assignee:'Assignees',participant_department:'Department participants',participant_individual:'Individual participants'};
@@ -4126,7 +4398,7 @@ function renderReminderMessages(pending){
     if((message.missing_member_ids||[]).length)add('p','reminder-editor-help','Discord ID가 없는 임원은 멘션에서 제외됩니다.');
     box.appendChild(card);
   }
-  if(!(preview.messages||[]).length&&!preview.invalid_time&&!preview.no_occurrence){
+  if(pending.item.reminderEnabled!==false&&!(preview.messages||[]).length&&!preview.invalid_time&&!preview.no_occurrence){
     const no=document.createElement('p');no.className='reminder-editor-help';no.textContent='수신 대상이 없어 편집할 메시지가 없습니다.';box.appendChild(no);
   }
   if(focusKey){
@@ -4152,7 +4424,7 @@ function editReminderDiscussion(key,value){
 
 function openItemConfirmation(action,item,original,commit,deleteContext=null){
   if(pendingItemConfirmation||!canEdit()) return;
-  pendingItemConfirmation={commit,action,item,original,deleteContext,notificationAck:null,noticeReady:false,previewVersion:0,previewRequest:0};
+  pendingItemConfirmation={commit,action,item,original,deleteContext,notificationAck:null,noticeReady:false,previewVersion:0,previewRequest:0,timingEditorOpen:false};
   setupReminderEditor(pendingItemConfirmation);
   confirmationFocus=document.activeElement;
   const single=action==='cancel_occurrence';
@@ -4226,7 +4498,9 @@ function notificationPreviewText(state,pending){
   const effects=state.effects||[];
   const removing=['delete','cancel_occurrence'].includes(pending.action);
   let text='';
-  if(state.will_notify){
+  if(pending.item?.reminderEnabled===false&&['add','edit'].includes(pending.action)){
+    text='이 일정의 Reminder가 Off이므로 정상 리마인더를 보내지 않습니다.';
+  }else if(state.will_notify){
     text=`⚠️ 확정하면 다음 자동 실행에서 Discord ${removing?'취소':'변경'} 알림이 발송됩니다.\n`+
       [...new Set(effects.flatMap(x=>x.kinds||[]))].map(x=>kinds[x]||x).join(' · ')+
       ` / 이미 안내된 ${effects.length}개 회차`;
@@ -4265,7 +4539,7 @@ async function refreshNotificationPreview(pending){
     if(!state||typeof state.ack!=='string') throw new Error('필요한 캘린더 업데이트가 적용되지 않았습니다. 관리자에게 문의해 주세요.');
     if(!document.getElementById('reminderEditor').hidden){
       if(!state.reminder_preview||(state.reminder_preview.messages||[]).some(m=>!m.key))throw new Error('SQL 25 업데이트를 먼저 적용해 주세요.');
-      pending.messagePreview=state.reminder_preview;pending.remindersEnabled=state.enabled;renderReminderMessages(pending);
+      pending.messagePreview=state.reminder_preview;pending.remindersEnabled=state.enabled&&state.item_reminder_enabled!==false;renderReminderMessages(pending);
     }
     pending.noticeReady=true;pending.notificationAck=state.ack;
     notificationState={...state,known:true};
@@ -4909,6 +5183,12 @@ document.getElementById('today').onclick=()=>{
 
 document.getElementById('addBtn').onclick=()=>openAdd(fmt(new Date()));
 document.getElementById('cancelBtn').onclick=closeModal;
+document.getElementById('fReminderEnabled').addEventListener('change',e=>{formReminderEnabled=e.target.checked;updateReminderFormUI();});
+document.getElementById('reminderCustomButton').onclick=openFormReminderCustom;
+document.getElementById('reminderApplyCustom').onclick=applyFormReminderCustom;
+document.getElementById('reminderUseDefault').onclick=useDefaultFormReminder;
+document.getElementById('fDate').addEventListener('change',updateReminderFormUI);
+document.getElementById('fTime').addEventListener('change',updateReminderFormUI);
 document.getElementById('saveBtn').onclick=saveItem;
 document.getElementById('deleteBtn').onclick=deleteItem;
 
