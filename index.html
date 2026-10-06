@@ -1756,13 +1756,45 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
   .reminder-time-actions{width:100%}
   .reminder-time-actions button{flex:1}
 }
+
+/* ===== v46 repeat-until + reminder eligibility ===== */
+.repeat-until-field{position:relative}
+.repeat-until-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.repeat-until-button{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:190px;background:#fff}
+.repeat-until-button .repeat-until-value{font-weight:650}
+.repeat-until-button .repeat-until-chevron{color:var(--muted);font-size:11px}
+.repeat-until-calendar{
+  width:min(330px,calc(100vw - 52px));margin-top:8px;padding:12px;border:1px solid var(--line);
+  border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.14)
+}
+.repeat-until-calendar[hidden]{display:none}
+.repeat-calendar-head{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;margin-bottom:8px}
+.repeat-calendar-title{text-align:center;font-weight:750;font-size:12px;color:var(--ink)}
+.repeat-calendar-head button{width:34px;height:30px;padding:0}
+.repeat-calendar-weekdays,.repeat-calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.repeat-calendar-weekdays span{text-align:center;font-size:9px;font-weight:750;color:var(--muted);padding:4px 0}
+.repeat-calendar-day{
+  min-width:0;height:34px;padding:0;border:0;border-radius:8px;background:#fff;font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center
+}
+.repeat-calendar-day:hover:not(:disabled){background:#EEF4FF;color:#1D4ED8}
+.repeat-calendar-day:disabled{cursor:not-allowed;color:#CBD5E1;background:transparent}
+.repeat-calendar-day.outside{opacity:.28}
+.repeat-calendar-day.valid:not(.selected){box-shadow:inset 0 0 0 1px #D6E3F8}
+.repeat-calendar-day.selected{background:#111827;color:#fff;box-shadow:none}
+.repeat-calendar-day.start-date{outline:1px dashed #94A3B8;outline-offset:-3px}
+.repeat-calendar-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.repeat-calendar-actions button{font-size:11px;padding:6px 9px}
+.repeat-until-help{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:6px}
+.repeat-until-error{font-size:11px;color:#B91C1C;margin-top:6px}
+
 </style>
 </head>
 
 <body class="signed-out">
 <section class="login-screen" id="loginScreen">
  <form class="login-card" id="loginForm">
-  <span class="version-badge">KESA · v45</span><h1>KESA Calendar</h1>
+  <span class="version-badge">KESA · v46</span><h1>KESA Calendar</h1>
   <label for="loginPerson">Member</label><select id="loginPerson" required disabled><option value="">Loading members…</option></select>
   <div id="loginPasswordField" hidden><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" maxlength="72"></div>
   <p id="loginHint">디렉터 및 회장단은 비밀번호가 필요합니다.</p>
@@ -1773,7 +1805,7 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v45</span></h1>
+      <h1><span class="k">KESA</span> Calendar <span class="version-badge">v46</span></h1>
     </div>
 
     <div class="account-bar">
@@ -1949,7 +1981,32 @@ header.app .account-actions button{font-size:11px;min-height:32px;padding:6px 10
         <option value="biweekly">Every 2 weeks</option>
         <option value="monthly">Monthly</option>
       </select>
-    </div></div><div class="field" id="statusField">
+    </div></div><div class="field repeat-until-field" id="repeatUntilField" hidden>
+      <label class="lb">Repeat until <span style="text-transform:none;color:#94A3B8;font-weight:500">(optional)</span></label>
+      <div class="repeat-until-control">
+        <button type="button" id="repeatUntilButton" class="repeat-until-button" aria-expanded="false">
+          <span class="repeat-until-value" id="repeatUntilValue">No end date</span>
+          <span class="repeat-until-chevron" aria-hidden="true">▾</span>
+        </button>
+      </div>
+      <div class="repeat-until-calendar" id="repeatUntilCalendar" hidden>
+        <div class="repeat-calendar-head">
+          <button type="button" id="repeatCalPrev" aria-label="Previous month">‹</button>
+          <div class="repeat-calendar-title" id="repeatCalTitle">—</div>
+          <button type="button" id="repeatCalNext" aria-label="Next month">›</button>
+        </div>
+        <div class="repeat-calendar-weekdays" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="repeat-calendar-grid" id="repeatCalGrid"></div>
+        <div class="repeat-calendar-actions">
+          <button type="button" id="repeatUntilClear">No end date</button>
+          <button type="button" id="repeatUntilClose" class="primary">Done</button>
+        </div>
+      </div>
+      <div class="repeat-until-help" id="repeatUntilHelp">반복 패턴에 실제로 해당하는 날짜만 선택할 수 있습니다.</div>
+      <div class="repeat-until-error" id="repeatUntilError" hidden></div>
+    </div><div class="field" id="statusField">
       <label class="lb">Status</label>
       <label class="school-status-option" id="schoolStatusOption">
         <input type="checkbox" id="schoolStatusToggle">
@@ -2214,6 +2271,7 @@ function toRow(ev){
     participant_departments:ev.participantDepartments||[],
     linked_event_id:ev.linkedEventId||null,
     recur:ev.recur||'none',
+    repeat_until:ev.repeatUntil||null,
     details:ev.details||'',
     reminder_discussion:ev.reminderDiscussion||null,
     reminder_discussions:ev.reminderDiscussions||{},
@@ -2242,6 +2300,7 @@ function fromRow(r){
     cancelledDates:r.cancelled_dates||[],
     linkedEventId:r.linked_event_id||null,
     recur:r.recur||'none',
+    repeatUntil:r.repeat_until||null,
     details:r.details||'',
     reminderDiscussion:r.reminder_discussion||null,
     reminderDiscussions:r.reminder_discussions||{},
@@ -2519,11 +2578,17 @@ const TYPE_GLYPH={event:'●',due:'⚑',meeting:'◇',school:'▲',other:'📌'}
 const TYPE_NAME={event:'Event',due:'Due date',meeting:'Meeting',school:'School',other:'Other'};
 function supportsReminder(type){return ['event','meeting','due'].includes(type);}
 function reminderEnabledFor(ev){return supportsReminder(ev?.type)&&ev?.reminderEnabled!==false;}
+function reminderWillSend(ev){return reminderEnabledFor(ev)&&ev?.status==='final';}
+function reminderDotState(ev){
+  if(!supportsReminder(ev?.type)) return null;
+  if(ev?.reminderEnabled===false) return {on:false,title:'Reminder disabled'};
+  if(ev?.status!=='final') return {on:false,title:'Reminder will not send while tentative'};
+  return {on:true,title:'Reminder scheduled'};
+}
 function reminderDotHtml(ev){
-  if(!supportsReminder(ev?.type)) return '';
-  const on=reminderEnabledFor(ev);
-  const title=on?'Reminder on':'Reminder off';
-  return `<span class="reminder-dot ${on?'on':'off'}" title="${title}" aria-label="${title}"></span>`;
+  const state=reminderDotState(ev);
+  if(!state) return '';
+  return `<span class="reminder-dot ${state.on?'on':'off'}" title="${escapeHtml(state.title)}" aria-label="${escapeHtml(state.title)}"></span>`;
 }
 function glyphFor(ev){return ev.type==='other'?(ev.emoji||'📌'):(TYPE_GLYPH[ev.type]||'•');}
 function linkedEventFor(ev){return ev.linkedEventId?events.find(e=>e.id===ev.linkedEventId&&e.type==='event'):null;}
@@ -2565,10 +2630,25 @@ function nthOfDate(base){
 const ORD=['','1st','2nd','3rd','4th','5th'];
 const WEEKDAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+function recurrenceMatchesDate(baseStr,recur,dateStr){
+  if(!baseStr||!dateStr||!recur||recur==='none') return dateStr===baseStr;
+  const base=parseYMD(baseStr),day=parseYMD(dateStr);
+  if(day<base) return false;
+  if(recur==='weekly') return daysBetween(base,day)%7===0;
+  if(recur==='biweekly') return daysBetween(base,day)%14===0;
+  if(recur==='monthly'){
+    const nd=nthWeekdayOfMonth(day.getFullYear(),day.getMonth(),base.getDay(),nthOfDate(base));
+    return !!nd&&fmt(nd)===dateStr;
+  }
+  return false;
+}
+
 function occurrences(ev,startStr,endStr){
   const base=parseYMD(ev.date);
   const start=parseYMD(startStr);
-  const end=parseYMD(endStr);
+  const requestedEnd=parseYMD(endStr);
+  const repeatEnd=ev.repeatUntil?parseYMD(ev.repeatUntil):null;
+  const end=repeatEnd&&repeatEnd<requestedEnd?repeatEnd:requestedEnd;
   const out=[];
 
   if(!ev.recur||ev.recur==='none'){
@@ -2576,21 +2656,10 @@ function occurrences(ev,startStr,endStr){
     return out;
   }
 
-  const nth=nthOfDate(base);
-  const wd=base.getDay();
-
   for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
     if(d<base) continue;
-
-    let match=false;
-    if(ev.recur==='weekly') match=d.getDay()===wd;
-    else if(ev.recur==='biweekly') match=d.getDay()===wd&&daysBetween(base,d)%14===0;
-    else if(ev.recur==='monthly'){
-      const nd=nthWeekdayOfMonth(d.getFullYear(),d.getMonth(),wd,nth);
-      match=nd&&fmt(nd)===fmt(d);
-    }
-
-    if(match&&!(ev.cancelledDates||[]).includes(fmt(d))) out.push(fmt(d));
+    const ds=fmt(d);
+    if(recurrenceMatchesDate(ev.date,ev.recur,ds)&&!(ev.cancelledDates||[]).includes(ds)) out.push(ds);
   }
 
   return out;
@@ -2598,7 +2667,8 @@ function occurrences(ev,startStr,endStr){
 
 function isCancelledOccurrence(ev,day){return (ev.cancelledDates||[]).includes(day);}
 function visibleOccurrences(ev,start,end){
-  return [...new Set([...occurrences(ev,start,end),...(ev.cancelledDates||[]).filter(d=>d>=start&&d<=end)])].sort();
+  const cancelled=(ev.cancelledDates||[]).filter(d=>d>=start&&d<=end&&(!ev.repeatUntil||d<=ev.repeatUntil));
+  return [...new Set([...occurrences(ev,start,end),...cancelled])].sort();
 }
 async function restoreFromDetail(){
   if(!canEdit()) return;
@@ -2618,11 +2688,11 @@ function recurLabel(ev){
 
   const b=parseYMD(ev.date);
   const wd=WEEKDAY[b.getDay()];
-
-  if(ev.recur==='weekly') return `Weekly on ${wd}`;
-  if(ev.recur==='biweekly') return `Every 2 weeks on ${wd}`;
-  if(ev.recur==='monthly') return `Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
-  return '';
+  let label='';
+  if(ev.recur==='weekly') label=`Weekly on ${wd}`;
+  else if(ev.recur==='biweekly') label=`Every 2 weeks on ${wd}`;
+  else if(ev.recur==='monthly') label=`Monthly · ${ORD[nthOfDate(b)]} ${wd}`;
+  return label;
 }
 
 function spanDays(ev){
@@ -2651,6 +2721,9 @@ let formStatus='final';
 let schoolStatusEnabled=false;
 let formReminderEnabled=true;
 let formReminderOffsetMinutes=null;
+let formRepeatUntil=null;
+let repeatCalendarMonth=new Date();
+repeatCalendarMonth.setDate(1);
 
 const uid=()=> 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
@@ -3319,11 +3392,11 @@ function openDetail(ev,occurrenceDate=null){
   }
   const detailReminderDot=document.getElementById('detailReminderDot');
   if(supportsReminder(ev.type)){
-    const on=reminderEnabledFor(ev);
+    const state=reminderDotState(ev);
     detailReminderDot.hidden=false;
-    detailReminderDot.className='reminder-dot detail-reminder-dot '+(on?'on':'off');
-    detailReminderDot.title=on?'Reminder on':'Reminder off';
-    detailReminderDot.setAttribute('aria-label',detailReminderDot.title);
+    detailReminderDot.className='reminder-dot detail-reminder-dot '+(state.on?'on':'off');
+    detailReminderDot.title=state.title;
+    detailReminderDot.setAttribute('aria-label',state.title);
   }else{
     detailReminderDot.hidden=true;
     detailReminderDot.className='reminder-dot detail-reminder-dot';
@@ -3338,6 +3411,7 @@ function openDetail(ev,occurrenceDate=null){
   if(participantDisplay(ev)) html+=detailRow('Participants',`◎ ${escapeHtml(participantDisplay(ev))}`);
   if(assigneeDetail(ev)) html+=detailRow('Assignees',`👤 ${assigneeDetailHtml(ev)}`);
   if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeats',escapeHtml(recurLabel(ev)));
+  if(ev.recur&&ev.recur!=='none') html+=detailRow('Repeat until',escapeHtml(ev.repeatUntil||'No end date'));
   if(supportsReminder(ev.type)){
     html+=detailRow('Reminder',reminderEnabledFor(ev)?'🟢 On':'🔴 Off');
     html+=detailRow('Reminder timing',escapeHtml(reminderTimingSummary(ev,shownDate)));
@@ -3751,6 +3825,7 @@ function setType(t){
   }
   if(typeSupportsParticipants(t)) renderParticipantPicker();
   document.getElementById('reminderFormSection').hidden=!supportsReminder(t);
+  updateRepeatUntilUI();
   updateReminderFormUI();
   document.getElementById('peopleSection').hidden=!typeSupportsParticipants(t)&&!typeSupportsAssignees(t);
 }
@@ -3817,6 +3892,102 @@ function refreshLinkOptions(currentId){
       o.textContent=`${e.title} (${e.date})`;
       sel.appendChild(o);
     });
+}
+
+
+function recurrenceLabelForForm(){
+  const recur=document.getElementById('fRecur').value;
+  const base=document.getElementById('fDate').value||fmt(new Date());
+  if(recur==='none') return '';
+  const d=parseYMD(base),wd=WEEKDAY[d.getDay()];
+  if(recur==='weekly') return `매주 ${wd}`;
+  if(recur==='biweekly') return `2주마다 ${wd}`;
+  if(recur==='monthly') return `매월 ${ORD[nthOfDate(d)]} ${wd}`;
+  return '';
+}
+
+function validRepeatUntilDate(dateStr){
+  const recur=document.getElementById('fRecur').value;
+  const base=document.getElementById('fDate').value;
+  return !!base&&recur!=='none'&&dateStr>=base&&recurrenceMatchesDate(base,recur,dateStr);
+}
+
+function updateRepeatUntilUI({resetInvalid=true}={}){
+  const recurField=document.getElementById('recurField');
+  const recur=document.getElementById('fRecur').value;
+  const field=document.getElementById('repeatUntilField');
+  const base=document.getElementById('fDate').value;
+  const recurrenceAvailable=!recurField.classList.contains('hide')&&recur!=='none';
+  field.hidden=!recurrenceAvailable;
+  if(!recurrenceAvailable){
+    formRepeatUntil=null;
+    closeRepeatUntilCalendar();
+  }else if(resetInvalid&&formRepeatUntil&&!validRepeatUntilDate(formRepeatUntil)){
+    formRepeatUntil=null;
+  }
+  document.getElementById('repeatUntilValue').textContent=formRepeatUntil||'No end date';
+  document.getElementById('repeatUntilHelp').textContent=
+    `${recurrenceLabelForForm()} 일정 중 마지막 회차를 선택하세요. 패턴에 맞지 않는 날짜는 선택할 수 없습니다.`;
+  const err=document.getElementById('repeatUntilError');
+  err.hidden=true;err.textContent='';
+  if(!document.getElementById('repeatUntilCalendar').hidden) renderRepeatUntilCalendar();
+}
+
+function openRepeatUntilCalendar(){
+  const base=document.getElementById('fDate').value||fmt(new Date());
+  const anchor=formRepeatUntil||base;
+  repeatCalendarMonth=parseYMD(anchor);
+  repeatCalendarMonth.setDate(1);
+  document.getElementById('repeatUntilCalendar').hidden=false;
+  document.getElementById('repeatUntilButton').setAttribute('aria-expanded','true');
+  renderRepeatUntilCalendar();
+}
+
+function closeRepeatUntilCalendar(){
+  const cal=document.getElementById('repeatUntilCalendar');
+  if(!cal)return;
+  cal.hidden=true;
+  document.getElementById('repeatUntilButton').setAttribute('aria-expanded','false');
+}
+
+function renderRepeatUntilCalendar(){
+  const grid=document.getElementById('repeatCalGrid');
+  const title=document.getElementById('repeatCalTitle');
+  if(!grid||!title)return;
+  const y=repeatCalendarMonth.getFullYear(),m=repeatCalendarMonth.getMonth();
+  title.textContent=repeatCalendarMonth.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1,12),start=new Date(first);
+  start.setDate(1-first.getDay());
+  grid.innerHTML='';
+  for(let i=0;i<42;i++){
+    const d=addDays(start,i),ds=fmt(d);
+    const b=document.createElement('button');
+    b.type='button';b.className='repeat-calendar-day';
+    b.textContent=String(d.getDate());
+    if(d.getMonth()!==m)b.classList.add('outside');
+    const valid=validRepeatUntilDate(ds);
+    b.disabled=!valid;
+    if(valid)b.classList.add('valid');
+    if(ds===formRepeatUntil)b.classList.add('selected');
+    if(ds===document.getElementById('fDate').value)b.classList.add('start-date');
+    if(valid)b.onclick=()=>{
+      formRepeatUntil=ds;
+      document.getElementById('repeatUntilValue').textContent=ds;
+      renderRepeatUntilCalendar();
+    };
+    grid.appendChild(b);
+  }
+}
+
+function validateRepeatUntil(){
+  const recur=document.getElementById('fRecur').value;
+  const err=document.getElementById('repeatUntilError');
+  if(recur==='none'||!formRepeatUntil){err.hidden=true;return true;}
+  if(!validRepeatUntilDate(formRepeatUntil)){
+    err.textContent='Repeat until은 실제 반복 회차에 해당하는 날짜여야 합니다.';
+    err.hidden=false;return false;
+  }
+  err.hidden=true;return true;
 }
 
 function defaultReminderMsForForm(){
@@ -3953,6 +4124,7 @@ function openAdd(dateStr){
   document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value='';
   document.getElementById('fRecur').value='none';
+  formRepeatUntil=null;
 
   buildDeptOptions('all');
   refreshLinkOptions(null);
@@ -3963,6 +4135,7 @@ function openAdd(dateStr){
   setSelectedParticipants([]);
   syncEndDateConstraints();
   setStatus('final');
+  updateRepeatUntilUI();
   updateReminderFormUI();
   clearErr();
   openModal();
@@ -3999,6 +4172,7 @@ function openEdit(ev,occurrenceDate=null){
   document.getElementById('participantPeople').open=false;
   document.getElementById('fDetails').value=ev.details||'';
   document.getElementById('fRecur').value=ev.recur||'none';
+  formRepeatUntil=ev.repeatUntil||null;
 
   buildDeptOptions(ev.dept!=='school'?ev.dept:undefined);
   refreshLinkOptions(ev.id);
@@ -4016,6 +4190,7 @@ function openEdit(ev,occurrenceDate=null){
   setSelectedAssignees((ev.assigneeIds&&ev.assigneeIds.length)?ev.assigneeIds:(ev.assigneeId?[ev.assigneeId]:[]));
   setSelectedParticipants(ev.participantDepartments||[],ev.participantIds||[]);
   document.getElementById('fLink').value=ev.linkedEventId||'';
+  updateRepeatUntilUI();
   updateReminderFormUI();
 
   clearErr();
@@ -4060,6 +4235,11 @@ async function saveItem(){
   const rec=document.getElementById('recurField').classList.contains('hide')
     ?'none'
     :document.getElementById('fRecur').value;
+  if(rec!=='none'&&!validateRepeatUntil()){
+    document.getElementById('repeatUntilButton').focus();
+    return;
+  }
+  const repeatUntil=rec==='none'?null:formRepeatUntil;
 
   const assigneeIds=typeSupportsAssignees(formType)
     ?[...selectedAssigneeIds].filter(id=>EXEC_BY_ID[id])
@@ -4102,7 +4282,7 @@ async function saveItem(){
   const payload={
     id:editingId||uid(),title,type:formType,dept,date,time,endDate,status,
     assignee,assigneeId,assigneeIds,participantDepartments,participantIds,linkedEventId,
-    recur:rec,details,emoji,reminderDiscussion:formReminderDiscussion,reminderDiscussions:{...formReminderDiscussions},
+    recur:rec,repeatUntil,details,emoji,reminderDiscussion:formReminderDiscussion,reminderDiscussions:{...formReminderDiscussions},
     reminderEnabled:supportsReminder(formType)?formReminderEnabled:false,
     reminderOffsetMinutes:supportsReminder(formType)?formReminderOffsetMinutes:null,
     cancelledDates:original?.cancelledDates||[],source:original?.source||'user'
@@ -4290,6 +4470,7 @@ function confirmationRows(ev){
       const p=EXEC_BY_ID[id];return p?`${p.english_name} (${p.department})`:id;
     }).join('\n')||ev.assignee||'None':'Not applicable',typeSupportsAssignees(ev.type)?[people,ev.assignee||'']:null],
     ['Repeats',recurLabel(ev)||'Does not repeat'],
+    ['Repeat until',ev.recur&&ev.recur!=='none'?(ev.repeatUntil||'No end date'):'Not applicable',ev.recur&&ev.recur!=='none'?(ev.repeatUntil||null):null],
     ['Linked event',linked?`${linked.title} (${linked.date})`:ev.linkedEventId||'None',ev.linkedEventId||''],
     ['Emoji',ev.emoji||'None'],
     ['Details',ev.details||'None'],
@@ -5187,8 +5368,17 @@ document.getElementById('fReminderEnabled').addEventListener('change',e=>{formRe
 document.getElementById('reminderCustomButton').onclick=openFormReminderCustom;
 document.getElementById('reminderApplyCustom').onclick=applyFormReminderCustom;
 document.getElementById('reminderUseDefault').onclick=useDefaultFormReminder;
-document.getElementById('fDate').addEventListener('change',updateReminderFormUI);
+document.getElementById('fDate').addEventListener('change',()=>{updateRepeatUntilUI();updateReminderFormUI();});
 document.getElementById('fTime').addEventListener('change',updateReminderFormUI);
+document.getElementById('fRecur').addEventListener('change',()=>{updateRepeatUntilUI();});
+document.getElementById('repeatUntilButton').onclick=()=>{
+  const cal=document.getElementById('repeatUntilCalendar');
+  cal.hidden?openRepeatUntilCalendar():closeRepeatUntilCalendar();
+};
+document.getElementById('repeatCalPrev').onclick=()=>{repeatCalendarMonth.setMonth(repeatCalendarMonth.getMonth()-1);renderRepeatUntilCalendar();};
+document.getElementById('repeatCalNext').onclick=()=>{repeatCalendarMonth.setMonth(repeatCalendarMonth.getMonth()+1);renderRepeatUntilCalendar();};
+document.getElementById('repeatUntilClear').onclick=()=>{formRepeatUntil=null;updateRepeatUntilUI({resetInvalid:false});renderRepeatUntilCalendar();};
+document.getElementById('repeatUntilClose').onclick=closeRepeatUntilCalendar;
 document.getElementById('saveBtn').onclick=saveItem;
 document.getElementById('deleteBtn').onclick=deleteItem;
 
